@@ -12,20 +12,7 @@
 <body>
 
 <script>
-AFRAME.registerComponent('yellow', {
-	schema: 
-	{
-	
-	},
-	
-	init: function()
-	{
-		let mesh = this.el.getObject3D("mesh");
-		mesh.material.color.set("yellow");
-	}
-	
-});
-	
+
 AFRAME.registerComponent('mousey', {
 	schema: 
 	{
@@ -58,7 +45,6 @@ AFRAME.registerComponent('mousey', {
 	}
 	
 });
-	
 
 </script>
 
@@ -81,16 +67,19 @@ AFRAME.registerComponent('mousey', {
 			position="-1 4 0">
 		</a-entity>
 		
+		
+	-->
+
+	<!--
+		This allows user to move with WASD keys
 		<a-entity position="0 1.6 1" camera look-controls wasd-controls></a-entity>
 	-->
 
 	<a-entity movement-controls="speed: 0.1; fly: false;" position="0 0 0">
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
+		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
 	</a-entity>
-	
-	
-	<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
-	<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
 	
 	<a-sky 
 		rotation = "0 0 0"
@@ -104,7 +93,8 @@ AFRAME.registerComponent('mousey', {
 		rotation="-90 0 0" 
 		color="#8888FF" 
 		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
-		shadow="cast: false; receive: true">
+		shadow="cast: false; receive: true"
+		mousey>
 	</a-plane>
 
 	<a-box
@@ -112,7 +102,7 @@ AFRAME.registerComponent('mousey', {
 		position = "-2.0 0.0 -3.0"
 		color = "#FFCCCC" 
 		material = "src: #grid"
-		yellow>
+		mousey>
 	</a-box>
 	
 	<a-box
