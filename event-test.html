@@ -6,6 +6,7 @@
 	<meta name="description" content="Hello, WebVR! - A-Frame">
 	<script src="js/aframe-master.js"></script>
 	<script src="js/aframe-animation-component.min.js"></script>
+	<script src="js/aframe-extras.min.js"></script>
 </head>
 
 <body>
@@ -79,10 +80,16 @@ AFRAME.registerComponent('mousey', {
 			light="type: directional; color: #FFFFFF; castShadow: true;" 
 			position="-1 4 0">
 		</a-entity>
+		
+		<a-entity position="0 1.6 1" camera look-controls wasd-controls></a-entity>
 	-->
 
-	<a-entity position="0 1.6 1" camera look-controls wasd-controls></a-entity>
-	<a-entity id="leftHand" laser-controls="hand: left" raycaster=""></a-entity>
+	<a-entity movement-controls="speed: 0.1; fly: false;" position="0 0 0">
+		<a-entity camera position="0 1.5 1" look-controls></a-entity>
+	</a-entity>
+	
+	
+	<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
 	<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
 	
 	<a-sky 
