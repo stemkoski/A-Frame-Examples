@@ -26,14 +26,14 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 7 \n - \n -");
+		textArea.setAttribute("text", "value", "test 8 \n - \n -");
 		
 		this.el.addEventListener("axismove", function(event)
 		{
 			// this.x = event.axis[0];
 			// this.y = event.axis[1];
 			
-			textArea.setAttribute("text", "value", "axis move " + this.x + "," + this.y);
+			textArea.setAttribute("text", "value", event);
 		});
 		
 		this.el.addEventListener("triggerdown", function(event)
