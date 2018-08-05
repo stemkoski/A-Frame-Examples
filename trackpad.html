@@ -27,6 +27,11 @@ AFRAME.registerComponent('updater', {
 			textarea.setAttribute("text", "value", "axis move");
 		});
 		
+		this.el.addEventListener("triggerdown", function(event)
+		{
+			textarea.setAttribute("text", "value", "trigger down");
+		});
+		
 	},
 	
 	tick: function (time, timeDelta) 
@@ -52,7 +57,7 @@ AFRAME.registerComponent('updater', {
 	
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
 		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
-		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" updater></a-entity>
 
 	
 	<a-sky 
@@ -78,14 +83,14 @@ AFRAME.registerComponent('updater', {
 		material="color: #444444; transparent: true; opacity: 0.80;"
 		text="anchor: center; baseline: center; wrapCount: 20;
 				transparent: true; opacity: 0.90; color: #FF8888;
-				value: Tick Counter: 1">
+				value: Tick Counter: 2">
 	</a-entity>
 
 	<!-- adding the updater last so it can get references to other entities 
-	<a-entity updater></a-entity> -->
+	<a-entity updater></a-entity> 
 	
 	
-	<a-entity id="trackpad" trackpad-controls updater>	</a-entity>
+	<a-entity id="trackpad" movement-controls updater>	</a-entity> -->
 	
 </a-scene>
 </body>
