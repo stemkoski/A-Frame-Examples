@@ -20,35 +20,23 @@ AFRAME.registerComponent('video-controls', {
 		let video = document.querySelector("#video");
 
 		let videoDisplay = document.querySelector("#video-display");
-		let videoBorder = document.querySelector("#video-border");
-		let videoMesh = videoDisplay.getObject3D("mesh");
+		let videoBorder  = document.querySelector("#video-border");
+		let videoMesh  = videoDisplay.getObject3D("mesh");
 		let borderMesh = videoBorder.getObject3D("mesh");
-		
-		videoBorder.addEventListener("mouseenter", function(event)
-		{
-			borderMesh.material.color.set("white");
-		});
 		
 		videoBorder.addEventListener("mousedown", function(event)
 		{
 			if ( video.paused )
 			{
 				video.play();
-				borderMesh.material.color.set("green");
+				borderMesh.material.color.set("#004400");
 			}
 			else
 			{
 				video.pause();
-				borderMesh.material.color.set("red");
+				borderMesh.material.color.set("#440000");
 			}
 		});
-
-		videoBorder.addEventListener("mouseleave", function(event)
-		{
-			borderMesh.material.color.set("gray");
-		});
-		
-		console.log("Hello!");
 	}
 	
 });
@@ -88,7 +76,7 @@ AFRAME.registerComponent('video-controls', {
 		id = "video-border"
 		width = "17" height = "10"
 		position = "0 5 -20"
-		color = "#4444ff"
+		color = "#440000"
 		video-controls>		
 		<a-video  
 			id = "video-display"
