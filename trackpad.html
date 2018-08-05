@@ -26,7 +26,7 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 10 \n - \n -");
+		textArea.setAttribute("text", "value", "test 11 \n - \n -");
 		
 		this.el.addEventListener("axismove", function(event)
 		{
@@ -71,7 +71,7 @@ AFRAME.registerComponent('updater', {
 	
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
 		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
-		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" updater></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" movement-controls="speed: 0; fly: false;" updater></a-entity>
 
 	
 	<a-sky 
