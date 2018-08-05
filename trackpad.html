@@ -26,14 +26,30 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 11 \n - \n -");
+		textArea.setAttribute("text", "value", "test 12 \n - \n -");
 		
-		this.el.addEventListener("axismove", function(event)
+		this.el.addEventListener("axismovee", function(event)
 		{
 			// this.x = event.axis[0];
 			// this.y = event.axis[1];
 			
 			textArea.setAttribute("text", "value", JSON.stringify(event) );
+		});
+		
+		this.el.addEventListener("gamepadbuttondown", function(event)
+		{
+			// this.x = event.axis[0];
+			// this.y = event.axis[1];
+			
+			textArea.setAttribute("text", "value", "button down " + event.index );
+		});
+		
+		this.el.addEventListener("trackpadchanged", function(event)
+		{
+			// this.x = event.axis[0];
+			// this.y = event.axis[1];
+			
+			textArea.setAttribute("text", "value", "trackpadchanged" );
 		});
 		
 		this.el.addEventListener("triggerdown", function(event)
@@ -71,7 +87,7 @@ AFRAME.registerComponent('updater', {
 	
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
 		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
-		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" movement-controls="speed: 0; fly: false;" updater></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" movement-controls updater></a-entity>
 
 	
 	<a-sky 
