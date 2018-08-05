@@ -26,17 +26,26 @@ AFRAME.registerComponent('video-controls', {
 		
 		videoBorder.addEventListener("mouseenter", function(event)
 		{
-			borderMesh.material.color.set("red");
+			borderMesh.material.color.set("white");
 		});
 		
-		this.el.addEventListener("mousedown", function(event)
+		videoBorder.addEventListener("mousedown", function(event)
 		{
-			borderMesh.material.color.set("yellow");
+			if ( video.paused )
+			{
+				video.play();
+				borderMesh.material.color.set("green");
+			}
+			else
+			{
+				video.pause();
+				borderMesh.material.color.set("red");
+			}
 		});
 
 		videoBorder.addEventListener("mouseleave", function(event)
 		{
-			borderMesh.material.color.set("blue");
+			borderMesh.material.color.set("gray");
 		});
 		
 		console.log("Hello!");
@@ -89,7 +98,6 @@ AFRAME.registerComponent('video-controls', {
 		</a-video>
 	</a-plane>
 	
-	<a-entity ></a-entity>
 </a-scene>
 </body>
 </html>
