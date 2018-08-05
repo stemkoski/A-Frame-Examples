@@ -24,17 +24,17 @@ AFRAME.registerComponent('video-controls', {
 		let videoMesh = videoDisplay.getObject3D("mesh");
 		let borderMesh = videoBorder.getObject3D("mesh");
 		
-		videoMesh.addEventListener("mouseenter", function(event)
+		videoDisplay.addEventListener("mouseenter", function(event)
 		{
 			borderMesh.material.color.set("red");
 		});
 		
-		videoMesh.addEventListener("mousedown", function(event)
+		videoDisplay.addEventListener("mousedown", function(event)
 		{
 			borderMesh.material.color.set("yellow");
 		});
 
-		videoMesh.addEventListener("mouseleave", function(event)
+		videoDisplay.addEventListener("mouseleave", function(event)
 		{
 			borderMesh.material.color.set("blue");
 		});
@@ -46,7 +46,7 @@ AFRAME.registerComponent('video-controls', {
 
 <a-scene antialias="true">
 	
-	<a-assets>
+	<a-assets timeout="10000">
 		<img id="grid" src="images/border.png" crossorigin="anonymous" />
 		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
 		<video id="video" autoplay loop="true" src="video/sintel.mp4"></video>
