@@ -21,17 +21,17 @@ AFRAME.registerComponent('updater', {
 		this.target = document.querySelector('#textArea');
 		
 		this.x = 0;
-		this.y = 0;
+		this.y = 0.98;
 		this.button = false;
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 4");
+		textArea.setAttribute("text", "value", "test 6 \n - \n -");
 		
 		this.el.addEventListener("axismove", function(event)
 		{
 			this.x = event.axis[0];
-			this.y = event.axis[1];
+			// this.y = event.axis[1];
 			
 			textArea.setAttribute("text", "value", "axis move " + this.x + "," + this.y);
 		});
@@ -97,7 +97,7 @@ AFRAME.registerComponent('updater', {
 		material="color: #444444; transparent: true; opacity: 0.80;"
 		text="anchor: center; baseline: center; wrapCount: 20;
 				transparent: true; opacity: 0.90; color: #FF8888;
-				value: Tick Counter: 2">
+				value: a \n b \n c \n d">
 	</a-entity>
 
 	<!-- adding the updater last so it can get references to other entities 
