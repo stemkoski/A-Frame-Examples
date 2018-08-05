@@ -19,14 +19,24 @@ AFRAME.registerComponent('updater', {
 	{
 		this.num = 0;
 		this.target = document.querySelector('#textArea');
+		
+		let textArea = document.querySelector('#textArea');
+		
+		this.el.addEventListener("axismove", function(event)
+		{
+			textarea.setAttribute("text", "value", "axis move");
+		});
+		
 	},
 	
 	tick: function (time, timeDelta) 
 	{
-		let a = this.el.components["tracked-controls"].axis[0];
+		// let a = this.el.components["tracked-controls"].axis[0];
 		this.num += 1;
-		this.target.setAttribute("text", "value", a)
+		// this.target.setAttribute("text", "value", 1)
 	}
+	
+	
 	
 });
 
@@ -68,7 +78,7 @@ AFRAME.registerComponent('updater', {
 		material="color: #444444; transparent: true; opacity: 0.80;"
 		text="anchor: center; baseline: center; wrapCount: 20;
 				transparent: true; opacity: 0.90; color: #FF8888;
-				value: Tick Counter: ???">
+				value: Tick Counter: 1">
 	</a-entity>
 
 	<!-- adding the updater last so it can get references to other entities 
