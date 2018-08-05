@@ -92,6 +92,15 @@ AFRAME.registerComponent('pointer', {
 		<a-entity position="0 1.6 1" camera look-controls wasd-controls></a-entity>
 	-->
 
+	<a-sphere
+		id = "pointer-marker"
+		radius = "0.25"
+		position = "0.00 3 -3.00"
+		color = "#FFFF00"
+		material = "src: #grid; repeat: 16 8;">
+	</a-sphere>
+		
+		
 	<a-entity movement-controls="speed: 0.1; fly: false;" position="0 0 0">
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
 		<a-entity id="leftHand" laser-controls="hand: left" raycaster="far: 5;" line="color: #FF00FF" pointer></a-entity>
@@ -137,14 +146,7 @@ AFRAME.registerComponent('pointer', {
 		mousey>
 	</a-box>
 	
-	<a-sphere
-		id = "pointer-marker"
-		radius = "0.25"
-		position = "0.00 3 -3.00"
-		color = "#FFFF00"
-		material = "src: #grid; repeat: 16 8;">
-	</a-sphere>
-		
+	
 
 	
 </a-scene>
