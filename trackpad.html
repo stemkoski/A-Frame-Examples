@@ -22,14 +22,16 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
+		textArea.setAttribute("text", "value", "test 3");
+		
 		this.el.addEventListener("axismove", function(event)
 		{
-			textarea.setAttribute("text", "value", "axis move");
+			textArea.setAttribute("text", "value", "axis move");
 		});
 		
 		this.el.addEventListener("triggerdown", function(event)
 		{
-			textarea.setAttribute("text", "value", "trigger down");
+			textArea.setAttribute("text", "value", "trigger down");
 		});
 		
 	},
