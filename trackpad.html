@@ -26,40 +26,26 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 13 \n - \n -");
+		textArea.setAttribute("text", "value", "test 14 \n - \n -");
 		
 		this.el.addEventListener("axismovee", function(event)
 		{
-			// this.x = event.axis[0];
-			// this.y = event.axis[1];
-			
-			textArea.setAttribute("text", "value", JSON.stringify(event) );
+			textArea.setAttribute("text", "value", "axismove " + JSON.stringify(event) );
 		});
 		
-		this.el.addEventListener("gamepadbuttondown", function(event)
+		this.el.addEventListener("touchstart", function(event)
 		{
-			// this.x = event.axis[0];
-			// this.y = event.axis[1];
-			
-			textArea.setAttribute("text", "value", "button down " + event.index );
+			textArea.setAttribute("text", "value", "touchstart " + JSON.stringify(event) );
 		});
 		
-		this.el.addEventListener("trackpadchanged", function(event)
+		this.el.addEventListener("buttondown", function(event)
 		{
-			// this.x = event.axis[0];
-			// this.y = event.axis[1];
-			
-			textArea.setAttribute("text", "value", "trackpadchanged " + JSON.stringify(event) );
+			textArea.setAttribute("text", "value", "button down");
 		});
 		
-		this.el.addEventListener("triggerdown", function(event)
+		this.el.addEventListener("buttonup", function(event)
 		{
-			textArea.setAttribute("text", "value", "trigger down");
-		});
-		
-		this.el.addEventListener("triggerup", function(event)
-		{
-			textArea.setAttribute("text", "value", "trigger up");
+			textArea.setAttribute("text", "value", "button up");
 		});
 		
 	},
@@ -87,7 +73,7 @@ AFRAME.registerComponent('updater', {
 	
 		<a-entity camera position="0 1.5 1" look-controls></a-entity>
 		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
-		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00" movement-controls updater></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
 
 	
 	<a-sky 
@@ -117,10 +103,10 @@ AFRAME.registerComponent('updater', {
 	</a-entity>
 
 	<!-- adding the updater last so it can get references to other entities 
-	<a-entity updater></a-entity> 
+	<a-entity updater></a-entity> -->
 	
 	
-	<a-entity id="trackpad" movement-controls updater>	</a-entity> -->
+	<a-entity id="trackpad" oculus-go-controls updater>	</a-entity> 
 	
 </a-scene>
 </body>
