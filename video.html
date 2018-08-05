@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello, WebVR! - A-Frame</title>
+	<meta name="description" content="Hello, WebVR! - A-Frame">
+	<script src="js/aframe-master.js"></script>
+	<script src="js/aframe-animation-component.min.js"></script>
+	<script src="js/aframe-extras.min.js"></script>
+</head>
+
+<body>
+
+<script>
+
+AFRAME.registerComponent('video-controls', {
+	
+	init: function()
+	{
+		let video = document.querySelector("#video");
+
+		let videoDisplay = document.querySelector("#video-display");
+		let videoBorder = document.querySelector("#video-border");
+		let videoMesh = videoDisplay.getObject3D("mesh");
+		let borderMesh = videoBorder.getObject3D("mesh");
+		
+		videoMesh.addEventListener("mouseenter", function(event)
+		{
+			borderMesh.material.color.set("red");
+		});
+		
+		videoMesh.addEventListener("mousedown", function(event)
+		{
+			borderMesh.material.color.set("yellow");
+		});
+
+		videoMesh.addEventListener("mouseleave", function(event)
+		{
+			borderMesh.material.color.set("blue");
+		});
+	}
+	
+});
+
+</script>
+
+<a-scene antialias="true">
+	
+	<a-assets>
+		<img id="grid" src="images/border.png" crossorigin="anonymous" />
+		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		<video id="video" autoplay loop="true" src="video/sintel.mp4"></video>
+	</a-assets>
+
+	<a-entity movement-controls="speed: 0.1; fly: false;" position="0 0 0">
+		<a-entity camera position="0 1.5 1" look-controls></a-entity>
+		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
+	</a-entity>
+	
+	<a-sky 
+		rotation = "0 0 0"
+		color = "#FFFFFF"
+		material = "src: #sky">
+	</a-sky>
+	
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#8888FF" 
+		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
+		shadow="cast: false; receive: true">
+	</a-plane>
+	
+	<a-plane
+		id = "video-border"
+		width = "17" height = "10"
+		position = "0 5 -20"
+		color = "#444444">		
+		<a-video  
+			id = "video-display"
+			width="16" height="9" 
+			position="0 0 0.1"
+			src="#video">
+		</a-video>
+	</a-plane>
+	
+	<a-entity video-controls></a-entity>
+</a-scene>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
