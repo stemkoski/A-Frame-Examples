@@ -26,26 +26,21 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 14 \n - \n -");
+		textArea.setAttribute("text", "value", "test 15 \n - \n -");
 		
-		this.el.addEventListener("axismovee", function(event)
+		this.el.addEventListener("axismove", function(event)
 		{
 			textArea.setAttribute("text", "value", "axismove " + JSON.stringify(event) );
 		});
 		
-		this.el.addEventListener("touchstart", function(event)
-		{
-			textArea.setAttribute("text", "value", "touchstart " + JSON.stringify(event) );
-		});
-		
 		this.el.addEventListener("buttondown", function(event)
 		{
-			textArea.setAttribute("text", "value", "button down");
+			textArea.setAttribute("text", "value", "button down " + JSON.stringify(event));
 		});
 		
 		this.el.addEventListener("buttonup", function(event)
 		{
-			textArea.setAttribute("text", "value", "button up");
+			textArea.setAttribute("text", "value", "button up " + JSON.stringify(event));
 		});
 		
 	},
