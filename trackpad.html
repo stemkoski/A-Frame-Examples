@@ -20,18 +20,30 @@ AFRAME.registerComponent('updater', {
 		this.num = 0;
 		this.target = document.querySelector('#textArea');
 		
+		this.x = 0;
+		this.y = 0;
+		this.button = false;
+		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 3");
+		textArea.setAttribute("text", "value", "test 4");
 		
 		this.el.addEventListener("axismove", function(event)
 		{
-			textArea.setAttribute("text", "value", "axis move");
+			this.x = event.axis[0];
+			this.y = event.axis[1];
+			
+			textArea.setAttribute("text", "value", "axis move " + this.x + "," + this.y);
 		});
 		
 		this.el.addEventListener("triggerdown", function(event)
 		{
 			textArea.setAttribute("text", "value", "trigger down");
+		});
+		
+		this.el.addEventListener("triggerup", function(event)
+		{
+			textArea.setAttribute("text", "value", "trigger up");
 		});
 		
 	},
