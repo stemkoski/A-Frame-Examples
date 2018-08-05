@@ -29,7 +29,7 @@ AFRAME.registerComponent('video-controls', {
 			borderMesh.material.color.set("red");
 		});
 		
-		videoBorder.addEventListener("mousedown", function(event)
+		this.el.addEventListener("mousedown", function(event)
 		{
 			borderMesh.material.color.set("yellow");
 		});
@@ -38,6 +38,8 @@ AFRAME.registerComponent('video-controls', {
 		{
 			borderMesh.material.color.set("blue");
 		});
+		
+		console.log("Hello!");
 	}
 	
 });
@@ -77,7 +79,8 @@ AFRAME.registerComponent('video-controls', {
 		id = "video-border"
 		width = "17" height = "10"
 		position = "0 5 -20"
-		color = "#444444">		
+		color = "#444444"
+		video-controls>		
 		<a-video  
 			id = "video-display"
 			width="16" height="9" 
@@ -86,7 +89,7 @@ AFRAME.registerComponent('video-controls', {
 		</a-video>
 	</a-plane>
 	
-	<a-entity video-controls></a-entity>
+	<a-entity ></a-entity>
 </a-scene>
 </body>
 </html>
