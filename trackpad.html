@@ -26,7 +26,7 @@ AFRAME.registerComponent('updater', {
 		
 		let textArea = document.querySelector('#textArea');
 		
-		textArea.setAttribute("text", "value", "test 12 \n - \n -");
+		textArea.setAttribute("text", "value", "test 13 \n - \n -");
 		
 		this.el.addEventListener("axismovee", function(event)
 		{
@@ -49,7 +49,7 @@ AFRAME.registerComponent('updater', {
 			// this.x = event.axis[0];
 			// this.y = event.axis[1];
 			
-			textArea.setAttribute("text", "value", "trackpadchanged" );
+			textArea.setAttribute("text", "value", "trackpadchanged " + JSON.stringify(event) );
 		});
 		
 		this.el.addEventListener("triggerdown", function(event)
