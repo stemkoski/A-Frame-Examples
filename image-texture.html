@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Image Textures</title>
+	<script src="js/aframe-master.min.js"></script>
+</head>
+
+<body>
+<a-scene antialias="true">
+	
+	<a-assets>
+		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		<img id="grass" src="images/grass.jpg" crossorigin="anonymous" />
+		<img id="crate" src="images/crate.jpg" crossorigin="anonymous" />
+		<img id="earth" src="images/earth-sphere.jpg" crossorigin="anonymous" />
+		<img id="hexagons" src="images/hexagons.png" crossorigin="anonymous" />
+	</a-assets>
+		
+	<a-sky 
+		color = "#FFFFFF"
+		material = "src: #sky">
+	</a-sky>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#888888" 
+		material="src: #grass; repeat:10 10; transparent: true; opacity: 0.75"
+		shadow="cast: false; receive: true">
+	</a-plane>
+	
+	<a-box
+		width = "1" height = "1" depth = "1"
+		position = "-1 0.5 -3"
+		rotation = "0 45 0"  
+		color = "#FFFFFF"
+		material = "src: #crate"
+		shadow = "cast: true; receive: true">
+	</a-box>
+	
+	<a-sphere
+		radius = "1.25"
+		position = "0 1.25 -5"
+		material = "src: #earth;"
+		shadow = "cast: true; receive: true">
+	</a-sphere>
+	
+	<a-cylinder
+		radius = "0.5" height = "1.5"
+		position = " 1 0.75 -3"
+		color = "#8888BB"
+		material = "src: #hexagons; repeat: 4 2;"
+		shadow = "cast: true; receive: true">
+	</a-cylinder>
+	
+</a-scene>
+</body>
+</html>

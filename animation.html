@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Animation</title>
+	<script src="js/aframe-master.min.js"></script>
+	<script src="js/aframe-animation-component.min.js"></script>
+	<script src="js/aframe-animation-timeline-component.min.js"></script>
+</head>
+
+<body>
+<a-scene antialias="true" animation-timeline__1="timeline: #myTimeline; loop: true">
+	
+	<a-assets>
+		<img id="grid" src="images/border.png" crossorigin="anonymous" />
+		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		
+		<!-- timeline used to play animations in sequence -->
+		<a-timeline id="myTimeline">
+			<a-timeline-animation select="#awesomeBox" name="shrink"></a-timeline-animation>
+			<a-timeline-animation select="#awesomeBox" name="setopacity0"></a-timeline-animation>
+			<a-timeline-animation select="#awesomeBox" name="setscale111"></a-timeline-animation>
+			<a-timeline-animation select="#awesomeBox" name="fadein"></a-timeline-animation>
+		</a-timeline>
+	</a-assets>
+		
+	<a-sky 
+		rotation = "0 0 0"
+		color = "#FFFFFF"
+		material = "src: #sky">
+	</a-sky>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#888888" 
+		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
+		shadow="cast: false; receive: true">
+	</a-plane>
+
+	<a-torus-knot 
+		p="2" q="3" radius="0.5" radius-tubular="0.1"
+		position = "-2.5 1.5 -4"
+		color="#CC3333" 
+		material = "src: #grid; repeat: 48 8;"
+		shadow = "cast: true; receive: true"
+		animation__color = "property: material.color; dur: 2000; easing: linear; dir: alternate; from:#FF3333; to:#FFCCCC; loop: true">
+	</a-torus-knot>
+	
+	<a-box
+		id = "awesomeBox"
+		width = "2" height = "1" depth = "1"
+		position = "-1 0.5 -3"
+		rotation = "0 45 0"  
+		scale = "1 1 1"
+		color = "#FF8800"
+		material = "src: #grid; transparent: true; opacity: 1.0;"
+		shadow = "cast: true; receive: true"
+		animation__shrink = "property: scale; dur: 2000; easing: easeInOutSine; from:1 1 1; to:0.01 0.01 0.01; autoplay: false;"
+		animation__setopacity0 = "property: material.opacity; dur: 10; easing: linear; from: 1; to: 0; autoplay: false"
+		animation__setscale111 = "property: scale; dur: 10; easing: linear; from: 0.01 0.01 0.01; to: 1 1 1; autoplay: false"
+		animation__fadein      = "property: material.opacity; dur: 2000; easing: linear; from:0; to:1; autoplay: false">
+	</a-box>
+	
+	<a-sphere
+		radius = "1.25"
+		position = "0 1.25 -5"
+		color = "#DDBB00"
+		material = "src: #grid; repeat: 32 16;"
+		shadow = "cast: true; receive: true"
+		animation__radius = "property: radius; dur: 1000; easing: easeInOutSine; dir: alternate; from:1.25; to:1.10; loop: true"
+		animation__color = "property: material.color; dur: 1000; easing: easeInOutSine; dir: alternate; from:#DDBB00; to:#333333; loop: true">
+	</a-sphere>
+	
+	<a-cylinder
+		radius = "0.5" height = "1.5"
+		position = " 1 0.75 -3"
+		color = "#008800"
+		material = "src: #grid; repeat: 16 8; transparent: true; opacity: 1.0;"
+		shadow = "cast: false; receive: true"
+		animation__opacity = "property: material.opacity; dur: 3000; easing: linear; dir: normal; from:1; to:0; loop: true">
+	</a-cylinder>
+
+	<a-cone
+		radius-bottom = "1" radius-top = "0" height = "2"
+		position = "3 1 -4"
+		color = "#4444CC"
+		material = "src: #grid; repeat: 16 8;"
+		shadow = "cast: true; receive: true"
+		animation__position = "property: position; dur: 3000; easing: easeInOutSine; dir: alternate; from:3 1 -4; to: 3 2 -4; loop: true">
+	</a-cone>
+	
+	<a-torus 
+		radius="0.5" radius-tubular="0.1"
+		position = "2 3 -4"
+		rotation = "30 -20 0"
+		color="#8800FF"
+		material = "src: #grid; repeat: 16 8;"
+		shadow = "cast: true; receive: true"
+		animation__rotate = "property: rotation; dur: 8000; easing: linear; dir: normal; from:30 -20 0; to: 30 -20 360; loop: true">
+	</a-torus>
+	
+	<!--
+	
+	<a-box
+		width = "2" height = "1" depth = "1"
+		position = "-1.00 0.50 -3.00"
+		rotation = "0 45 0"  
+		color = "#4CC3D9" 
+		material = "src: #grid"
+		shadow = "cast: true; receive: true"
+		animation__rotate = "property: rotation; dur: 4000; easing: linear; dir: alternate; from:0 0 45; to: 0 360 0; loop: true"
+		animation__color = "property: material.color; dur: 2000; easing: linear; dir: alternate; from:#FF0000; to:#008800; loop: true">
+	</a-box>
+	
+	<a-sphere
+		radius = "1.25"
+		position = "0.00 1.25 -5.00"
+		color = "#EF2D5E"
+		material = "src: #grid; repeat: 32 16;"
+		shadow = "cast: true; receive: true">
+	</a-sphere>
+	
+	<a-cylinder
+		radius = "0.5" height = "1.5"
+		position = " 1.00 0.75 -3.00"
+		color = "#FFC65D" 
+		material = "src: #grid; repeat: 16 8;"
+		shadow = "cast: true; receive: true">
+	</a-cylinder>
+
+	<a-cone
+		radius-bottom = "1" radius-top = "0" height = "2"
+		position = "3 1 -4"
+		color = "#8800FF"
+		material = "src: #grid; repeat: 16 8;">
+	</a-cone>
+	-->
+	
+</a-scene>
+</body>
+</html>

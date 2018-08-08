@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Virtual Arcade</title>
+	<script src="js/phaser.min.js"></script>
+	<script src="js/aframe-master.min.js"></script>
+	<script src="js/aframe-extras.min.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent('joystick', {
+	
+	schema:
+	{
+		triggerPressed: {type: 'boolean', default: false},
+		triggerDown: {type: 'boolean', default: false},
+		triggerReleased: {type: 'boolean', default: false},
+		trackpadAxis0: {type: 'float', default: 0},
+		trackpadAxis1: {type: 'float', default: 0},
+		trackpadAngle: {type: 'float', default: 0},
+		trackpadTouch: {type: 'boolean', default: false}, // not implemented in this version of aframe
+		trackpadButtonPressed: {type: 'boolean', default: false},
+		trackpadButtonDown: {type: 'boolean', default: false},
+		trackpadButtonReleased: {type: 'boolean', default: false},
+	},
+	
+	init: function()
+	{
+		let self = this;
+		
+		this.el.addEventListener("triggerdown", function(event)
+		{
+			self.data.triggerDown = true;
+		});
+		
+		this.el.addEventListener("triggerup", function(event)
+		{
+			self.data.triggerDown = false;
+		});
+		
+		this.el.addEventListener("trackpaddown", function(event)
+		{
+			self.data.trackpadButtonDown = true;
+		});
+		
+		this.el.addEventListener("trackpadup", function(event)
+		{
+			self.data.trackpadButtonDown = false;
+		});
+		
+		this.el.addEventListener("axismove", function(event)
+		{
+			self.data.trackpadAxis0 = event.detail.axis[0];
+			self.data.trackpadAxis1 = event.detail.axis[1];
+			self.data.trackpadAngle = Math.atan2( event.detail.axis[1], event.detail.axis[0] ) * 180 / Math.PI;
+		});
+		
+	},
+	
+	tick: function (time, timeDelta) 
+	{
+		
+	}
+	
+});
+</script>
+
+<a-scene antialias="true">
+	
+	<a-assets>
+		<img id="grid" src="images/border.png" crossorigin="anonymous" />
+		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		<a-asset-item id="arcade-cabinet" src="models/arcade-cabinet/arcade-cabinet.gltf"></a-asset-item>
+		<img id="marquee" src="images/starfish-collector/marquee.png" crossorigin="anonymous" />
+		<canvas id="mycanvas" crossorigin="anonymous"></canvas>
+		<div id="gameArea"></div>
+	</a-assets>
+
+	<a-entity wasd-controls="acceleration: 15;" position="0 0 0">
+		<a-entity camera position="0 1.5 1" look-controls></a-entity>
+		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FFCCCC"></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #CCCCFF"></a-entity>
+	</a-entity>
+	
+	<a-sky 
+		rotation = "0 0 0"
+		color = "#FFFFFF"
+		material = "src: #sky">
+	</a-sky>
+	
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#888888" 
+		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
+		shadow="cast: false; receive: true">
+	</a-plane>
+	
+	<a-entity position="0 0 -1.5">
+		<a-plane
+			id = "canvas-display"
+			width = "0.9" height = "0.615"
+			position="0 1.395 -0.120"
+			material = "shader: flat; src: #mycanvas;">
+		</a-plane>
+		<a-entity id='cabinet' gltf-model="#arcade-cabinet" scale="0.5 0.5 0.5"></a-entity>
+		<a-plane
+			width = "0.990" height = "0.280"
+			position="0 2.080 0.240"
+			material="src: #marquee;">
+		</a-plane>
+
+	</a-entity>
+	
+	<a-entity
+		id = "joystick"
+		oculus-go-controls
+		joystick>
+	</a-entity>
+	
+</a-scene>
+
+<script>
+var codeObject =
+{
+	// declare variables here if needed
+	turtle: null,
+	starfish: null, 
+	score: null, 
+	scoreText: null, 
+	
+	// load assets here
+    preload: function () 
+	{
+		// asset ID/Key, path to asset
+        game.load.image("water", "images/starfish-collector/water.png");
+	    game.load.image("turtle", "images/starfish-collector/turtle.png");
+	    game.load.image("starfish", "images/starfish-collector/starfish.png");
+    },
+
+    create: function () 
+	{
+		game.add.sprite(0,0,"water");
+		
+		turtle = game.add.sprite(400,300, "turtle");
+		turtle.anchor.setTo(0.5, 0.5);
+		game.physics.enable(turtle, Phaser.Physics.ARCADE);
+		
+		starfish = game.add.sprite(600,500, "starfish");
+		starfish.anchor.setTo(0.5, 0.5);
+		game.physics.enable(starfish, Phaser.Physics.ARCADE);
+		
+		score = 0;
+		var scoreTextStyle = {font: "64px Arial", fontWeight: "bold", fill:"#44F", stroke:"#000", strokeThickness: "8"};
+		scoreText = game.add.text(10,10, "Starfish Collected: " + score.toString(), scoreTextStyle);
+		
+		cursors = game.input.keyboard.createCursorKeys();
+		
+		// hook phaser into A-Frame by setting id of phaser-generated canvas
+		document.querySelector("#gameArea").childNodes[0].id = "game-canvas";
+		document.querySelector("#canvas-display").setAttribute("material", "src", "#game-canvas");
+	},
+	
+	update: function()
+	{
+		let speed = 4;
+		let dx = 0;
+		let dy = 0;
+		
+		// isDown : continuous
+		if ( cursors.left.isDown ) 
+			dx -= speed;
+		if ( cursors.right.isDown ) 
+			dx += speed;
+		if ( cursors.up.isDown ) 
+			dy -= speed;
+		if ( cursors.down.isDown ) 
+			dy += speed;
+			
+		// hook into aframe joystick controls
+		let joystick = document.querySelector("#joystick").components["joystick"]
+		if ( joystick )
+		{
+			dx += speed * joystick.data.trackpadAxis0;
+			dy += speed * joystick.data.trackpadAxis1;
+		}
+		
+		turtle.x += dx;
+		turtle.y += dy;
+		
+		if (dx != 0 || dy != 0)
+			turtle.rotation = Math.atan2(dy, dx);
+		
+		game.physics.arcade.overlap(turtle, starfish, this.starfishHandler);
+	},
+	
+	starfishHandler : function(turtleObject, starfishObject)
+	{
+		starfishObject.x = 700 * Math.random() + 50;
+		starfishObject.y = 450 * Math.random() + 100;
+		score++;
+		scoreText.setText( "Starfish Collected: " + score.toString() );
+	}
+
+}
+
+// constructor adds an HTML canvas element to the specified DIV element
+var game = new Phaser.Game(800, 600, Phaser.AUTO, "gameArea", codeObject);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+Note: using a very specific build of aframe-master.min.js (from May 2):
+
+    - after Oculus Go support was added
+	- before canvas texture update was broken (sometime between May 2 and Aug 1)
+	
+Also: wasd-controls component has been modified to _only_ use WASD (not arrow keys) for movement.

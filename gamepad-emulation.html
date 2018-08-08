@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Gamepad Emulation</title>
+	<script src="js/aframe-master.min.js"></script>
+	<script src="js/aframe-extras.min.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent('joystick', {
+	
+	schema:
+	{
+		triggerPressed: {type: 'boolean', default: false},
+		triggerDown: {type: 'boolean', default: false},
+		triggerReleased: {type: 'boolean', default: false},
+		trackpadAxis0: {type: 'float', default: 0},
+		trackpadAxis1: {type: 'float', default: 0},
+		trackpadAngle: {type: 'float', default: 0},
+		trackpadTouch: {type: 'boolean', default: false}, // not implemented in this version of aframe
+		trackpadButtonPressed: {type: 'boolean', default: false},
+		trackpadButtonDown: {type: 'boolean', default: false},
+		trackpadButtonReleased: {type: 'boolean', default: false},
+	},
+	
+	init: function()
+	{
+		this.textArea = document.querySelector('#textArea');
+		this.textArea.setAttribute("text", "value", "Joystick Initialized.");
+		this.tickNumber = 0;
+		
+		this.triggerState = "--";
+		this.trackpadState = "--";
+		this.buttonState = "--";
+		this.touchState = "--";
+		this.axisState  = "--";
+		
+		let self = this;
+		
+		// eventually, event listeners will set a queue variable, will be processed in tick 
+		
+		this.el.addEventListener("triggerdown", function(event)
+		{
+			self.data.triggerDown = true;
+		});
+		
+		this.el.addEventListener("triggerup", function(event)
+		{
+			self.data.triggerDown = false;
+		});
+		
+		this.el.addEventListener("trackpaddown", function(event)
+		{
+			self.data.trackpadButtonDown = true;
+		});
+		
+		this.el.addEventListener("trackpadup", function(event)
+		{
+			self.data.trackpadButtonDown = false;
+		});
+		
+		this.el.addEventListener("axismove", function(event)
+		{
+			// self.axisState = JSON.stringify(event.detail);
+			self.data.trackpadAxis0 = event.detail.axis[0];
+			self.data.trackpadAxis1 = event.detail.axis[1];
+			self.data.trackpadAngle = Math.atan2( event.detail.axis[1], event.detail.axis[0] ) * 180 / Math.PI;
+		});
+		
+	},
+	
+	tick: function (time, timeDelta) 
+	{
+		/*
+		// let a = this.el.components["tracked-controls"].axis[0];
+		this.tickNumber += 1;
+		this.textArea.setAttribute("text", "value", this.tickNumber);
+		let p = this.el.getAttribute("position");
+		let x = p.x;
+		let y = p.y;
+		let z = p.z;
+		let isPressed = (z != 0 || x != 0);
+		let angle = Math.atan2(z, x) * 180 / Math.PI;
+		this.textArea.setAttribute("text", "value", isPressed + " " + Math.round(angle) + " degrees5" 
+			+ "\n Trigger state: " + this.triggerState
+			+ "\n Trackpad state: " + this.trackpadState
+			+ "\n Button state: " + this.buttonState
+			+ "\n Touch state: " + this.touchState	
+			+ "\n Axis state: " + this.axisState	
+			);
+		// this.el.setAttribute("position", {x:0, y:0, z:0});
+		//this.el.object3D.position.set(0,0,0);
+		*/
+	}
+	
+	
+	
+});
+
+AFRAME.registerComponent('joystick-display', {
+
+	tick: function()
+	{
+		let data = document.querySelector("#joystick").components["joystick"].data;
+		this.el.setAttribute("text", "value", "Controller data: "
+			+ "\n Trigger down: " + data.triggerDown
+			+ "\n Trackpad down: " + data.trackpadButtonDown
+			+ "\n Axis 0: " + data.trackpadAxis0.toFixed(2)
+			+ "\n Axis 1: " + data.trackpadAxis1.toFixed(2)
+			+ "\n Axis Angle: " + data.trackpadAngle.toFixed(0) );
+	},
+	
+});
+
+</script>
+
+<a-scene antialias="true">
+	
+	<a-assets>
+		<img id="grid" src="images/border.png" crossorigin="anonymous" />
+		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+	</a-assets>
+
+	
+		<a-entity camera position="0 1.5 1" look-controls></a-entity>
+		
+		<a-entity id="leftHand" laser-controls="hand: left" raycaster="" line="color: #FF00FF"></a-entity>
+		<a-entity id="rightHand" laser-controls="hand: right" raycaster="" line="color: #FFFF00"></a-entity>
+	
+	
+	<a-sky 
+		rotation = "0 0 0"
+		color = "#FFFFFF"
+		material = "src: #sky">
+	</a-sky>
+	
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#888888" 
+		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
+		shadow="cast: false; receive: true">
+	</a-plane>
+	
+	<a-entity
+		id = "joystick"
+		oculus-go-controls
+		joystick>
+	</a-entity>
+	
+	<a-entity
+		id="textArea"
+		position="0 1.5 -2"
+		geometry="primitive: plane;  width: 3; height:auto"
+		material="color: #444444; transparent: true; opacity: 0.80;"
+		text="anchor: center; baseline: center; wrapCount: 40;
+				transparent: true; opacity: 0.90; color: #8888FF;
+				value: a \n b \n c \n d"
+		joystick-display>
+	</a-entity>
+	
+</a-scene>
+</body>
+</html>

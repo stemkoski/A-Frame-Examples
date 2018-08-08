@@ -1,0 +1,1 @@
+Arcade Cabinet model created by Lee Stemkoski in Blender, exported to OBJ format, then converted to GLTF format via http://52.4.31.236/convertmodel.html .
