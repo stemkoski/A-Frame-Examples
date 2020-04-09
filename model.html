@@ -3,8 +3,7 @@
 
 <head>
 	<title>A-Frame - Models</title>
-	<script src="js/aframe-master.min.js"></script>
-	<script src="js/aframe-extras.min.js"></script>
+	<script src="js/aframe-master.1.0.4.min.js"></script>
 </head>
 
 <body>
@@ -12,8 +11,8 @@
 <a-scene antialias="true">
 	
 	<a-assets>
-		<img id="grid" src="images/border.png" crossorigin="anonymous" />
-		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		<img id="grid" src="images/border.png" />
+		<img id="sky" src="images/stars.jpg"  />
 		<a-asset-item id="tree" src="models/tree/tree.gltf"></a-asset-item>
 	</a-assets>
 	
@@ -33,7 +32,6 @@
 	</a-plane>
 	
 	<a-entity 
-		id='cabinet'
 		position = "0 0 -5"
 		rotation = "0 -45 0"
 		gltf-model="#tree" 

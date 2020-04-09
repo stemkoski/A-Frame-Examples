@@ -2,6 +2,7 @@
 <head>
 <title>A-Frame Examples</title>
 <link rel=stylesheet href="css/index.css"/>
+
 </head>
 <body>
 
@@ -11,109 +12,142 @@
 <hr/>
 The goal of this collection is to provide a set of basic and instructive examples that introduce the various features of the <a class="toc" href="https://aframe.io/">A-Frame</a> library.
 <br/><br/>
-Examples can be viewed using a normal web browser. Some examples contain interactive virtual reality components that require a VR headset (such as the Oculus Go, which was used to test these examples).
+Examples can be viewed using a normal web browser. Some examples contain interactive virtual reality components that require a VR headset (such as the Oculus Go or Oculus Quest, which were used to test different sets of examples).
 <br/><br/>
 Source code hosted at <a class="toc" href="https://github.com/stemkoski/A-Frame-Examples">GitHub</a>.
 <hr/>
 
 <br/>
 
-<div class="fancy">
-<a href="Hello-WebVR.html">
-<img src="images/demo/Hello-WebVR.png" class="superImage" />
-<br/>Basic Scene</a>
-<p class ="superText">A basic scene containing a variety of colorful shapes: box, sphere, cylinder, cone, torus, and trefoil torus knot.
-</p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="Hello-WebVR.html">
+<img src="images/demo/Hello-WebVR.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="Hello-WebVR.html">Basic Scene</a></td></tr>
+<tr><td class="demo-text">
+	A basic scene containing a variety of colorful shapes: box, sphere, cylinder, cone, torus, and trefoil torus knot.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="image-texture-grid.html" target="_blank">
-<img src="images/demo/image-texture-grid.png" class="superImage" />
-<br/>Image Textures (Grid)</a>
-<p class ="superText"> The basic scene with a sky-sphere image added, and using square grid image textures on all the geometric objects. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="image-texture-grid.html">
+<img src="images/demo/image-texture-grid.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="image-texture-grid.html">Image Textures (Grid)</a></td></tr>
+<tr><td class="demo-text">
+	The basic scene with a sky-sphere image added, and using square grid image textures on all the geometric objects.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="image-texture.html" target="_blank">
-<img src="images/demo/image-texture.png" class="superImage" />
-<br/>Image Texture</a>
-<p class ="superText"> Applying image textures to geometric objects.  </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="image-texture.html">
+<img src="images/demo/image-texture.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="image-texture.html">Image Texture</a></td></tr>
+<tr><td class="demo-text">
+	Applying image textures to geometric objects.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="text-2D.html" target="_blank">
-<img src="images/demo/text-2D.png" class="superImage" />
-<br/>Text (2D)</a>
-<p class ="superText"> Displaying text on a 2D plane. Uses component with tick function to continuously update text. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="environment.html">
+<img src="images/demo/environment.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="environment.html">Environment Component</a></td></tr>
+<tr><td class="demo-text">
+	Using the <a href="https://github.com/supermedium/aframe-environment-component">environment component</a> to automatically generate a background.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="text-3D.html" target="_blank">
-<img src="images/demo/text-3D.png" class="superImage" />
-<br/>Text (3D)</a>
-<p class ="superText"> Displaying text as a 3D geometric object (with thickness). Uses component to update text once per second. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="text-2D.html">
+<img src="images/demo/text-2D.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="text-2D.html">Text (2D)</a></td></tr>
+<tr><td class="demo-text">
+	Displaying text on a 2D plane with a text-area entity. 
+	Uses component with tick function to continuously update text.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="animation.html" target="_blank">
-<img src="images/demo/animation.png" class="superImage" />
-<br/>Animation</a>
-<p class ="superText"> Animations added to geometric objects from the basic scene example. Animated properties include position, rotation, scale, color, and opacity. Contains examples with simultaneous animations (sphere changes radius and color) and sequential animations (box changes scale, then opacity) using the timeline component. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="text-3D.html">
+<img src="images/demo/text-3D.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="text-3D.html">Text (3D)</a></td></tr>
+<tr><td class="demo-text">
+	Displaying text as a 3D geometric object (with thickness), using the <a href="https://github.com/supermedium/superframe/tree/master/components/text-geometry">text geometry component</a>. Example updates text once per second.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="model.html" target="_blank">
-<img src="images/demo/model.png" class="superImage" />
-<br/>Model</a>
-<p class ="superText"> A scene containing a model of a tree. Model uses GLTF file format. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="keyboard.html">
+<img src="images/demo/keyboard.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="keyboard.html">Keyboard Component</a></td></tr>
+<tr><td class="demo-text">
+	Using the <a href="https://github.com/supermedium/aframe-super-keyboard">keyboard component</a>. Enter the name of a color and press enter to change the color of the sphere.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="video-texture.html" target="_blank">
-<img src="images/demo/video-texture.png" class="superImage" />
-<br/>Video Texture</a>
-<p class ="superText"> A video is used as the texture of a plane. <br/>With a VR headset, pointing at and clicking on video activates pause and play functionality. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="animation.html">
+<img src="images/demo/animation.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="animation.html">Animation</a></td></tr>
+<tr><td class="demo-text">
+	<a href="https://aframe.io/docs/1.0.0/components/animation.html">Animations</a> added to geometric objects from the basic scene example. Animated properties include position, rotation, scale, color, and opacity. Contains examples with simultaneous animations (sphere changes radius and color) and sequential animations (box changes scale, then opacity) using the <a href="https://github.com/supermedium/superframe/tree/master/components/animation-timeline">timeline component</a>.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="canvas-texture.html" target="_blank">
-<img src="images/demo/canvas-texture.png" class="superImage" />
-<br/>Canvas Texture</a>
-<p class ="superText"> An HTML canvas element is used as the texture of a plane. The canvas is updated (redrawn) in the tick function of a component, created an animated effect. </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="model.html">
+<img src="images/demo/model.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="model.html">Model</a></td></tr>
+<tr><td class="demo-text">
+	A scene containing a model of a tree. Model uses GLTF file format.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="laser-controls.html" target="_blank">
-<img src="images/demo/laser-controls.png" class="superImage" />
-<br/>Laser Controls</a>
-<p class ="superText"> Requires VR headset. Can point a laser at a cube; cube changes color when pointed at, when clicked on, and when no longer pointed at. (Corresponds to mouseenter, mousedown, mouseleave events.) ALSO.... </p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="video-texture.html">
+<img src="images/demo/video-texture.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="video-texture.html">Video Texture</a></td></tr>
+<tr><td class="demo-text">
+	A video is used as the texture of a plane. <br/>With a VR headset, pointing at and clicking on video activates pause and play functionality.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="gamepad-emulation.html" target="_blank">
-<img src="images/demo/gamepad-emulation.png" class="superImage" />
-<br/>Gamepad Emulation</a>
-<p class ="superText"> Requires Oculus Go headset. The trackpad and trigger on the Oculus controller are used to simulate an analog joystick and button of a standard gamepad controller. Controller state data is stored in a component, and displayed on a text element.</p>
-</div>
+<table class="demo-table">
+<tr><td rowspan="2"><a href="canvas-texture.html">
+<img src="images/demo/canvas-texture.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="canvas-texture.html">Canvas Texture</a></td></tr>
+<tr><td class="demo-text">
+	An HTML canvas element is used as the texture of a plane. The canvas is updated (redrawn) in the tick function of a component, created an animated effect.
+</td></tr>
+</table>
 
-<div class="fancy">
-<a href="virtual-arcade.html" target="_blank">
-<img src="images/demo/virtual-arcade.png" class="superImage" />
-<br/>Virtual Arcade</a>
-<p class ="superText"> Builds upon the previous examples. A hidden canvas contains a game (Starfish Collector) created using the <a class="toc" href="http://phaser.io/">Phaser</a> game framework. The game is used as a canvas texture in the A-Frame scene, positioned directly in front of a model of an arcade cabinet. 
+<table class="demo-table">
+<tr><td rowspan="2"><a href="laser-controls.html">
+<img src="images/demo/laser-controls.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="laser-controls.html">Laser Controls</a></td></tr>
+<tr><td class="demo-text">
+	Requires VR headset (only tested with Oculus Go). Can point a laser at a cube; cube changes color when pointed at, when clicked on, and when no longer pointed at. (Corresponds to mouseenter, mousedown, mouseleave events.)
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="gamepad-emulation.html">
+<img src="images/demo/gamepad-emulation.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="gamepad-emulation.html">Gamepad Emulation (Oculus Go)</a></td></tr>
+<tr><td class="demo-text">
+	Requires Oculus Go headset. The trackpad and trigger on the Oculus Go controller are used to simulate an analog joystick and button of a standard gamepad controller. Controller state data is stored in a component, and displayed on a text element.
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="virtual-arcade.html">
+<img src="images/demo/virtual-arcade.png" class="demo-image"/></a></td>
+<td class="demo-title"><a href="virtual-arcade.html">Virtual Arcade</a></td></tr>
+<tr><td class="demo-text">
+	Builds upon the previous examples. A hidden canvas contains a game (Starfish Collector) created using the <a class="toc" href="http://phaser.io/">Phaser</a> game framework. The game is used as a canvas texture in the A-Frame scene, positioned directly in front of a model of an arcade cabinet. 
 <br/>If using a regular computer, the keyboard can be used: W/A/S/D to move the camera, Arrow Keys to control the game. 
-<br/>If using the Oculus Go, the trackpad on the controller can be used to control the game. </p>
-</div>
+<br/>If using the Oculus Go, the trackpad on the controller can be used to control the game.
+</td></tr>
+</table>
 
-<br/><br/><br/><br/><br/><br/>
-<!--
-<div class="fancy">
-<a href="zzzz.html" target="_blank">
-<img src="images/demo/zzzz.png" class="superImage" />
-<br/>zzzz</a>
-<p class ="superText"> ... </p>
-</div>
--->
 
 </body>
 </html>

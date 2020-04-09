@@ -3,7 +3,7 @@
 
 <head>
 	<title>A-Frame - 3D Text</title>
-	<script src="js/aframe-master.min.js"></script>
+	<script src="js/aframe-master.1.0.4.min.js"></script>
 	<script src="js/aframe-text-geometry-component.min.js"></script>
 </head>
 
@@ -15,26 +15,32 @@ AFRAME.registerComponent('updater', {
 	
 	init: function()
 	{
-		this.num = 0;
-		this.target = document.querySelector('#textArea');
+		// apply material to this.el.object3d
 	},
-	
+
 	tick: function (time, timeDelta) 
 	{
-		this.num += 1;
 		let t = Math.round(time/1000);
-		this.target.setAttribute("text-geometry", "value", "Seconds: " + t)
+		let newText = "Seconds: " + t;
+		let currentText = this.el.getAttribute("text-geometry")["value"];
+
+		// only update if newText is different than current text displayed.
+		if (newText != currentText)
+		{
+			this.el.setAttribute("text-geometry", "value", newText)
+		}
 	}
 	
 });
 
 </script>
 
-<a-scene antialias="true">
+<a-scene>
 	
 	<a-assets>
-		<img id="grid" src="images/border.png" crossorigin="anonymous" />
-		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
+		<img id="grid" src="images/border.png" />
+		<img id="sky" src="images/stars.jpg"  />
+		<img id="hexagons" src="images/hexagons.png" />
 		<a-asset-item id="customFont" src="fonts/helvetiker_regular.typeface.json"></a-asset-item>
 	</a-assets>
 
@@ -53,18 +59,26 @@ AFRAME.registerComponent('updater', {
 		shadow="cast: false; receive: true">
 	</a-plane>
 	
+	<-- 
+		uses the text-geometry component:
+	    https://github.com/supermedium/superframe/tree/master/components/text-geometry 
+	    see also:
+	    https://threejs.org/docs/#api/en/geometries/TextGeometry
+	    height: depth of text
+	-->
 	<a-entity 
 		id="textArea"
 		position="-1.5 2 -3" 
 		text-geometry="font: #customFont;  
 			size: 0.5; 
-			height: 0.01;
+			height: 0.1;
+			bevelEnabled: true;
+			bevelSize: 0.02;
+			bevelThickness: 0.02;
 			value: Seconds: ?"
-		material="color: #AAAAFF;">
+		material="color: #AAAAFF; src: #hexagons; repeat: 20 20;"
+		updater>
 	</a-entity>
-
-	<!-- adding the updater last so it can get references to other entities -->
-	<a-entity updater></a-entity>
 	
 </a-scene>
 </body>

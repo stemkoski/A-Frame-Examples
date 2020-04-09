@@ -3,8 +3,7 @@
 
 <head>
 	<title>A-Frame - Canvas Texture</title>
-	<script src="js/aframe-master.min.js"></script>
-	<script src="js/aframe-extras.min.js"></script>
+	<script src="js/aframe-master.1.0.4.min.js"></script>
 </head>
 
 <body>
@@ -17,8 +16,6 @@ AFRAME.registerComponent('draw-canvas', {
 	{
 		this.canvas = document.querySelector("#mycanvas");
 
-		this.canvas.width = 800;
-		this.canvas.height = 600;
 		this.context = this.canvas.getContext('2d');
 		
 		this.x = 200;
@@ -32,30 +29,38 @@ AFRAME.registerComponent('draw-canvas', {
 		this.x += this.dx;
 		this.y += this.dy;
 		
-		if (this.x > 750 || this.x < 0)
+		if (this.x > 512-50 || this.x < 0)
 			this.dx *= -1;
-		if (this.y > 550 || this.y < 0)
+		if (this.y > 512-50 || this.y < 0)
 			this.dy *= -1;
 	
 		// clear canvas
 		this.context.fillStyle = "#8888FF";
-		this.context.fillRect(0,0, 800,600);
+		this.context.fillRect(0,0, 512,512);
 		
 		// draw rectangle
 		this.context.fillStyle = "#FF0000";
 		this.context.fillRect( this.x, this.y, 50, 50 );
+
+		// thanks to https://github.com/aframevr/aframe/issues/3936 for the update fix
+		let material = this.el.getObject3D('mesh').material;
+	    if (!material.map)
+	     	return;
+        else
+        	material.map.needsUpdate = true;
 	}
 	
 });
 
 </script>
 
-<a-scene antialias="true">
+<a-scene>
 	
 	<a-assets timeout="10000">
-		<img id="grid" src="images/border.png" crossorigin="anonymous" />
-		<img id="sky" src="images/stars.jpg" crossorigin="anonymous" />
-		<canvas id="mycanvas" crossorigin="anonymous"></canvas>
+		<img id="grid" src="images/border.png" />
+		<img id="sky" src="images/stars.jpg" />
+		<!-- texture sizes should be powers of 2 -->
+		<canvas id="mycanvas" width=512 height=512></canvas>
 	</a-assets>
 	
 	<a-sky 
@@ -69,13 +74,12 @@ AFRAME.registerComponent('draw-canvas', {
 		position=" 0.00 0.00 0.00" 
 		rotation="-90 0 0" 
 		color="#888888" 
-		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
-		shadow="cast: false; receive: true">
+		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75">
 	</a-plane>
 	
 	<a-plane
 		id = "canvas-display"
-		width = "8" height = "6"
+		width = "6" height = "6"
 		position = "0 5 -10"
 		material = "shader: flat; src: #mycanvas;"
 		draw-canvas>		

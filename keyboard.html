@@ -26,24 +26,30 @@ AFRAME.registerComponent('keyboard-functions', {
 		this.el.addEventListener('superkeyboardinput', function(event)
 		{
 			let text = event.detail.value;
+			
 			// text also accessible via: self.el.getAttribute("super-keyboard")["value"]
+			
 			console.log("Input: " + text);
+			
 			// clear the input bar (since keyboard is not disappearing)
 			self.el.setAttribute( "super-keyboard", "value", "" );
 
+			// change the color of the sphere
+			document.getElementById("sphere").setAttribute("color", text);
 		});
 
 		// dismiss event triggered when user closes keyboard
-		this.el.addEventListener('superkeyboardismiss', function(event)
+		this.el.addEventListener('superkeyboarddismiss', function(event)
 		{
 			// repurpose close functionality to clear all input text without submitting
+			console.log("Input cleared.");
 			self.el.setAttribute( "super-keyboard", "value", "" );
 		});
 	},
 	
 	tick: function (time, timeDelta) 
 	{
-		// force keyboard to remain visible even after input or dismiss
+		// force keyboard to remain visible even after input or dismiss events triggered
 		if ( !this.el.object3D.visible )
 			this.el.object3D.visible = true;
 	}
@@ -69,7 +75,9 @@ AFRAME.registerComponent('keyboard-functions', {
     -->
 
     <a-entity id="keyboard" super-keyboard="hand: #mouseCursor; imagePath: images/;" keyboard-functions
-    position="0 1.076 -0.5" rotation="-30 0 0"></a-entity>
+    position="0 1.25 -0.5" rotation="-30 0 0"></a-entity>
+
+    <a-sphere id="sphere" radius="2" position="0 2 -8" color="gray"></a-sphere>
 
 </a-scene>
 
