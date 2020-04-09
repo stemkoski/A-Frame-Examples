@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Keyboard component</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/aframe-super-keyboard.min.js"></script>
+</head>
+
+<body>
+
+<script>
+
+AFRAME.registerComponent('keyboard-functions', {
+	
+	init: function()
+	{
+		// for referencing issues
+		let self = this;
+
+		// set up event listeners
+
+		// input event triggered when user presses enter
+		this.el.addEventListener('superkeyboardinput', function(event)
+		{
+			let text = event.detail.value;
+			// text also accessible via: self.el.getAttribute("super-keyboard")["value"]
+			console.log("Input: " + text);
+			// clear the input bar (since keyboard is not disappearing)
+			self.el.setAttribute( "super-keyboard", "value", "" );
+
+		});
+
+		// dismiss event triggered when user closes keyboard
+		this.el.addEventListener('superkeyboardismiss', function(event)
+		{
+			// repurpose close functionality to clear all input text without submitting
+			self.el.setAttribute( "super-keyboard", "value", "" );
+		});
+	},
+	
+	tick: function (time, timeDelta) 
+	{
+		// force keyboard to remain visible even after input or dismiss
+		if ( !this.el.object3D.visible )
+			this.el.object3D.visible = true;
+	}
+	
+});
+
+</script>
+
+<!-- https://github.com/supermedium/aframe-environment-component -->
+<a-scene environment="preset: default;">
+
+	<a-entity id="mouseCursor" cursor="rayOrigin: mouse"></a-entity>
+
+    <a-entity id="hand" laser-controls="hand: right">
+    	<a-sphere radius="0.03"></a-sphere>
+    </a-entity>
+
+    <!-- 
+    	Documentation at https://github.com/supermedium/aframe-super-keyboard
+    	Changeto "hand: #hand;" for VR. 
+		imagePath: directory that contains image sk-basic.png
+		multipleInputs: show keyboard stay open after input is entered? (default: false)
+    -->
+
+    <a-entity id="keyboard" super-keyboard="hand: #mouseCursor; imagePath: images/;" keyboard-functions
+    position="0 1.076 -0.5" rotation="-30 0 0"></a-entity>
+
+</a-scene>
+
+</body>
+</html>
