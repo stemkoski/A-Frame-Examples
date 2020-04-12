@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Extended WASD Controls</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+</head>
+
+<body>
+
+<script>
+
+</script>
+<!-- 
+	disable press "F" to enter fullscreen mode
+	disable WASD controls attached to default camera
+ -->
+<a-scene environment="preset: arches; shadow: true;" 
+	keyboard-shortcuts="enterVR: false;">
+	
+	<a-assets>
+		<img id="crate" src="images/crate.jpg" />
+	</a-assets>
+
+	<a-entity id="camera" camera 
+		position="0 1.6 0"
+		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true; maxLookAngle: 60;">
+	</a-entity>
+	  
+	<a-box position="0 0.5 -5" material="src:#crate;" shadow>
+	</a-box>
+
+</a-scene>
+
+</body>
+</html>
