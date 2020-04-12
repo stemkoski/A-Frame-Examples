@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Simple Keyboard Input</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script type="text/javascript" src="js/keyboard.js"></script>
+</head>
+
+<body>
+<script type="text/javascript">
+	
+AFRAME.registerComponent('keyboard-functions', {
+	
+	init: function()
+	{
+		this.keyboard = new Keyboard();
+		this.sphere = document.getElementById("sphere");
+	},
+	
+	tick: function (time, timeDelta) 
+	{
+		this.keyboard.update();
+
+		if (this.keyboard.isKeyDown("R"))
+			this.sphere.setAttribute("color", "red");
+		if (this.keyboard.isKeyDown("Y"))
+			this.sphere.setAttribute("color", "yellow");
+		if (this.keyboard.isKeyDown("G"))
+			this.sphere.setAttribute("color", "green");
+		if (this.keyboard.isKeyDown("B"))
+			this.sphere.setAttribute("color", "blue");
+
+		let speed = 0.01;
+		if (this.keyboard.isKeyPressed("I"))
+			this.sphere.object3D.position.z -= speed;
+		if (this.keyboard.isKeyPressed("J"))
+			this.sphere.object3D.position.x -= speed;
+		if (this.keyboard.isKeyPressed("K"))
+			this.sphere.object3D.position.z += speed;
+		if (this.keyboard.isKeyPressed("L"))
+			this.sphere.object3D.position.x += speed;
+	}
+});
+
+</script>
+
+<a-scene environment="preset: default;">
+	  
+	  <a-entity camera look-controls wasd-controls="acceleration:10" position="0 1.6 0"></a-entity>
+
+	  <a-sphere id="sphere" position="0 2 -5" color="gray"></a-sphere>
+
+	  <a-entity keyboard-functions></a-entity>
+
+</a-scene>
+
+</body>
+</html>
