@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Conway's Game of Life</title>
+</head>
+<body>
+
+<center>
+	<h1>Conway's Game of Life</h1>
+	<canvas id="canvas" width=512 height=512></canvas>
+</center>
+
+<script>
+
+	// "fixed" mod function
+	Number.prototype.mod = function(n) 
+	{
+		return ((this%n)+n)%n;
+	}
+
+	class Cell
+	{
+		constructor()
+		{
+			this.prevState = null; // used to detect change (need to draw) when rendering?
+			this.currentState = 0; // 0:dead, 1:alive
+			this.nextState = null; // used to avoid creating a second board
+			this.count = 0;        // # of live neighbors
+		}
+	}
+
+	let canvas = document.getElementById("canvas");
+	let context = canvas.getContext("2d");
+
+	let canvasSize = 512;
+	let boardSize = 128;
+	let cellSize = canvasSize / boardSize;
+
+	let DEAD = 0;
+	let ALIVE = 1;
+	let cellColors = { 0: "#DDDDDD", 1: "#0088FF" };
+
+	// used to identify cell neighbors
+	let offsets = [ {dx:1, dy:0}, {dx:1, dy:1}, {dx:0, dy:1}, {dx:-1, dy:1},
+					{dx:-1, dy:0}, {dx:-1, dy:-1}, {dx:0, dy:-1}, {dx:1, dy:-1} ];
+
+
+	// board: 2D array of cells
+	let board = null;
+
+	function initialize()
+	{
+		// initialize board
+		board = [];
+
+		for (let rowNumber = 0; rowNumber < boardSize; rowNumber++)
+		{
+			let row = [];
+			for (let columnNumber = 0; columnNumber < boardSize; columnNumber++)
+			{
+				let cell = new Cell();
+
+				if ( Math.random() < 0.30 )
+					cell.currentState = 1;
+				else
+					cell.currentState = 0;
+
+				row.push( cell );
+			}
+			board.push(row);
+		}
+
+		// initialize canvas
+		context.fillStyle = "#DDDDDD";
+		context.fillRect(0,0, 512,512);
+		
+		context.strokeStyle = "#BBBBBB";
+		context.lineWidth = 1;
+
+		// draw lines across rows
+		for (let rowNumber = 0; rowNumber < boardSize; rowNumber++)
+		{
+			context.beginPath();
+			context.moveTo(0, rowNumber * cellSize + 0.5);
+			context.lineTo(canvasSize, rowNumber * cellSize + 0.5);
+			context.closePath();
+			context.stroke();
+		}
+
+		// draw lines down columns
+		for (let columnNumber = 0; columnNumber < boardSize; columnNumber++)
+		{
+			context.beginPath();
+			context.moveTo(columnNumber * cellSize + 0.5, 0);
+			context.lineTo(columnNumber * cellSize + 0.5, canvasSize);
+			context.closePath();
+			context.stroke();
+		}
+
+	}
+
+	function update()
+	{
+		// count adjacent neighbors currentState
+		for (let rowNumber = 0; rowNumber < boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < boardSize; columnNumber++)
+			{
+				let cell = board[rowNumber][columnNumber];
+
+				// count neighbors whose current state is ALIVE
+				cell.count = 0;
+
+				for (let i=0; i<8; i++)
+				{
+					if (board[ (rowNumber + offsets[i].dy).mod(boardSize) ][ (columnNumber + offsets[i].dx).mod(boardSize) ].currentState == ALIVE)
+						cell.count += 1;
+				}
+
+				if (cell.count < 2) // death by underpopulation
+                    cell.nextState = 0;
+                else if (cell.count == 2) // stable
+                    cell.nextState = cell.currentState; 
+                else if (cell.count == 3) // birth
+                    cell.nextState = 1;
+                else // (cell.count > 3) // death by overpopulation
+                    cell.nextState = 0
+			}
+		}
+
+		// update current states to next states
+		for (let rowNumber = 0; rowNumber < boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < boardSize; columnNumber++)
+			{
+				let cell = board[rowNumber][columnNumber];
+				cell.prevState = cell.currentState;
+				cell.currentState = cell.nextState;
+				cell.nextState = null;
+			}
+		}
+	}
+
+	function render()
+	{
+		// console.log("Rendering...");
+
+		for (let rowNumber = 0; rowNumber < boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < boardSize; columnNumber++)
+			{
+				let cell = board[rowNumber][columnNumber];
+				let canvasY = rowNumber * cellSize;
+				let canvasX = columnNumber * cellSize;
+
+				// only redraw if cell has changed state
+				if (cell.currentState != cell.prevState)
+				{
+					context.fillStyle = cellColors[ cell.currentState ];
+					context.fillRect(canvasX+1, canvasY+1, cellSize-1, cellSize-1);
+				}
+			}
+		}
+	}
+
+	function gameloop()
+	{
+		update();
+		render();
+		setTimeout( gameloop, 50 );
+	}
+
+	// run the code
+	initialize();
+	gameloop();
+
+</script>
+
+</body>
+</html>

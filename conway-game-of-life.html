@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Conway's Game of Life</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+
+</head>
+
+<body>
+
+<script>
+
+// "fixed" mod function
+Number.prototype.mod = function(n) 
+{
+	return ((this%n)+n)%n;
+}
+
+class Cell
+{
+	constructor()
+	{
+		this.prevState = null; // used to detect change (need to draw) when rendering?
+		this.currentState = 0; // 0:dead, 1:alive
+		this.nextState = null; // used to avoid creating a second board
+		this.count = 0;        // # of live neighbors
+	}
+}
+
+
+AFRAME.registerComponent('draw-canvas', {
+
+	init: function()
+	{
+		this.canvas = document.querySelector("#mycanvas");
+		this.context = this.canvas.getContext("2d");
+		this.canvasSize = 512;
+		this.boardSize = 128;
+		this.cellSize = this.canvasSize / this.boardSize;
+		this.DEAD = 0;
+		this.ALIVE = 1;
+		this.cellColors = { 0: "#FFFF88", 1: "#0088FF" };
+
+		// used to identify cell neighbors
+		this.offsets = [ {dx:1, dy:0}, {dx:1, dy:1}, {dx:0, dy:1}, {dx:-1, dy:1},
+						{dx:-1, dy:0}, {dx:-1, dy:-1}, {dx:0, dy:-1}, {dx:1, dy:-1} ];
+		// board: 2D array of cells
+		this.board = [];
+
+		for (let rowNumber = 0; rowNumber < this.boardSize; rowNumber++)
+		{
+			let row = [];
+			for (let columnNumber = 0; columnNumber < this.boardSize; columnNumber++)
+			{
+				let cell = new Cell();
+
+				if ( Math.random() < 0.30 )
+					cell.currentState = 1;
+				else
+					cell.currentState = 0;
+
+				row.push( cell );
+			}
+			this.board.push(row);
+		}
+
+		// initialize canvas
+		this.context.fillStyle = this.cellColors[this.DEAD];
+		this.context.fillRect(0,0, this.canvasSize,this.canvasSize);		
+		this.context.strokeStyle = "#BBBBBB";
+		this.context.lineWidth = 1;
+
+		// draw lines across rows
+		for (let rowNumber = 0; rowNumber < this.boardSize; rowNumber++)
+		{
+			this.context.beginPath();
+			this.context.moveTo(0, rowNumber * this.cellSize + 0.5);
+			this.context.lineTo(this.canvasSize, rowNumber * this.cellSize + 0.5);
+			this.context.closePath();
+			this.context.stroke();
+		}
+
+		// draw lines down columns
+		for (let columnNumber = 0; columnNumber < this.boardSize; columnNumber++)
+		{
+			this.context.beginPath();
+			this.context.moveTo(columnNumber * this.cellSize + 0.5, 0);
+			this.context.lineTo(columnNumber * this.cellSize + 0.5, this.canvasSize);
+			this.context.closePath();
+			this.context.stroke();
+		}
+
+		this.tickNumber = 0;
+	},
+	
+	tick: function(t)
+	{
+		// slow down animation by updating every n-th tick...
+		this.tickNumber += 1;
+		if (this.tickNumber % 4 != 0)
+		 	return;
+
+		// update board state
+
+		// count adjacent neighbors currentState
+		for (let rowNumber = 0; rowNumber < this.boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < this.boardSize; columnNumber++)
+			{
+				let cell = this.board[rowNumber][columnNumber];
+
+				// count neighbors whose current state is ALIVE
+				cell.count = 0;
+
+				for (let i=0; i<8; i++)
+				{
+					if (this.board[ (rowNumber + this.offsets[i].dy).mod(this.boardSize) ][ (columnNumber + this.offsets[i].dx).mod(this.boardSize) ].currentState == this.ALIVE)
+						cell.count += 1;
+				}
+
+				if (cell.count < 2) // death by underpopulation
+                    cell.nextState = 0;
+                else if (cell.count == 2) // stable
+                    cell.nextState = cell.currentState; 
+                else if (cell.count == 3) // birth
+                    cell.nextState = 1;
+                else // (cell.count > 3) // death by overpopulation
+                    cell.nextState = 0
+			}
+		}
+
+		// update current states to next states
+		for (let rowNumber = 0; rowNumber < this.boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < this.boardSize; columnNumber++)
+			{
+				let cell = this.board[rowNumber][columnNumber];
+				cell.prevState = cell.currentState;
+				cell.currentState = cell.nextState;
+				cell.nextState = null;
+			}
+		}
+
+		// update canvas
+		for (let rowNumber = 0; rowNumber < this.boardSize; rowNumber++)
+		{
+			for (let columnNumber = 0; columnNumber < this.boardSize; columnNumber++)
+			{
+				let cell = this.board[rowNumber][columnNumber];
+				let canvasY = rowNumber * this.cellSize;
+				let canvasX = columnNumber * this.cellSize;
+
+				// only redraw if cell has changed state
+				if (cell.currentState != cell.prevState)
+				{
+					this.context.fillStyle = this.cellColors[ cell.currentState ];
+					this.context.fillRect(canvasX+1, canvasY+1, this.cellSize-1, this.cellSize-1);
+				}
+			}
+		}
+
+		// update material map from canvas
+		// thanks to https://github.com/aframevr/aframe/issues/3936 for the update fix
+		let material = this.el.getObject3D('mesh').material;
+	    if (!material.map)
+	     	return;
+        else
+        	material.map.needsUpdate = true;
+	}
+	
+});
+
+AFRAME.registerComponent('rotato', {
+
+	tick: function()
+	{
+		this.el.object3D.rotation.x += 0.005337;
+		this.el.object3D.rotation.y += 0.008049;	
+	}
+});
+
+</script>
+
+<!-- 
+	In a-scene, normally disable default lights with light="defaultLightsEnabled: false;" 
+	Alternative approach needed when using environment component. 
+-->
+<a-scene environment="preset: default; lighting: none;">
+	  
+	<a-assets>
+		<!-- texture sizes should be powers of 2 -->
+		<canvas id="mycanvas" width=512 height=512></canvas>
+	</a-assets>
+
+	
+	<a-entity light="type: ambient; color: #AAA"></a-entity>
+	<a-entity light="type: directional; color: #BBB; intensity: 0.5" position="-0.5 1 1"></a-entity>
+	
+	<a-torus position="0 2 -3" material = "src: #mycanvas;" draw-canvas rotato>
+
+	</a-torus>
+
+</a-scene>
+
+</body>
+</html>
