@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Spritesheet Animation</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/aframe-spritesheet-animation.js"></script>
+</head>
+
+<body>
+
+<script>
+
+AFRAME.registerComponent('rotato', {
+
+	tick: function()
+	{
+		this.el.object3D.rotation.y -= 0.028049;	
+	}
+
+});
+
+</script>
+
+<a-scene environment="preset: default;">
+
+	<a-assets>
+		<img id="sheet" src="images/spritesheet-test.png"/>		
+	</a-assets>
+
+	<a-box position="0 1 -3" material="shader: flat; src: #sheet; transparent: true; " spritesheet-animation="rows: 2; columns: 8; frameDuration: 0.08; loop: true;" rotato>
+	</a-box>
+
+</a-scene>
+
+</body>
+</html>
