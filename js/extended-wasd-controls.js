@@ -142,10 +142,14 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 			totalLookAngle += this.lookAngle;
 
-			// look towards horizon when both are pressed
-			if (this.isKeyPressed(this.data.lookUpKey)
-				&& this.isKeyPressed(this.data.lookDownKey))
-				this.lookAngle *= 0.90;
+			// look towards horizon when both are pressed;
+			//   does not work well when used with look-controls
+			if ( !this.data.coordinateLookControls )
+			{
+				if (this.isKeyPressed(this.data.lookUpKey)
+					&& this.isKeyPressed(this.data.lookDownKey))
+					this.lookAngle *= 0.90;
+			}
 
 			// enforce bounds on look angle (avoid upside-down perspective) 
 			if ( this.data.maxLookEnabled )
