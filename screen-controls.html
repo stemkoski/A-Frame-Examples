@@ -73,11 +73,7 @@
 	</div>
 
 	<!-- bottom-left -->
-	<div class="regionUI" style="bottom: 10px; left: 10px;">
-	</div>
-
-	<!-- bottom-right -->
-	<div class="regionUI brown" style="bottom: 10px; right: 10px;">
+	<div class="regionUI brown" style="bottom: 10px; left: 10px;">
 		<div class="buttonUI">
 	    	<img src="images/buttons/red/left.png" id="buttonMoveLeft" />
 	    </div>
@@ -88,6 +84,11 @@
 	    <div class="buttonUI">
 	    	<img src="images/buttons/red/right.png" id="buttonMoveRight" />
 	    </div>
+	</div>
+
+	<!-- bottom-right -->
+	<div class="regionUI" style="bottom: 10px; right: 10px;">
+		
 	</div>
 
 </div>
@@ -171,7 +172,7 @@
 <a-scene 
 	environment="preset: arches; shadow: true;" 
 	keyboard-shortcuts="enterVR: false;" 
-	vr-mode-ui="enabled: false;"
+	vr-mode-ui="enabled: true;"
 	screen-controls>
 	
 	<!-- adding in look controls -->
