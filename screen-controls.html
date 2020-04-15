@@ -133,7 +133,15 @@
 	{
 		init: function () 
 		{
-    		let component = document.getElementById("camera").components["extended-wasd-controls"];
+			let camera = document.getElementById("camera");
+			
+			if ( !camera )
+				return;
+
+    		let component = camera.components["extended-wasd-controls"];
+
+    		if ( !component )
+    			return;
 
 			addButtonEventListeners("buttonMoveForward",
 				function() { component.registerKeyDown( component.data.moveForwardKey ) },
@@ -175,13 +183,13 @@
 	vr-mode-ui="enabled: true;"
 	screen-controls>
 	
-	<!-- adding in look controls -->
+	<!-- adding in look controls 
 	<a-entity id="camera" camera look-controls
 		position="0 1.6 0"
 		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true;
 		maxLookEnabled: false; coordinateLookControls: true;">
 	</a-entity>
-	
+	-->
 
 </a-scene>
 
