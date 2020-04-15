@@ -133,15 +133,15 @@
 	{
 		init: function () 
 		{
-			let camera = document.getElementById("camera");
-			
-			if ( !camera )
-				return;
+			// allow scene to set default camera
 
+			// find the a-entity with the camera attribute
+			let camera = document.querySelector("[camera]");
+
+			camera.setAttribute('extended-wasd-controls', 
+				{ maxLookEnabled: false, coordinateLookControls: true });
+    		
     		let component = camera.components["extended-wasd-controls"];
-
-    		if ( !component )
-    			return;
 
 			addButtonEventListeners("buttonMoveForward",
 				function() { component.registerKeyDown( component.data.moveForwardKey ) },
