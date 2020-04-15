@@ -15,8 +15,7 @@
 
 </script>
 <!-- 
-	disable press "F" to enter fullscreen mode
-	disable WASD controls attached to default camera
+	disable press "F" to enter fullscreen mode.
  -->
 <a-scene environment="preset: arches; shadow: true;" 
 	keyboard-shortcuts="enterVR: false;">
@@ -25,7 +24,12 @@
 		<img id="crate" src="images/crate.jpg" />
 	</a-assets>
 
-	<a-entity id="camera" camera 
+	<!--
+		create a camera entity; not adding default wasd-controls.
+		if desired, look-controls component can be added to camera, provided that
+		   "coordinateLookControls: true;" included in extendend-wasd-controls 
+	-->
+	<a-entity id="camera" camera
 		position="0 1.6 0"
 		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true; maxLookAngle: 60;">
 	</a-entity>

@@ -23,10 +23,18 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		lookUpKey:       {type: 'string', default: "T"},
 		lookDownKey:     {type: 'string', default: "G"},
 		
-  		flyEnabled:  {type: 'boolean', default: 'true'},
-  		turnEnabled: {type: 'boolean', default: 'true'},
-  		lookEnabled: {type: 'boolean', default: 'true'},
+  		flyEnabled:  {type: 'boolean', default: true},
+  		turnEnabled: {type: 'boolean', default: true},
+  		lookEnabled: {type: 'boolean', default: true},
 
+  		// if you are attaching extended-wasd-controls to a camera
+  		//  that also has the look-controls component,
+  		/// set this to true so that the rotations from each component are combined here
+  		coordinateLookControls: {type: 'boolean', default: false},
+
+  		// consider setting to maxLook to false when working with look controls;
+  		//   complicated to handle the combination accurately
+  		maxLookEnabled: {type: 'boolean', default: true},
   		maxLookAngle: {type: 'number', default: 60},
 
   		moveSpeed: {type: 'number', default: 1},  // A-Frame units/second
@@ -92,6 +100,12 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		// current rotation amounts
 		this.turnAngle = 0; // around global Y axis
 		this.lookAngle = 0; // around local X axis
+
+		this.lookControls = null;
+		if (this.data.coordinateLookControls)
+		{
+			this.lookControls = this.el.components["look-controls"];
+		}
 	},
 	
 
@@ -106,6 +120,42 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		let maxLookAngle = THREE.Math.degToRad(this.data.maxLookAngle);
 		
 		// rotations
+		
+		// reset values
+		this.upVector.set(0,1,0);
+		let totalTurnAngle = 0;
+		let totalLookAngle = 0;
+
+		if ( this.data.coordinateLookControls )
+		{
+			totalTurnAngle += this.lookControls.yawObject.rotation.y;
+			totalLookAngle += this.lookControls.pitchObject.rotation.x;
+		}
+
+		if ( this.data.lookEnabled )
+		{
+			if (this.isKeyPressed(this.data.lookUpKey))
+				this.lookAngle += lookAmount;
+
+			if (this.isKeyPressed(this.data.lookDownKey))
+				this.lookAngle -= lookAmount;
+
+			totalLookAngle += this.lookAngle;
+
+			// look towards horizon when both are pressed
+			if (this.isKeyPressed(this.data.lookUpKey)
+				&& this.isKeyPressed(this.data.lookDownKey))
+				this.lookAngle *= 0.90;
+
+			// enforce bounds on look angle (avoid upside-down perspective) 
+			if ( this.data.maxLookEnabled )
+			{
+				if (this.lookAngle > maxLookAngle)
+					this.lookAngle = maxLookAngle;
+				if (this.lookAngle < -maxLookAngle)
+					this.lookAngle = -maxLookAngle;
+			}
+		}
 
 		if (this.data.turnEnabled)
 		{
@@ -114,40 +164,24 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 			if (this.isKeyPressed(this.data.turnRightKey))
 				this.turnAngle -= turnAmount;
+
+			totalTurnAngle += this.turnAngle;
 		}
 
-		if (this.data.lookEnabled)
-		{
-			if (this.isKeyPressed(this.data.lookUpKey))
-				this.lookAngle += lookAmount;
+		this.el.object3D.rotation.set(totalLookAngle, 0, 0);
 
-			if (this.isKeyPressed(this.data.lookDownKey))
-				this.lookAngle -= lookAmount;
-
-			// look towards horizon when both are pressed
-			if (this.isKeyPressed(this.data.lookUpKey)
-				&& this.isKeyPressed(this.data.lookDownKey))
-				this.lookAngle *= 0.90;
-
-			// enforce bounds on look angle (avoid upside-down perspective)
-			if (this.lookAngle > maxLookAngle)
-				this.lookAngle = maxLookAngle;
-			if (this.lookAngle < -maxLookAngle)
-				this.lookAngle = -maxLookAngle;
-		}
-
-		this.upVector.set(0,1,0);
-		this.el.object3D.rotation.set(this.lookAngle, 0, 0);
-		this.el.object3D.rotateOnWorldAxis(this.upVector, this.turnAngle);
+		this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
 
 		// translations
 
-		let c = Math.cos(this.turnAngle);
-		let s = Math.sin(this.turnAngle);
+		let c = Math.cos(totalTurnAngle);
+		let s = Math.sin(totalTurnAngle);
 
 		this.forwardVector.set( -s, 0, -c ).multiplyScalar( moveAmount );
 		this.rightVector.set( c, 0, -s ).multiplyScalar( moveAmount );
 		this.upVector.set( 0, 1, 0 ).multiplyScalar( moveAmount );
+
+		// console.log("forward vec", this.forwardVector)
 
 		if (this.isKeyPressed(this.data.moveForwardKey))
 			this.el.object3D.position.add( this.forwardVector );

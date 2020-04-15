@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Screen Navigation</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+
+<style>
+
+.mainUI
+{
+	border: 0px solid pink; 
+	position: fixed; 
+	top: 0px;  
+	width:99%; 
+	height:99%; 
+	z-index: 1; 
+	pointer-events: none; /* allow click-through in transparent areas */
+}
+
+.regionUI
+{
+	border: 0px solid yellow;
+	position: absolute; 
+	display: flex;
+	flex-direction: row;
+	pointer-events: none;
+}
+
+.buttonUI
+{
+	border: 0px solid lime;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	pointer-events: auto;	
+	filter: drop-shadow(0px 0px 20px white);
+}
+
+.blue
+{
+	filter: hue-rotate(240deg) saturate(100%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+.brown
+{
+	filter: hue-rotate(24deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- note: by using red base images for buttons, can tint (HSV) using filter: hue-rotate(); etc. -->
+
+<div class="mainUI" id="uiDiv">
+
+	<!-- top-left -->
+	<div class="regionUI blue" style="top: 10px; left: 10px;">
+		<div class="buttonUI">
+	    	<img src="images/buttons/red/up.png" id="buttonMoveUp" /><br/>
+	    	<img src="images/buttons/red/down.png" id="buttonMoveDown" />
+	    </div>
+	</div>
+
+	<!-- top-right -->
+	<div class="regionUI" style="top: 10px; right: 10px;">
+	</div>
+
+	<!-- bottom-left -->
+	<div class="regionUI" style="bottom: 10px; left: 10px;">
+	</div>
+
+	<!-- bottom-right -->
+	<div class="regionUI brown" style="bottom: 10px; right: 10px;">
+		<div class="buttonUI">
+	    	<img src="images/buttons/red/left.png" id="buttonMoveLeft" />
+	    </div>
+    	<div class="buttonUI">
+	    	<img src="images/buttons/red/up.png" id="buttonMoveForward" /><br/>
+	    	<img src="images/buttons/red/down.png" id="buttonMoveBackward" />
+	    </div>
+	    <div class="buttonUI">
+	    	<img src="images/buttons/red/right.png" id="buttonMoveRight" />
+	    </div>
+	</div>
+
+</div>
+
+
+<script>
+
+	// add events for both touch and mouse controls
+	function addButtonEventListeners( elementID, startFunction, endFunction )
+	{
+		let element = document.getElementById( elementID );
+		element.addEventListener('touchstart', startFunction);
+		element.addEventListener('mousedown',  startFunction);
+		element.addEventListener('touchend',   endFunction);
+		element.addEventListener('mouseup',    endFunction);
+	}
+
+	// prevent right-click menus from appearing
+	document.addEventListener("contextmenu", event => event.preventDefault());
+
+	/*
+
+	// a fun addition for another time
+	function changeColor(id, colorName)
+	{
+		document.querySelector(id).setAttribute("material", "color", colorName);
+	}
+
+	addButtonEventListeners("buttonRed",
+		function() { changeColor("#box", "red") },
+		function() { changeColor("#box", "gray") }
+	);
+
+	*/
+
+	// need to run javascript code after a-scene entities and components are loaded
+	AFRAME.registerComponent('screen-controls', 
+	{
+		init: function () 
+		{
+    		let component = document.getElementById("camera").components["extended-wasd-controls"];
+
+			addButtonEventListeners("buttonMoveForward",
+				function() { component.registerKeyDown( component.data.moveForwardKey ) },
+				function() { component.registerKeyUp( component.data.moveForwardKey ) }
+			);
+			addButtonEventListeners("buttonMoveBackward",
+				function() { component.registerKeyDown( component.data.moveBackwardKey ) },
+				function() { component.registerKeyUp( component.data.moveBackwardKey ) }
+			);
+			addButtonEventListeners("buttonMoveLeft",
+				function() { component.registerKeyDown( component.data.moveLeftKey ) },
+				function() { component.registerKeyUp( component.data.moveLeftKey ) }
+			);
+			addButtonEventListeners("buttonMoveRight",
+				function() { component.registerKeyDown( component.data.moveRightKey ) },
+				function() { component.registerKeyUp( component.data.moveRightKey ) }
+			);
+			addButtonEventListeners("buttonMoveUp",
+				function() { component.registerKeyDown( component.data.moveUpKey ) },
+				function() { component.registerKeyUp( component.data.moveUpKey ) }
+			);
+			addButtonEventListeners("buttonMoveDown",
+				function() { component.registerKeyDown( component.data.moveDownKey ) },
+				function() { component.registerKeyUp( component.data.moveDownKey ) }
+			);
+  		}
+
+	});
+
+</script>
+
+<!-- 
+	disable press "F" to enter fullscreen mode
+	disable WASD controls attached to default camera
+ -->
+<a-scene 
+	environment="preset: arches; shadow: true;" 
+	keyboard-shortcuts="enterVR: false;" 
+	vr-mode-ui="enabled: false;"
+	screen-controls>
+	
+	<!-- adding in look controls -->
+	<a-entity id="camera" camera look-controls
+		position="0 1.6 0"
+		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true;
+		maxLookEnabled: false; coordinateLookControls: true;">
+	</a-entity>
+	
+
+</a-scene>
+
+</body>
+</html>
