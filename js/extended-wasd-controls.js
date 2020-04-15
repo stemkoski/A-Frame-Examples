@@ -4,7 +4,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 	{
 		/*
 			Default key assignments: WASDQERFTG. 
-			(Pronounced: "wahz-dee-kerf-tug")
+			(Pronounced: "wahz-dee-kerf-tig")
 
 			WASD: standard forward/left/backward/right movement
 			Mnemonics:
@@ -34,6 +34,33 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		lookSpeed: {type: 'number', default: 30}  // degrees/second
 	},
 
+	convertKeyName: function(keyName)
+	{
+		if (keyName == " ")
+			return "Space";
+		else if (keyName.length == 1)
+			return keyName.toUpperCase();
+		else
+			return keyName;
+	},
+
+	registerKeyDown: function(keyName)
+	{
+		// avoid adding duplicates of keys
+		if ( !this.keyPressedSet.has(keyName) )
+        	this.keyPressedSet.add(keyName);
+	},
+
+	registerKeyUp: function(keyName)
+	{
+       	this.keyPressedSet.delete(keyName);
+	},
+
+	isKeyPressed: function(keyName)
+	{
+       	return this.keyPressedSet.has(keyName);
+	},
+
 	init: function()
 	{
 		// register key down/up events 
@@ -42,31 +69,17 @@ AFRAME.registerComponent('extended-wasd-controls', {
 				
 		let self = this;
 		
-		let convertKeyName = function(keyName)
-		{
-			if (keyName == " ")
-				return "Space";
-			else if (keyName.length == 1)
-				return keyName.toUpperCase();
-			else
-				return keyName;
-		}
-
 		document.addEventListener( "keydown", 
 			function(eventData) 
 			{ 
-				let keyName = convertKeyName( eventData.key );
-				// avoid adding duplicates of keys
-				if ( !self.keyPressedSet.has(keyName) )
-            		self.keyPressedSet.add(keyName);
+				self.registerKeyDown( self.convertKeyName(eventData.key) );
 			}
 		);
 		
 		document.addEventListener( "keyup", 
 			function(eventData) 
 			{ 
-				let keyName = convertKeyName( eventData.key );
-				self.keyPressedSet.delete(keyName);
+				self.registerKeyUp( self.convertKeyName(eventData.key) );
 			} 
 		);
 
@@ -81,6 +94,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		this.lookAngle = 0; // around local X axis
 	},
 	
+
 	tick: function (time, timeDelta) 
 	{
 		// console.log( this.keyPressedSet );
@@ -95,24 +109,24 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 		if (this.data.turnEnabled)
 		{
-			if (this.keyPressedSet.has(this.data.turnLeftKey))
+			if (this.isKeyPressed(this.data.turnLeftKey))
 				this.turnAngle += turnAmount;
 
-			if (this.keyPressedSet.has(this.data.turnRightKey))
+			if (this.isKeyPressed(this.data.turnRightKey))
 				this.turnAngle -= turnAmount;
 		}
 
 		if (this.data.lookEnabled)
 		{
-			if (this.keyPressedSet.has(this.data.lookUpKey))
+			if (this.isKeyPressed(this.data.lookUpKey))
 				this.lookAngle += lookAmount;
 
-			if (this.keyPressedSet.has(this.data.lookDownKey))
+			if (this.isKeyPressed(this.data.lookDownKey))
 				this.lookAngle -= lookAmount;
 
 			// look towards horizon when both are pressed
-			if (this.keyPressedSet.has(this.data.lookUpKey)
-				&& this.keyPressedSet.has(this.data.lookDownKey))
+			if (this.isKeyPressed(this.data.lookUpKey)
+				&& this.isKeyPressed(this.data.lookDownKey))
 				this.lookAngle *= 0.90;
 
 			// enforce bounds on look angle (avoid upside-down perspective)
@@ -135,24 +149,24 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		this.rightVector.set( c, 0, -s ).multiplyScalar( moveAmount );
 		this.upVector.set( 0, 1, 0 ).multiplyScalar( moveAmount );
 
-		if (this.keyPressedSet.has(this.data.moveForwardKey))
+		if (this.isKeyPressed(this.data.moveForwardKey))
 			this.el.object3D.position.add( this.forwardVector );
 
-		if (this.keyPressedSet.has(this.data.moveLeftKey))
+		if (this.isKeyPressed(this.data.moveLeftKey))
 			this.el.object3D.position.sub( this.rightVector );
 
-		if (this.keyPressedSet.has(this.data.moveBackwardKey))
+		if (this.isKeyPressed(this.data.moveBackwardKey))
 			this.el.object3D.position.sub( this.forwardVector );
 
-		if (this.keyPressedSet.has(this.data.moveRightKey))
+		if (this.isKeyPressed(this.data.moveRightKey))
 			this.el.object3D.position.add( this.rightVector );
 
 		if (this.data.flyEnabled)
 		{
-			if (this.keyPressedSet.has(this.data.moveUpKey))
+			if (this.isKeyPressed(this.data.moveUpKey))
 				this.el.object3D.position.add( this.upVector );
 
-			if (this.keyPressedSet.has(this.data.moveDownKey))
+			if (this.isKeyPressed(this.data.moveDownKey))
 				this.el.object3D.position.sub( this.upVector );
 		}
 
