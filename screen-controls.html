@@ -152,21 +152,6 @@ body
 		);
 	}
 
-	/*
-
-	// a fun addition for another time
-	function changeColor(id, colorName)
-	{
-		document.querySelector(id).setAttribute("material", "color", colorName);
-	}
-
-	addButtonEventListeners("buttonRed",
-		function() { changeColor("#box", "red") },
-		function() { changeColor("#box", "gray") }
-	);
-
-	*/
-
 	// need to run javascript code after a-scene entities and components are loaded
 	AFRAME.registerComponent('screen-controls', 
 	{
@@ -197,6 +182,7 @@ body
 
   		tick: function(time, deltaTime)
   		{
+  			/*
   			if ( document.fullscreenEnabled )
 			{
 				// update button visibility
@@ -211,6 +197,7 @@ body
 					document.getElementById("buttonMinimize").style.display = "none";
 				}
 			}
+			*/
   		}
 	});
 
