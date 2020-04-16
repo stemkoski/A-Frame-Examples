@@ -123,6 +123,8 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		
 		// reset values
 		this.upVector.set(0,1,0);
+
+		
 		let totalTurnAngle = 0;
 		let totalLookAngle = 0;
 
@@ -131,7 +133,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 			totalTurnAngle += this.lookControls.yawObject.rotation.y;
 			totalLookAngle += this.lookControls.pitchObject.rotation.x;
 		}
-
+		
 		if ( this.data.lookEnabled )
 		{
 			if (this.isKeyPressed(this.data.lookUpKey))
@@ -159,6 +161,8 @@ AFRAME.registerComponent('extended-wasd-controls', {
 				if (this.lookAngle < -maxLookAngle)
 					this.lookAngle = -maxLookAngle;
 			}
+
+			this.el.object3D.rotation.set(totalLookAngle, 0, 0);
 		}
 
 		if (this.data.turnEnabled)
@@ -169,12 +173,12 @@ AFRAME.registerComponent('extended-wasd-controls', {
 			if (this.isKeyPressed(this.data.turnRightKey))
 				this.turnAngle -= turnAmount;
 
-			totalTurnAngle += this.turnAngle;
+			totalTurnAngle += this.turnAngle;	
+
+			this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
 		}
 
-		this.el.object3D.rotation.set(totalLookAngle, 0, 0);
 
-		this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
 
 		// translations
 

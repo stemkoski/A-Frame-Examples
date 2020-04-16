@@ -40,14 +40,14 @@
 	filter: drop-shadow(0px 0px 20px white);
 }
 
-.blue
+.skyColor
 {
 	filter: hue-rotate(240deg) saturate(100%) brightness(100%) drop-shadow(0px 0px 20px white);
 }
 
-.brown
+.baseColor
 {
-	filter: hue-rotate(24deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
+	filter: hue-rotate(0deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
 }
 
 </style>
@@ -61,7 +61,7 @@
 <div class="mainUI" id="uiDiv">
 
 	<!-- top-left -->
-	<div class="regionUI blue" style="top: 10px; left: 10px;">
+	<div class="regionUI skyColor" style="top: 10px; left: 10px;">
 		<div class="buttonUI">
 	    	<img src="images/buttons/red/up.png" id="buttonMoveUp" /><br/>
 	    	<img src="images/buttons/red/down.png" id="buttonMoveDown" />
@@ -73,7 +73,7 @@
 	</div>
 
 	<!-- bottom-left -->
-	<div class="regionUI brown" style="bottom: 10px; left: 10px;">
+	<div class="regionUI baseColor" style="bottom: 10px; left: 10px;">
 		<div class="buttonUI">
 	    	<img src="images/buttons/red/left.png" id="buttonMoveLeft" />
 	    </div>
@@ -138,8 +138,9 @@
 			// find the a-entity with the camera attribute
 			let camera = document.querySelector("[camera]");
 
+			// trying to get tablet magic window effect working
 			camera.setAttribute('extended-wasd-controls', 
-				{ maxLookEnabled: false, coordinateLookControls: true });
+				{ maxLookEnabled: false, coordinateLookControls: true, turnEnabled: false, lookEnabled: false });
     		
     		let component = camera.components["extended-wasd-controls"];
 
