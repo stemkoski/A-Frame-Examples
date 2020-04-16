@@ -28,8 +28,9 @@ AFRAME.registerComponent('extended-wasd-controls', {
   		lookEnabled: {type: 'boolean', default: true},
 
   		// if you are attaching extended-wasd-controls to a camera
-  		//  that also has the look-controls component,
-  		/// set this to true so that the rotations from each component are combined here
+  		//   that also has the look-controls component,
+  		//   set this to true to use look-controls from rotation to calculate forward/right vectors.
+  		// For responsive magic window effect on tablets, set turnEnabled/lookEnabled to false also.
   		coordinateLookControls: {type: 'boolean', default: false},
 
   		// consider setting to maxLook to false when working with look controls;
@@ -124,7 +125,6 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		// reset values
 		this.upVector.set(0,1,0);
 
-		
 		let totalTurnAngle = 0;
 		let totalLookAngle = 0;
 
@@ -177,8 +177,6 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 			this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
 		}
-
-
 
 		// translations
 

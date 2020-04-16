@@ -2,13 +2,19 @@
 <html>
 
 <head>
-	<title>A-Frame: Screen Navigation</title>
+	<title>v10</title>
 	<meta name="description" content="A-Frame Examples">
 	<script src="js/aframe-master.1.0.4.min.js"></script>
 	<script src="js/aframe-environment-component.min.js"></script>
 	<script src="js/extended-wasd-controls.js"></script>
 
 <style>
+
+body
+{
+	/* disable long press in iOS? */
+	-webkit-touch-callout: none;
+}
 
 .mainUI
 {
@@ -38,6 +44,8 @@
 	justify-content: center;
 	pointer-events: auto;	
 	filter: drop-shadow(0px 0px 20px white);
+	
+
 }
 
 .skyColor
@@ -47,7 +55,12 @@
 
 .baseColor
 {
-	filter: hue-rotate(0deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
+	filter: hue-rotate(24deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+.grayColor
+{
+	filter: hue-rotate(0deg) saturate(0%) brightness(100%) drop-shadow(0px 0px 20px white);
 }
 
 </style>
@@ -58,10 +71,10 @@
 
 <!-- note: by using red base images for buttons, can tint (HSV) using filter: hue-rotate(); etc. -->
 
-<div class="mainUI" id="uiDiv">
+<div class="mainUI" id="uiDiv" oncontextmenu="return false;">
 
 	<!-- top-left -->
-	<div class="regionUI skyColor" style="top: 10px; left: 10px;">
+	<div class="regionUI skyColor" style="top: 10px; left: 10px;" oncontextmenu="return false;">
 		<div class="buttonUI">
 	    	<img src="images/buttons/red/up.png" id="buttonMoveUp" /><br/>
 	    	<img src="images/buttons/red/down.png" id="buttonMoveDown" />
@@ -69,11 +82,19 @@
 	</div>
 
 	<!-- top-right -->
-	<div class="regionUI" style="top: 10px; right: 10px;">
+	<div class="regionUI grayColor" style="top: 10px; right: 10px;">
+		<div class="buttonUI">
+	    	<img src="images/buttons/red/maximize.png" id="buttonMaximize" />
+	    	<img src="images/buttons/red/minimize.png" id="buttonMinimize" />
+	    </div>
 	</div>
 
 	<!-- bottom-left -->
-	<div class="regionUI baseColor" style="bottom: 10px; left: 10px;">
+	<div class="regionUI" style="bottom: 10px; left: 10px;">
+	</div>
+
+	<!-- bottom-right -->
+	<div class="regionUI baseColor" style="bottom: 10px; right: 10px;">
 		<div class="buttonUI">
 	    	<img src="images/buttons/red/left.png" id="buttonMoveLeft" />
 	    </div>
@@ -86,32 +107,50 @@
 	    </div>
 	</div>
 
-	<!-- bottom-right -->
-	<div class="regionUI" style="bottom: 10px; right: 10px;">
-		
-	</div>
-
 </div>
-
 
 <script>
 
-	// add events for both touch and mouse controls
-	function addButtonEventListeners( elementID, startFunction, endFunction )
+	function haltEvent(event)
 	{
-		let element = document.getElementById( elementID );
+		event.preventDefault && event.preventDefault();
+		event.stopPropagation && event.stopPropagation();
+		event.cancelBubble = true;
+		event.returnValue = false;
+		return false;
+	}
+
+	// prevent right-click menus from appearing
+	document.addEventListener("contextmenu", haltEvent );
+	// more attempts to prevent right-click menus from appearing
+	document.addEventListener("touchmove", haltEvent );
+	document.addEventListener("touchcancel", haltEvent );
+	
+	// add events for both touch and mouse controls
+	function addButtonEventListeners( buttonElementID, startFunction, endFunction )
+	{
+		let element = document.getElementById( buttonElementID );
 		element.addEventListener('touchstart', startFunction);
 		element.addEventListener('mousedown',  startFunction);
 		element.addEventListener('touchend',   endFunction);
 		element.addEventListener('mouseup',    endFunction);
 	}
 
-	// prevent right-click menus from appearing
-	document.addEventListener("contextmenu", function(event) {
-		event.preventDefault();
-		event.stopPropagation();
-     	return false;
-	});
+	function associateMovementControls( buttonElementID, component, keyName )
+	{
+		addButtonEventListeners(buttonElementID,
+			function(event) 
+			{ 
+				component.registerKeyDown( keyName );
+				return haltEvent(event);
+			},
+			function(event) 
+			{ 
+				component.registerKeyUp( keyName );
+				return haltEvent(event);
+			}
+		);
+	}
 
 	/*
 
@@ -133,44 +172,90 @@
 	{
 		init: function () 
 		{
-			// allow scene to set default camera
+    		let component = document.getElementById("camera").components["extended-wasd-controls"];
 
-			// find the a-entity with the camera attribute
-			let camera = document.querySelector("[camera]");
+			associateMovementControls( "buttonMoveForward",  component, component.data.moveForwardKey );
+			associateMovementControls( "buttonMoveBackward", component, component.data.moveBackwardKey );
+			associateMovementControls( "buttonMoveLeft",     component, component.data.moveLeftKey );
+			associateMovementControls( "buttonMoveRight",    component, component.data.moveRightKey );
+			associateMovementControls( "buttonMoveUp",       component, component.data.moveUpKey );
+			associateMovementControls( "buttonMoveDown",     component, component.data.moveDownKey );
 
-			// trying to get tablet magic window effect working
-			camera.setAttribute('extended-wasd-controls', 
-				{ maxLookEnabled: false, coordinateLookControls: true, turnEnabled: false, lookEnabled: false });
-    		
-    		let component = camera.components["extended-wasd-controls"];
+			// TODO: full-screen support
+			// if ( document.fullscreenEnabled )
+			// {
+			//	addButtonEventListeners( "buttonMaximize", openFullscreen, function() {} );
+			//	addButtonEventListeners( "buttonMinimize", closeFullscreen, function() {} );
+			// }
+			// else
+			// {
+				// update button visibility
+				document.getElementById("buttonMaximize").style.display = "none"; //inline
+				document.getElementById("buttonMinimize").style.display = "none";
+			// }
+  		},
 
-			addButtonEventListeners("buttonMoveForward",
-				function() { component.registerKeyDown( component.data.moveForwardKey ) },
-				function() { component.registerKeyUp( component.data.moveForwardKey ) }
-			);
-			addButtonEventListeners("buttonMoveBackward",
-				function() { component.registerKeyDown( component.data.moveBackwardKey ) },
-				function() { component.registerKeyUp( component.data.moveBackwardKey ) }
-			);
-			addButtonEventListeners("buttonMoveLeft",
-				function() { component.registerKeyDown( component.data.moveLeftKey ) },
-				function() { component.registerKeyUp( component.data.moveLeftKey ) }
-			);
-			addButtonEventListeners("buttonMoveRight",
-				function() { component.registerKeyDown( component.data.moveRightKey ) },
-				function() { component.registerKeyUp( component.data.moveRightKey ) }
-			);
-			addButtonEventListeners("buttonMoveUp",
-				function() { component.registerKeyDown( component.data.moveUpKey ) },
-				function() { component.registerKeyUp( component.data.moveUpKey ) }
-			);
-			addButtonEventListeners("buttonMoveDown",
-				function() { component.registerKeyDown( component.data.moveDownKey ) },
-				function() { component.registerKeyUp( component.data.moveDownKey ) }
-			);
+  		tick: function(time, deltaTime)
+  		{
+  			if ( document.fullscreenEnabled )
+			{
+				// update button visibility
+				if ( isFullscreen() )
+				{
+					document.getElementById("buttonMaximize").style.display = "none";
+					document.getElementById("buttonMinimize").style.display = "inline";
+				}
+				else
+				{
+					document.getElementById("buttonMaximize").style.display = "inline";
+					document.getElementById("buttonMinimize").style.display = "none";
+				}
+			}
   		}
-
 	});
+
+	
+	function openFullscreen() 
+	{
+		let docElem = document.documentElement;
+		if (docElem.requestFullscreen)
+			docElem.requestFullscreen();
+		else if (docElem.mozRequestFullScreen)		// Firefox
+			docElem.mozRequestFullScreen();
+		else if (docElem.webkitRequestFullscreen)	// Chrome, Safari and Opera
+			docElem.webkitRequestFullscreen();
+		else if (docElem.msRequestFullscreen)		// IE/Edge
+			docElem.msRequestFullscreen();
+		// update button visibility
+		document.getElementById("buttonMaximize").style.display = "none";
+		document.getElementById("buttonMinimize").style.display = "inline";
+	}
+
+	function closeFullscreen() 
+	{
+		if ( !isFullscreen() )
+			return;
+
+		if (document.exitFullscreen)
+			document.exitFullscreen();
+		else if (document.mozCancelFullScreen)		// Firefox
+			document.mozCancelFullScreen();
+		else if (document.webkitExitFullscreen)		// Chrome, Safari and Opera
+			document.webkitExitFullscreen();
+		else if (document.msExitFullscreen)			// IE/Edge
+			document.msExitFullscreen();
+		// update button visibility
+		document.getElementById("buttonMaximize").style.display = "inline";
+		document.getElementById("buttonMinimize").style.display = "none";
+	}
+
+	function isFullscreen()
+	{
+		if (document.fullscreenElement)
+			return true;
+		else
+			return false;
+	}
 
 </script>
 
@@ -181,17 +266,16 @@
 <a-scene 
 	environment="preset: arches; shadow: true;" 
 	keyboard-shortcuts="enterVR: false;" 
-	vr-mode-ui="enabled: true;"
+	vr-mode-ui="enabled: false;"
 	screen-controls>
 	
-	<!-- adding in look controls 
+	<!-- adding in look controls -->
 	<a-entity id="camera" camera look-controls
 		position="0 1.6 0"
-		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true;
+		extended-wasd-controls="flyEnabled: true; turnEnabled: false; lookEnabled: false;
 		maxLookEnabled: false; coordinateLookControls: true;">
 	</a-entity>
-	-->
-
+	
 </a-scene>
 
 </body>
