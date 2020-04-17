@@ -1,0 +1,134 @@
+<html>
+<head>
+    <script src="js/aframe-master.1.0.4.min.js"></script>
+    <script src="js/aframe-environment-component.min.js"></script>
+    <script src="js/aframe-spe-particles-component.js"></script>
+    <script src="js/extended-wasd-controls.js"></script>
+</head>
+<body>
+
+<a-scene environment="preset: starry; fog: 0;" keyboard-shortcuts="enterVR: false;" >
+
+    <!-- adding in look controls -->
+    <a-entity id="camera" camera look-controls
+      position="0 1.6 0"
+      extended-wasd-controls="flyEnabled: true; turnEnabled: false; lookEnabled: false;
+      maxLookEnabled: false; coordinateLookControls: true;">
+    </a-entity>
+
+  <!-- water fountain -->
+    <a-cylinder position="-3 2 -4" radius="0.1" height="0.1" color="gray">
+        <a-entity
+            spe-particles="
+            texture: images/particles/snowflake.png; 
+            color: #0000FF, #00FFFF, #FFFFFF; 
+            opacity: 1, 1, 0;
+            size: 1, 1, 0;
+            velocity: 0 4 0; 
+            velocity-spread: 2 0 2; 
+            acceleration: 0 -6 0;
+            particle-count: 1000;">
+        </a-entity>
+    </a-cylinder>    
+
+    <!-- sparkle-ball -->
+    <a-sphere
+      radius = "0.1"
+      position = "-1 2 -4"
+      color = "#FF8800">
+      <a-entity 
+        spe-particles="
+          texture: images/particles/sparkle.png;
+          color: #FFFF00, #FF0000; 
+          size: 1, 0;
+          distribution: SPHERE;
+          radius: 0.001;
+          velocity: 0.2;
+          velocity-spread: 0.1; 
+          angle: 0, 6.28;
+          particle-count: 1000;
+          blending: additive;
+          maxAge: 3; ">
+      </a-entity> 
+      </a-sphere>
+
+    <!-- star fountain -->
+    <a-entity position="0 2 -4"
+      spe-particles="
+      texture: images/particles/star.png;
+      color: #FF0000, #FFFF00, #00FFFF, #FF00FF;
+      distribution: BOX;
+      opacity: 1,1,1,0;
+      velocity: 0 0.5 0;
+      velocity-spread: 0.2 0 0.2; 
+      blending: normal;
+      particle-count: 100;
+      angle: 0, 6.28;
+      maxAge: 3; ">
+    </a-entity> 
+
+    <!-- firework -- set active-multiplier to a large number
+     and also set duration < max-age for a single burst -->
+    <a-entity position="3 4 -8"
+        spe-particles="
+        texture: images/particles/sparkle.png;
+        color: yellow, red, cyan, black; 
+        distribution: sphere; 
+        randomize-velocity: true;
+        radius: 0.01; 
+        particle-count: 800; 
+        velocity: 1; 
+        velocity-spread: 0.5; 
+        drag: 1; 
+        max-age: 2;
+        blending: additive;
+        active-multiplier: 1000; 
+        size: 1, 1, 1, 0">
+    </a-entity>
+    
+    <!-- clouds -->
+    <a-entity position="-1.5 3.5 -4" spe-particles="
+        texture: images/particles/fog-256.png; 
+        position-spread: 1 0.2 0.5; 
+        velocity-spread: 0.1 0.05 0.1; 
+        particle-count: 200; 
+        max-age: 10; 
+        size: 6, 10; 
+        opacity: 0, 1, 0; 
+        angle: 0;
+        angle-spread: 6.28;
+        randomize-position: true;">
+    </a-entity>
+
+    <!-- color ball -->
+    <a-entity position="1 2 -4"
+        spe-particles="
+        texture: images/particles/circle.png; 
+        particle-count: 400; 
+        max-age: 3; 
+        distribution: sphere; 
+        radius: 0.2;
+        color: #FF0000, #0000FF; 
+        color-spread: 1 0 0, 0 0 1; 
+        size: 0, 1, 0">
+    </a-entity>
+
+    <!-- fire ball -->
+    <a-entity position="2 2 -4"
+        spe-particles="
+        texture: images/particles/snowflake.png; 
+        particle-count: 200; 
+        max-age: 3; 
+        blending: additive;
+        distribution: sphere; 
+        velocity: 0.04;
+        velocity-spread: 0.03;
+        radius: 0.01;
+        color: #FF4400, #FF1100, #FF0000, #880000;
+        opacity: 0.1;
+        size: 3, 3, 3, 0">
+    </a-entity>
+
+</a-scene>
+</body>
+</html>
