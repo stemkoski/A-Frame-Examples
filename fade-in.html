@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Environment component</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+
+<style>
+.mainUI
+{
+	border: 0px solid pink; 
+	position: fixed; 
+	top: 0px;  
+	width:100%; 
+	height:100%; 
+	z-index: 1; 
+	pointer-events: none; /* allow click-through in transparent areas */
+	display: flex;
+	align-items: center;
+  	justify-content: center;
+}
+
+.regionUI
+{
+	border: 0px solid yellow;
+	position: absolute; 
+	display: flex;
+	flex-direction: row;
+	pointer-events: none;
+}
+
+.buttonUI
+{
+	border: 0px solid lime;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	pointer-events: auto;	
+	filter: drop-shadow(0px 0px 20px white);
+}
+</style>
+</head>
+
+<body>
+
+<div class="mainUI" id="uiDiv" oncontextmenu="return false;">
+
+	<!-- centered -->
+	<div class="regionUI">
+		<div class="buttonUI">
+    	<img src="images/buttons/enter.png" id="buttonEnter" />
+		</div>
+	</div>
+
+</div>
+
+<script>
+
+// runs when user clicks button
+AFRAME.registerComponent('start', {
+
+	init: function()
+	{
+		// block pointer events until buttonEnter is clicked
+		let uiDiv = document.getElementById("uiDiv");
+		uiDiv.style["pointer-events"] = "auto";
+
+		// set up background blocker
+		uiDiv.style["background-color"] = "rgba(0, 0, 0, 0.75)";
+
+		// indicate clickable with hand cursor (desktop)
+		let buttonEnter = document.getElementById("buttonEnter");
+		buttonEnter.style.cursor = "pointer";
+
+		// fade-in functionality
+		let fadeIn = function()
+		{
+			// allow point events again
+			uiDiv.style["pointer-events"] = "none";
+
+			// sounds can only be triggered after a mouse interaction
+			let soundPlayer = document.querySelector("#ambientSound");
+			soundPlayer.components.sound.playSound();
+
+			// remove startButton
+			buttonEnter.parentNode.remove(buttonEnter);
+
+			// fade out uiDiv background
+			uiDiv.style["background-color"] = "rgba(0, 0, 0, 0.0)";
+    		uiDiv.style["transition"] = "background-color 1000ms linear";
+		}
+
+		// activate for desktop/touchscreen
+		buttonEnter.addEventListener('touchstart', fadeIn);
+		buttonEnter.addEventListener('mousedown',  fadeIn);
+	}
+
+});
+</script>
+
+
+<!-- https://github.com/supermedium/aframe-environment-component -->
+<a-scene environment="preset: default;" start>
+	  
+	<a-assets>
+    	<audio id="ambient" src="audio/ambient-wind.mp3" preload="auto"></audio>
+  	</a-assets>
+		
+	<a-entity id="ambientSound" sound="src: #ambient; loop: true;"></a-entity>
+
+</a-scene>
+
+</body>
+</html>
