@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Images/Sprites</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/aframe-look-at-component.js"></script>
+	<script src="js/aframe-render-order-component.min.js"></script>
+	<script src="js/aframe-spritesheet-animation.js"></script>
+
+</head>
+
+<body>
+
+<!-- 
+	 render-order helps to sort transparent objects by distance,
+	 but may not work for every viewing angle...
+	 (particularly oblique angles to camera when objects are positioned closely)
+ -->
+<a-scene renderer="sortObjects: true;" environment="preset: default;">
+	 
+	<a-assets>
+    	<img id="crate" src="images/crate.jpg">
+    	<img id="box-label" src="images/box-label.png">
+    	<img id="glow" src="images/glow.png">
+    	<img id="grid" src="images/color-grid.png">
+    	<img id="sheet" src="images/spritesheet-fireball.png"/>
+    	<img id="sheet2" src="images/fireball-up.png"/>
+  	</a-assets>
+
+	<a-camera id="player" position="0 1.6 0" wasd-controls look-controls></a-camera>
+
+  	
+  	<a-box position="3 0.5 -5" material="src: #crate"></a-box>
+	<a-image width="0.5" height="0.5" position="3 2 -5" look-at="#player" src="#box-label"></a-image>
+  	<a-entity line="start: 3 1.75 -5; end: 3 0.5 -5; color: red"></a-entity>
+
+	<a-image width="1" height="1" position="1 2 -5" look-at="#player" src="#sheet2" material="blending: normal; transparent: true; alphaTest: 0.01;" spritesheet-animation="rows: 1; columns: 8; frameDuration: 0.06; loop: true;"></a-image>
+
+	<!-- simulated glow on a sphere. -->
+	<a-entity id="glowSphere" position="-3 1.6 -5">
+		<a-sphere radius="0.5" material="src: #grid; emissive: red; emissive-intensity: 0.5;"></a-sphere>
+		<a-image width="2" height="2" src="#glow" look-at="#player" color="red" material="transparent: true; opacity: 1.0; alphaTest: 0.01;"></a-image>
+	</a-entity>
+
+	<!-- simulated glow on a sphere + animated pulse effect -->
+	<a-entity id="glowPulse" position="-1 1.6 -5"
+		animation__spin="property: rotation; from: 0 0 0; to: 0 360 0; dur: 4000; loop: true; easing: linear;">
+		<a-sphere radius="0.5" material="src: #grid; emissive: yellow; emissive-intensity: 0.5;"
+		animation__pulse="property: material.emissiveIntensity; from: 0.5; to: 0.0; dur: 1000; loop: true; dir: alternate; easing: linear;"></a-sphere>
+		<a-image width="2" height="2" src="#glow" look-at="#player" color="yellow" material="transparent: true; opacity: 1.0; alphaTest: 0.01;"
+		animation__pulse="property: material.opacity; from: 1.0; to: 0.0; dur: 1000; loop: true; dir: alternate; easing: linear;"></a-image>
+	</a-entity>
+	
+</a-scene>
+
+</body>
+</html>
