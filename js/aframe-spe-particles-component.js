@@ -1087,7 +1087,7 @@ SPE.ShaderAttribute.prototype.resetUpdateRange = function() {
 
 SPE.ShaderAttribute.prototype.resetDynamic = function() {
 	'use strict';
-	this.bufferAttribute.dynamic = this.dynamicBuffer;
+	this.bufferAttribute.usage = this.dynamicBuffer; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
 };
 
 /**
@@ -1111,7 +1111,7 @@ SPE.ShaderAttribute.prototype.forceUpdateAll = function() {
 	this.bufferAttribute.array = this.typedArray.array;
 	this.bufferAttribute.updateRange.offset = 0;
 	this.bufferAttribute.updateRange.count = -1;
-	this.bufferAttribute.dynamic = false;
+	this.bufferAttribute.dynamic = false; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
 	this.bufferAttribute.needsUpdate = true;
 };
 
@@ -1180,7 +1180,7 @@ SPE.ShaderAttribute.prototype._createBufferAttribute = function( size ) {
 	}
 
 	this.bufferAttribute = new THREE.BufferAttribute( this.typedArray.array, this.componentSize );
-	this.bufferAttribute.dynamic = this.dynamicBuffer;
+	this.bufferAttribute.usage = this.dynamicBuffer; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
 };
 
 /**
@@ -2629,7 +2629,7 @@ SPE.Group.prototype._applyAttributesToGeometry = function() {
 
             // // Add the attribute to the geometry if it doesn't already exist.
             else {
-                geometry.addAttribute( attr, attribute.bufferAttribute );
+                geometry.setAttribute( attr, attribute.bufferAttribute ); // LJS: stop A-Frame warnings "addAttribute()" -> "setAttribute()"
             }
 
             // Mark the attribute as needing an update the next time a frame is rendered.
