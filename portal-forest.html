@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Link component</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/link-controls.js"></script>
+</head>
+
+<body>
+
+<!-- cursor activated from mouse position; only intersects objects with "link" component added (the <a-link> tag) -->
+<!-- environments featured: default, forest, egypt, goldmine, arches, japan, volcano -->
+
+<a-scene environment="preset: forest;" cursor="rayOrigin: mouse;" raycaster="far: 100; objects: [link];">
+	  
+	<a-assets>
+        <img id="previewDefault"  src="images/spherical/default.jpg">
+        <img id="previewVolcano"  src="images/spherical/volcano.jpg">
+        <img id="previewEgypt"    src="images/spherical/egypt.jpg">
+        <img id="previewForest"   src="images/spherical/forest.jpg">
+        <img id="previewArches"   src="images/spherical/arches.jpg">
+        <img id="previewJapan"    src="images/spherical/japan.jpg">
+	</a-assets>
+
+<!-- note: raycast issue (link still active) after walking through portal -->
+
+<a-sphere id="origin" radius="0.25" position="0 0 0" color="white"></a-sphere>
+
+<a-link	position="-4 1.6 -4" rotation="0 40 0"
+	href="portal-volcano.html" title="Volcano" image="#previewVolcano"></a-link>
+
+<a-link position="-2 1.6 -5" rotation="0 20 0"
+	href="portal-egypt.html" title="Egypt" image="#previewEgypt"></a-link>
+
+<a-link position="0 1.6 -6" 
+	href="portal-default.html" title="Default" image="#previewDefault"></a-link>
+
+<a-link position="2 1.6 -5" rotation="0 -20 0"
+	href="portal-arches.html" title="Arches" image="#previewArches"></a-link>
+
+<a-link position="4 1.6 -4" rotation="0 -40 0"
+	href="portal-japan.html" title="Japan" image="#previewJapan"></a-link>
+
+</a-scene>
+
+</body>
+</html>
