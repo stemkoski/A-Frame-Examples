@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Parameterized Path Following</title>
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+	<script src="js/parser.js"></script>
+	<script src="js/aframe-parametric-tube.js"></script>
+	<script src="js/aframe-parametric-path-follow.js"></script>
+</head>
+
+<body>
+
+<a-scene environment="preset: default; fog: 0;" keyboard-shortcuts="enterVR: false;">
+	
+	<a-assets>
+		<a-asset-item id="jet" src="models/jet/jet.gltf"></a-asset-item>
+	</a-assets>
+
+	<a-entity camera wasd-controls look-controls position="0 3 0"></a-entity>
+	
+	<a-entity position="0 0 -4">
+
+		<!-- Note: for model to appear to follow tube path,
+			 make sure they have the same parametric functions set! -->
+		<a-entity parametric-tube="
+			xFunction: 2*cos(t); 
+			yFunction: 0.5*cos(3*t) + 2; 
+			zFunction: 2*sin(t); 
+			tMin: 0; 
+			tMax: 6.283; 
+			tubeSegments: 200;
+			radius: 0.02;
+			tubeColor: orange;">
+		</a-entity>
+
+		<a-entity
+			id="jetModel"
+			scale="0.1 0.1 0.1"
+			gltf-model="#jet"
+			parametric-path-follow="
+			xFunction: 2*cos(t); 
+			yFunction: 0.5*cos(3*t) + 2; 
+			zFunction: 2*sin(t); 
+			tMin: 0; 
+			tMax: 6.283; 
+			duration: 4;
+			loop: true; 
+			">
+		</a-entity>
+
+	</a-entity>
+
+</a-scene>
+</body>
+</html>
