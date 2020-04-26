@@ -4,41 +4,79 @@
 <head>
 	<title>A-Frame - Models</title>
 	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/animation-mixer.js"></script>
 </head>
 
 <body>
-
-<a-scene antialias="true">
+<a-scene environment="preset: default; fog: 0; playArea: 1.0; groundYScale: 5.00; groundTexture: walkernoise; groundColor: #002200; groundColor2: #003300">
 	
 	<a-assets>
-		<img id="grid" src="images/border.png" />
-		<img id="sky" src="images/stars.jpg"  />
-		<a-asset-item id="tree" src="models/tree/tree.gltf"></a-asset-item>
+		<!-- all model files from Poly by Google 
+			 (with texture modifications to reduce file size and increase brightness) -->
+		<a-asset-item id="pine" src="models/trees/PineTree.gltf"></a-asset-item>
+		<a-asset-item id="ash" src="models/trees/AshTree.gltf"></a-asset-item>
+		<a-asset-item id="elm" src="models/trees/ElmTree.gltf"></a-asset-item>
+		<a-asset-item id="oak" src="models/trees/OakTree.gltf"></a-asset-item>
+		<a-asset-item id="sycamore" src="models/trees/SycamoreTree.gltf"></a-asset-item>
+		<a-asset-item id="shrub" src="models/Shrub.gltf"></a-asset-item>
+		<a-asset-item id="parrot" src="models/Parrot.glb"></a-asset-item>
 	</a-assets>
 	
-	<a-sky 
-		rotation = "0 0 0"
-		color = "#FFFFFF"
-		material = "src: #sky">
-	</a-sky>
-	
-	<a-plane
-		width="100" height="100"
-		position=" 0.00 0.00 0.00" 
-		rotation="-90 0 0" 
-		color="#888888" 
-		material="src: #grid; repeat:100 100; transparent: true; opacity: 0.75"
-		shadow="cast: false; receive: true">
-	</a-plane>
-	
-	<a-entity 
-		position = "0 0 -5"
-		rotation = "0 -45 0"
-		gltf-model="#tree" 
-		scale="0.25 0.25 0.25"
-		color="#FFFFFF"
-		shadow="cast: true; receive: true;">
+	<a-entity gltf-model="#ash" 
+		position = "-12 0 -15"
+		rotation="0 0 0"
+		scale="0.4 0.5 0.5">
 	</a-entity>
+
+	<a-entity gltf-model="#sycamore" 
+		position = "-5 0 -15"
+		rotation="0 0 0"
+		scale="0.4 0.5 0.5">
+	</a-entity>
+
+	<a-entity gltf-model="#pine" 
+		position = "0 0 -15"
+		rotation="0 30 0"
+		scale="0.5 0.5 0.5">
+	</a-entity>
+
+	<a-entity gltf-model="#oak" 
+		position = "6 0 -15"
+		rotation="0 30 0"
+		scale="0.5 0.5 0.5">
+	</a-entity>
+	
+	<a-entity gltf-model="#elm" 
+		position = "12 0 -15"
+		rotation="0 30 0"
+		scale="0.4 0.4 0.4">
+	</a-entity>
+
+	<a-entity gltf-model="#shrub"
+		position = "1 0 -10" rotation="0 0 0" scale="0.30 0.30 0.30">
+	</a-entity>
+	<a-entity gltf-model="#shrub"
+		position = "0 0 -10" rotation="0 60 0" scale="0.31 0.35 0.29">
+	</a-entity>
+	<a-entity gltf-model="#shrub"
+		position = "-1 0 -10" rotation="0 180 0" scale="0.27 0.28 0.31">
+	</a-entity>
+
+	<a-entity gltf-model="#parrot" position="0 2 -2" rotation="0 90 0" scale="0.01 0.01 0.01" animation-mixer="loop: repeat"></a-entity>
+
+
+	<a-sphere radius="0.1"></a-sphere>
+
+	<!-- Alter scale/rotation to create appearance of multiple distinct tree models:
+	<a-entity gltf-model="#pine" 
+		position = "3 0 -15"
+		rotation="0 180 0"
+		scale="0.75 0.35 0.55">
+	</a-entity>
+	-->
+
+	
 	
 </a-scene>
 </body>
