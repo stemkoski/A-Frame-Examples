@@ -1,20 +1,6 @@
 /* 
 	Note: this component requires mathematical parser library from:
 	https://github.com/silentmatt/expr-eval
-
-	// Parse slash-delimited string to an array 
-  // (e.g., `foo="myProperty: a/b"` to `['a', 'b']`).
-  myProperty: {
-    default: [],
-    parse: function (value) {
-      return value.split('/');
-    }
-  }
-
-  vec3array
-  3 1 4, 2 3 5, 3 3 7, 2 4 8;
-	split by ',' then by ' ' into THREE.Vector3 objects...
-
 */
 AFRAME.registerComponent('curve', {
     schema: 
