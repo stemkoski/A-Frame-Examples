@@ -7,8 +7,9 @@
 	<script src="js/aframe-environment-component.min.js"></script>
 	<script src="js/extended-wasd-controls.js"></script>
 	<script src="js/parser.js"></script>
-	<script src="js/aframe-parametric-tube.js"></script>
-	<script src="js/aframe-parametric-path-follow.js"></script>
+	<script src="js/aframe-curve-component.js"></script>
+	<script src="js/aframe-tube-geometry.js"></script>
+	<script src="js/aframe-curve-follow.js"></script>
 </head>
 
 <body>
@@ -21,34 +22,25 @@
 
 	<a-entity camera wasd-controls look-controls position="0 3 0"></a-entity>
 	
+	<a-entity id="path"
+		curve="type: parametric;
+			   xyzFunctions: 2*cos(t), 0.5*cos(3*t) + 2, 2*sin(t); 
+			   tRange: 0, 6.283;">
+	</a-entity>
+
 	<a-entity position="0 0 -4">
 
-		<!-- Note: for model to appear to follow tube path,
-			 make sure they have the same parametric functions set! -->
-		<a-entity parametric-tube="
-			xFunction: 2*cos(t); 
-			yFunction: 0.5*cos(3*t) + 2; 
-			zFunction: 2*sin(t); 
-			tMin: 0; 
-			tMax: 6.283; 
-			tubeSegments: 200;
-			radius: 0.02;
-			tubeColor: orange;">
+		<a-entity 
+			tube-geometry="curveData: #path; 
+						   tubeSegments: 200; radius: 0.02; tubeColor: yellow;">
 		</a-entity>
 
-		<a-entity
+		<a-entity 
 			id="jetModel"
 			scale="0.1 0.1 0.1"
 			gltf-model="#jet"
-			parametric-path-follow="
-			xFunction: 2*cos(t); 
-			yFunction: 0.5*cos(3*t) + 2; 
-			zFunction: 2*sin(t); 
-			tMin: 0; 
-			tMax: 6.283; 
-			duration: 4;
-			loop: true; 
-			">
+			curve-follow="curveData: #path; 
+						  duration: 4; loop: true;">
 		</a-entity>
 
 	</a-entity>
