@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>A-Frame: Extended WASD Controls</title>
+	<title>VR Art Gallery</title>
 	<meta name="description" content="A-Frame Examples">
 	<script src="js/aframe-master.1.0.4.min.js"></script>
 	<script src="js/aframe-environment-component.min.js"></script>
@@ -56,16 +56,17 @@ AFRAME.registerComponent("boundary",
 		<a-asset-item id="table" src="models/table.glb"></a-asset-item>
 		<a-asset-item id="picture" src="models/picture.glb"></a-asset-item>
 		<a-asset-item id="pagoda" src="models/pagoda.glb"></a-asset-item>
-		<video id="video" loop="true" src="video/sintel.mp4"></video>
+		<!-- <video id="video" loop="true" src="video/sintel.mp4"></video> -->
 	</a-assets>
 
 	<!--
 		create a camera entity
-	-->
+	
 	<a-entity id="camera" camera
 		position="0 1.6 0"
-		xextended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true; maxLookAngle: 60;" look-controls wasd-controls="acceleration: 4;" boundary>
+		look-controls wasd-controls="acceleration: 4;" boundary>
 	</a-entity>
+	-->
 	
 	<!-- floor -->  
 	<a-box width="6.5" depth="6.5" height="0.1" position="0 0 0" material="src:#wood;"></a-box>
