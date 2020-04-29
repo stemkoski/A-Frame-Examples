@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - Compass Path Following</title>
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+	<script src="js/aframe-compass-curve.js"></script>
+	<script src="js/aframe-tube-geometry.js"></script>
+	<script src="js/aframe-curve-follow.js"></script>
+</head>
+
+<body>
+
+<a-scene environment="preset: default; fog: 0; playArea: 1.0; groundYScale: 4.00; groundTexture: walkernoise; groundColor: #002200; groundColor2: #003300" keyboard-shortcuts="enterVR: false;">
+	
+	<a-assets>
+		<a-asset-item id="car" src="models/vehicles/truck.glb"></a-asset-item>
+	</a-assets>
+
+	<!-- <a-entity camera wasd-controls look-controls position="0 0.5 0"></a-entity> -->
+	
+	<a-entity id="path"
+		compass-curve="directions: N,N,N,N,NE,E,E,E,E,E,E,ES,S,SW,W,WS,S,S,SE,E,ES,S,SW,W,W,W,W,W,W,WN,N,N,N,N;">
+	</a-entity>
+
+	<a-entity position="0 0.1 -5">
+
+		<a-entity 
+			tube-geometry="curveData: #path; type: compass-curve;
+						   tubeSegments: 200; radius: 0.2; tubeColor: #442211;"
+			scale="1 0.1 1"
+			shadow>
+		</a-entity>
+
+		<a-entity id="followGroup"
+				  curve-follow="curveData: #path; type: compass-curve;
+						  		duration: 240; loop: true;">
+
+			<a-entity id="carModel" 
+					  scale="0.0005 0.0005 0.0005"
+					  position="0 0.016 0"
+					  rotation="0 90 0"
+					  gltf-model="#car"
+					  shadow>
+			</a-entity>
+
+			<a-entity rotation="0 180 0">
+				<!-- insert camera here! -->
+				<a-entity camera look-controls position="-0.024 0.09 -0.02"></a-entity> 
+			</a-entity>
+
+		</a-entity>
+
+	</a-entity>
+
+
+</a-scene>
+</body>
+</html>

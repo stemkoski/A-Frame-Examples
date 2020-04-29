@@ -1,11 +1,13 @@
 /* 
-	Note: this component requires aframe-curve-component
+	Note: compatible with aframe-parametric-curve and aframe-compass-curve components
 */
 AFRAME.registerComponent('curve-geometry', {
     schema: 
     {
-		// reference to entity containing aframe-curve-component
-		curveData:   { type: "string", default: "" },
+		// reference to entity containing component with curve data
+		curveData:      { type: "string",  default: "" },
+		// component type that generated curve data
+		type:      		{ type: "string",  default: "parametric-curve" },
 		
 		totalPoints: { type: "number", default: 500},
 		lineColor:   { type: "color",  default: "red"}
@@ -14,20 +16,20 @@ AFRAME.registerComponent('curve-geometry', {
     init: function() 
     {
 		let entity = document.querySelector(this.data.curveData);
-
 		if ( !entity )
 		{
 			console.error("no element: " + this.data.curveData);
 			return;
 		}
-
-		let curveComponent = entity.components.curve;
-
+		let curveComponent = entity.components[this.data.type];
 		if ( !curveComponent )
 		{
-			console.error("element: " + this.data.curveData + " does not have aframe-curve-component");
+			console.error(
+				"element: " + this.data.curveData +
+			 	" does not have component: " + this.data.type );
 			return;			
 		}
+
 
 		let f    = curveComponent.eval;
 		let tMin = curveComponent.data.tRange[0];

@@ -8,7 +8,7 @@
 	<script src="js/aframe-environment-component.min.js"></script>
 	<script src="js/extended-wasd-controls.js"></script>
 	<script src="js/parser.js"></script>
-	<script src="js/aframe-curve-component.js"></script>
+	<script src="js/aframe-parametric-curve.js"></script>
 	<script src="js/aframe-curve-geometry.js"></script>
 	<script src="js/aframe-tube-geometry.js"></script>
 	
@@ -23,33 +23,32 @@
 	</a-sphere>
 	
 	<a-entity id="helix"
-		curve="type: parametric;
-			   xyzFunctions: cos(t), 0.02*t, sin(t); 
-			   tRange: 0, 200;">
+		parametric-curve="xyzFunctions: cos(t), 0.02*t, sin(t); 
+			   		      tRange: 0, 200;">
 	</a-entity>
 
 	<a-entity id="trefoil"
-		curve="type: parametric;
-			   xyzFunctions: t^3 - 3*t, t^4 - 4*t^2, (t^5 - 10*t)/5; 
-			   tRange: -2.05, 2.05;">
+		parametric-curve="xyzFunctions: t^3 - 3*t, t^4 - 4*t^2, (t^5 - 10*t)/5; 
+			   			  tRange: -2.05, 2.05;">
 	</a-entity>
 
 	<a-entity 
-		curve-geometry="curveData: #helix; 
+		curve-geometry="curveData: #helix; type: parametric-curve;
 					    totalPoints: 1000; lineColor: black;" 
 		position="-2 0 -5">
 	</a-entity>
 
 	<!--
 	<a-entity 
-		curve-geometry="curveData: #trefoil; totalPoints: 500; lineColor: orange;"
+		curve-geometry="curveData: #trefoil; type: parametric-curve;
+				        totalPoints: 500; lineColor: orange;"
 		position="2 2.1 -5" 
 		scale="0.5 0.5 0.5">
 	</a-entity>
 	-->
 
 	<a-entity 
-		tube-geometry="curveData: #trefoil; 
+		tube-geometry="curveData: #trefoil; type: parametric-curve;
 					   tubeSegments: 100; radius: 0.1; tubeColor: orange;"  
 		position="2 2.1 -5" 
 		scale="0.5 0.5 0.5">
