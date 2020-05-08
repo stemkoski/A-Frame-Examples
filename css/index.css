@@ -85,3 +85,10 @@ a:hover
 	-ms-transition: all 300ms ease-in-out;
 	transition: all 300ms ease-in-out; 
 }
+
+.code
+{
+	font-family: monospace;
+	font-weight: bold;
+
+}

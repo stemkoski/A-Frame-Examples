@@ -17,7 +17,10 @@ AFRAME.registerComponent("curve-follow",
 		duration: {type: "number", default: 4},
 
 		// actively follow path?
-		enabled: {type: "boolean", default: true}
+		enabled: {type: "boolean", default: true},
+
+		// follow path in reverse
+		reverse: {type: "boolean", default: false}
     },
 
     init: function()
@@ -52,7 +55,17 @@ AFRAME.registerComponent("curve-follow",
 			return f(tValue);
 		};
 
-		this.elapsedTime = 0;
+		if ( !this.data.reverse )
+		{
+			// moving forwards (default), starting time is zero
+			this.elapsedTime = 0; 		
+		}
+		else
+		{
+			// moving in reverse direction, starting time at maximum and counting down
+			this.elapsedTime = this.data.duration;
+		}
+		
 		this.upVector = new THREE.Vector3(0,1,0);
 	},
 
@@ -61,16 +74,27 @@ AFRAME.registerComponent("curve-follow",
 		if ( !this.data.enabled )
 			return;
 		
-		if ( this.elapsedTime > this.data.duration )
+		// once elapsedTime is out of bounds, reset (if looping) or return
+		if ( this.elapsedTime > this.data.duration || this.elapsedTime < 0)
 		{
 			if ( this.data.loop )
-				this.elapsedTime = 0;
+			{
+				if ( !this.data.reverse )
+					this.elapsedTime = 0;
+				else
+					this.elapsedTime = this.data.duration;
+			}
 			else
 				return;
 		}
 
 		// convert time (milliseconds) to t (seconds)
-		this.elapsedTime += deltaTime / 1000;
+		// and take into account reverse direction setting
+		if ( !this.data.reverse )
+			this.elapsedTime += deltaTime / 1000;
+		else
+			this.elapsedTime -= deltaTime / 1000;
+			
 		let percentComplete = this.elapsedTime / this.data.duration;
 
 		// get current position; take into account travel speed (duration)
