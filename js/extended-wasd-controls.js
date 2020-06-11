@@ -144,7 +144,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 			// look towards horizon when both are pressed;
 			//   does not work well when used with look-controls
-			if ( !this.data.coordinateLookControls )
+			if ( !this.lookControls )
 			{
 				if (this.isKeyPressed(this.data.lookUpKey)
 					&& this.isKeyPressed(this.data.lookDownKey))
