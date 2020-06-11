@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Arches!</title>
+	<title>Screen Controls</title>
 	<meta name="description" content="A-Frame Examples">
 	<script src="js/aframe-master.1.0.4.min.js"></script>
 	<script src="js/aframe-environment-component.min.js"></script>
@@ -44,8 +44,6 @@ body
 	justify-content: center;
 	pointer-events: auto;	
 	filter: drop-shadow(0px 0px 20px white);
-	
-
 }
 
 .skyColor
@@ -82,11 +80,7 @@ body
 	</div>
 
 	<!-- top-right -->
-	<div class="regionUI grayColor" style="top: 10px; right: 10px;">
-		<div class="buttonUI">
-	    	<img src="images/buttons/red/maximize.png" id="buttonMaximize" />
-	    	<img src="images/buttons/red/minimize.png" id="buttonMinimize" />
-	    </div>
+	<div class="regionUI" style="top: 10px; right: 10px;">
 	</div>
 
 	<!-- bottom-left -->
@@ -165,84 +159,14 @@ body
 			associateMovementControls( "buttonMoveRight",    component, component.data.moveRightKey );
 			associateMovementControls( "buttonMoveUp",       component, component.data.moveUpKey );
 			associateMovementControls( "buttonMoveDown",     component, component.data.moveDownKey );
-
-			// TODO: full-screen support
-			// if ( document.fullscreenEnabled )
-			// {
-			//	addButtonEventListeners( "buttonMaximize", openFullscreen, function() {} );
-			//	addButtonEventListeners( "buttonMinimize", closeFullscreen, function() {} );
-			// }
-			// else
-			// {
-				// update button visibility
-				document.getElementById("buttonMaximize").style.display = "none"; //inline
-				document.getElementById("buttonMinimize").style.display = "none";
-			// }
   		},
 
   		tick: function(time, deltaTime)
   		{
-  			/*
-  			if ( document.fullscreenEnabled )
-			{
-				// update button visibility
-				if ( isFullscreen() )
-				{
-					document.getElementById("buttonMaximize").style.display = "none";
-					document.getElementById("buttonMinimize").style.display = "inline";
-				}
-				else
-				{
-					document.getElementById("buttonMaximize").style.display = "inline";
-					document.getElementById("buttonMinimize").style.display = "none";
-				}
-			}
-			*/
+  
   		}
 	});
 
-	
-	function openFullscreen() 
-	{
-		let docElem = document.documentElement;
-		if (docElem.requestFullscreen)
-			docElem.requestFullscreen();
-		else if (docElem.mozRequestFullScreen)		// Firefox
-			docElem.mozRequestFullScreen();
-		else if (docElem.webkitRequestFullscreen)	// Chrome, Safari and Opera
-			docElem.webkitRequestFullscreen();
-		else if (docElem.msRequestFullscreen)		// IE/Edge
-			docElem.msRequestFullscreen();
-		// update button visibility
-		document.getElementById("buttonMaximize").style.display = "none";
-		document.getElementById("buttonMinimize").style.display = "inline";
-	}
-
-	function closeFullscreen() 
-	{
-		if ( !isFullscreen() )
-			return;
-
-		if (document.exitFullscreen)
-			document.exitFullscreen();
-		else if (document.mozCancelFullScreen)		// Firefox
-			document.mozCancelFullScreen();
-		else if (document.webkitExitFullscreen)		// Chrome, Safari and Opera
-			document.webkitExitFullscreen();
-		else if (document.msExitFullscreen)			// IE/Edge
-			document.msExitFullscreen();
-		// update button visibility
-		document.getElementById("buttonMaximize").style.display = "inline";
-		document.getElementById("buttonMinimize").style.display = "none";
-	}
-
-	function isFullscreen()
-	{
-		if (document.fullscreenElement)
-			return true;
-		else
-			return false;
-	}
 
 </script>
 
@@ -259,8 +183,7 @@ body
 	<!-- adding in look controls -->
 	<a-entity id="camera" camera look-controls
 		position="0 1.6 0"
-		extended-wasd-controls="flyEnabled: true; turnEnabled: false; lookEnabled: false;
-		maxLookEnabled: false; coordinateLookControls: true;">
+		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true;	maxLookEnabled: false;">
 	</a-entity>
 	
 </a-scene>

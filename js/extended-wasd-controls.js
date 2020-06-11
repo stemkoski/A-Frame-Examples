@@ -102,18 +102,16 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		this.turnAngle = 0; // around global Y axis
 		this.lookAngle = 0; // around local X axis
 
-		this.lookControls = null;
-		if (this.data.coordinateLookControls)
-		{
-			this.lookControls = this.el.components["look-controls"];
-		}
+		// will = null or an object
+		this.lookControls = this.el.components["look-controls"];
+		
+		// allows easy extraction of turn angle
+		this.el.object3D.rotation.order = 'YXZ';
 	},
 	
 
 	tick: function (time, timeDelta) 
 	{
-		// console.log( this.keyPressedSet );
-
 		let moveAmount = (timeDelta/1000) * this.data.moveSpeed;
 		// need to convert angle measures from degrees to radians
 		let turnAmount = (timeDelta/1000) * THREE.Math.degToRad(this.data.turnSpeed);
@@ -128,7 +126,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		let totalTurnAngle = 0;
 		let totalLookAngle = 0;
 
-		if ( this.data.coordinateLookControls )
+		if ( this.lookControls ) // take into account lookControls, if they exist
 		{
 			totalTurnAngle += this.lookControls.yawObject.rotation.y;
 			totalLookAngle += this.lookControls.pitchObject.rotation.x;
@@ -177,11 +175,13 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 			this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
 		}
-
+		
 		// translations
 
-		let c = Math.cos(totalTurnAngle);
-		let s = Math.sin(totalTurnAngle);
+		let finalTurnAngle = this.el.object3D.rotation.y;
+		
+		let c = Math.cos(finalTurnAngle);
+		let s = Math.sin(finalTurnAngle);
 
 		this.forwardVector.set( -s, 0, -c ).multiplyScalar( moveAmount );
 		this.rightVector.set( c, 0, -s ).multiplyScalar( moveAmount );
