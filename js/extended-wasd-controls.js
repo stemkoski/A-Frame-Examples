@@ -187,8 +187,6 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		this.rightVector.set( c, 0, -s ).multiplyScalar( moveAmount );
 		this.upVector.set( 0, 1, 0 ).multiplyScalar( moveAmount );
 
-		// console.log("forward vec", this.forwardVector)
-
 		if (this.isKeyPressed(this.data.moveForwardKey))
 			this.el.object3D.position.add( this.forwardVector );
 

@@ -116,7 +116,7 @@ body
 
 	// prevent right-click menus from appearing
 	document.addEventListener("contextmenu", haltEvent );
-	// more attempts to prevent right-click menus from appearing -- blocks touchscreen/iPad controls?
+	// more attempts to prevent right-click menus from appearing -- avoid; they block touchscreen/iPad controls
 	// document.addEventListener("touchmove", haltEvent );
 	// document.addEventListener("touchcancel", haltEvent );
 	
@@ -183,7 +183,7 @@ body
 	<!-- adding in look controls -->
 	<a-entity id="camera" camera look-controls
 		position="0 1.6 0"
-		extended-wasd-controls="flyEnabled: false; turnEnabled: false; lookEnabled: false;	maxLookEnabled: false;">
+		extended-wasd-controls="flyEnabled: true; turnEnabled: true; lookEnabled: true;	maxLookEnabled: false;">
 	</a-entity>
 	
 </a-scene>
