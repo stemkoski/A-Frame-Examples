@@ -27,20 +27,15 @@ AFRAME.registerComponent('extended-wasd-controls', {
   		turnEnabled: {type: 'boolean', default: true},
   		lookEnabled: {type: 'boolean', default: true},
 
-  		// if you are attaching extended-wasd-controls to a camera
-  		//   that also has the look-controls component,
-  		//   set this to true to use look-controls from rotation to calculate forward/right vectors.
-  		// For responsive magic window effect on tablets, set turnEnabled/lookEnabled to false also.
-  		coordinateLookControls: {type: 'boolean', default: false},
-
-  		// consider setting to maxLook to false when working with look controls;
-  		//   complicated to handle the combination accurately
   		maxLookEnabled: {type: 'boolean', default: true},
-  		maxLookAngle: {type: 'number', default: 60},
+  		maxLookAngle:   {type: 'number',  default: 60},
 
   		moveSpeed: {type: 'number', default: 1},  // A-Frame units/second
 		turnSpeed: {type: 'number', default: 30}, // degrees/second
-		lookSpeed: {type: 'number', default: 30}  // degrees/second
+		lookSpeed: {type: 'number', default: 30},  // degrees/second
+
+		// use keyboard or other (e.g. joystick) to activate these controls
+		inputType: {type: 'string', default: "keyboard"}
 	},
 
 	convertKeyName: function(keyName)
@@ -94,8 +89,18 @@ AFRAME.registerComponent('extended-wasd-controls', {
 
 		// movement-related data
 
-		this.forwardVector = new THREE.Vector3(0,0,-1);
-		this.rightVector = new THREE.Vector3(1,0,0);
+		this.moveVector  = new THREE.Vector3(0,0,0);
+		this.movePercent = new THREE.Vector3(0,0,0);
+		// z = forward/backward
+		// x = left/right
+		// y = up/down
+
+		this.rotateVector  = new THREE.Vector2(0,0);
+		this.rotatePercent = new THREE.Vector2(0,0);
+		// y = turn angle
+		// x = look angle
+
+		// used as reference vector when turning
 		this.upVector = new THREE.Vector3(0,1,0);
 		
 		// current rotation amounts
@@ -121,34 +126,60 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		// rotations
 		
 		// reset values
-		this.upVector.set(0,1,0);
-
 		let totalTurnAngle = 0;
 		let totalLookAngle = 0;
 
-		if ( this.lookControls ) // take into account lookControls, if they exist
+		// look-controls and extended-wasd-controls are compatible
+		//   with desktop/mouse combo but not for tablet/gyroscope combo ("magic window" effect)
+		//   (at least not with this code)
+		// thus, look/turn automatically disabled when look-controls present
+
+		console.log("rev. 6");
+
+		if ( this.lookControls ) // take into account look-controls, if they exist
 		{
-			totalTurnAngle += this.lookControls.yawObject.rotation.y;
-			totalLookAngle += this.lookControls.pitchObject.rotation.x;
+			// this code is only useful when trying to combine 
+			//   look-controls with extended-wasd rotation
+			// totalTurnAngle += this.lookControls.yawObject.rotation.y;
+			// totalLookAngle += this.lookControls.pitchObject.rotation.x;
 		}
-		
-		if ( this.data.lookEnabled )
+		else
 		{
-			if (this.isKeyPressed(this.data.lookUpKey))
-				this.lookAngle += lookAmount;
-
-			if (this.isKeyPressed(this.data.lookDownKey))
-				this.lookAngle -= lookAmount;
-
-			totalLookAngle += this.lookAngle;
-
-			// look towards horizon when both are pressed;
-			//   does not work well when used with look-controls
-			if ( !this.lookControls )
+			if (this.data.inputType == "keyboard")
 			{
-				if (this.isKeyPressed(this.data.lookUpKey)
-					&& this.isKeyPressed(this.data.lookDownKey))
+				// need to reset rotatePercent values
+				//   when querying which keys are currently pressed
+				this.rotatePercent.set(0,0);
+
+				if (this.isKeyPressed(this.data.lookUpKey))
+					this.rotatePercent.x += 1;
+				if (this.isKeyPressed(this.data.lookDownKey))
+					this.rotatePercent.x -= 1;
+
+				if (this.isKeyPressed(this.data.turnLeftKey))
+					this.rotatePercent.y += 1;
+				if (this.isKeyPressed(this.data.turnRightKey))
+					this.rotatePercent.y -= 1;
+
+				// center on horizon
+				if (this.isKeyPressed(this.data.lookUpKey) && this.isKeyPressed(this.data.lookDownKey))
 					this.lookAngle *= 0.90;
+			}
+			else // other, e.g. "joystick"
+			{
+				// assume this.rotatePercent values have been set/reset elsewhere (outside of this function)
+			}
+
+			if ( this.data.lookEnabled )
+			{
+				this.lookAngle += this.rotatePercent.x * lookAmount;
+				this.el.object3D.rotation.x = this.lookAngle;
+			}
+
+			if ( this.data.turnEnabled )
+			{
+				this.turnAngle += this.rotatePercent.y * turnAmount;
+				this.el.object3D.rotation.y = this.turnAngle;
 			}
 
 			// enforce bounds on look angle (avoid upside-down perspective) 
@@ -159,54 +190,54 @@ AFRAME.registerComponent('extended-wasd-controls', {
 				if (this.lookAngle < -maxLookAngle)
 					this.lookAngle = -maxLookAngle;
 			}
-
-			this.el.object3D.rotation.set(totalLookAngle, 0, 0);
 		}
 
-		if (this.data.turnEnabled)
-		{
-			if (this.isKeyPressed(this.data.turnLeftKey))
-				this.turnAngle += turnAmount;
-
-			if (this.isKeyPressed(this.data.turnRightKey))
-				this.turnAngle -= turnAmount;
-
-			totalTurnAngle += this.turnAngle;	
-
-			this.el.object3D.rotateOnWorldAxis(this.upVector, totalTurnAngle);
-		}
-		
 		// translations
 
+		// this only works when rotation order = "YXZ"
 		let finalTurnAngle = this.el.object3D.rotation.y;
 		
 		let c = Math.cos(finalTurnAngle);
 		let s = Math.sin(finalTurnAngle);
 
-		this.forwardVector.set( -s, 0, -c ).multiplyScalar( moveAmount );
-		this.rightVector.set( c, 0, -s ).multiplyScalar( moveAmount );
-		this.upVector.set( 0, 1, 0 ).multiplyScalar( moveAmount );
-
-		if (this.isKeyPressed(this.data.moveForwardKey))
-			this.el.object3D.position.add( this.forwardVector );
-
-		if (this.isKeyPressed(this.data.moveLeftKey))
-			this.el.object3D.position.sub( this.rightVector );
-
-		if (this.isKeyPressed(this.data.moveBackwardKey))
-			this.el.object3D.position.sub( this.forwardVector );
-
-		if (this.isKeyPressed(this.data.moveRightKey))
-			this.el.object3D.position.add( this.rightVector );
-
-		if (this.data.flyEnabled)
+		if (this.data.inputType == "keyboard")
 		{
-			if (this.isKeyPressed(this.data.moveUpKey))
-				this.el.object3D.position.add( this.upVector );
+			// need to reset movePercent values
+			//   when querying which keys are currently pressed
+			this.movePercent.set(0,0,0)
 
-			if (this.isKeyPressed(this.data.moveDownKey))
-				this.el.object3D.position.sub( this.upVector );
+			if (this.isKeyPressed(this.data.moveForwardKey))
+				this.movePercent.z += 1;
+			if (this.isKeyPressed(this.data.moveBackwardKey))
+				this.movePercent.z -= 1;
+
+			if (this.isKeyPressed(this.data.moveRightKey))
+				this.movePercent.x += 1;
+			if (this.isKeyPressed(this.data.moveLeftKey))
+				this.movePercent.x -= 1;
+
+			if ( this.data.flyEnabled )
+			{
+				if (this.isKeyPressed(this.data.moveUpKey))
+					this.movePercent.y += 1;
+				if (this.isKeyPressed(this.data.moveDownKey))
+					this.movePercent.y -= 1;
+			}
+		}
+		else // other, e.g. "joystick"
+		{
+			// assume this.movePercent values have been set/reset elsewhere (outside of this function)
 		}
 
+		// forward(z) direction: [ -s,  0, -c ]
+		//   right(x) direction: [  c,  0, -s ]
+		//      up(y) direction: [  0,  1,  0 ]
+		// multiply each by (maximum) movement amount and percentages (how much to move in that direction)
+
+		this.moveVector.set( -s * this.movePercent.z + c * this.movePercent.x,
+							  1 * this.movePercent.y,
+							 -c * this.movePercent.z - s * this.movePercent.x ).multiplyScalar( moveAmount );
+
+		this.el.object3D.position.add( this.moveVector );
 	}
 });

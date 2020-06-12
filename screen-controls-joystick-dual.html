@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Screen Controls</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+	<script src="js/joystick.js"></script>
+<style>
+
+body
+{
+	/* disable long press in iOS? */
+	-webkit-touch-callout: none;
+}
+
+.mainUI
+{
+	border: 0px solid pink; 
+	position: fixed; 
+	top: 0px;  
+	width:99%; 
+	height:99%; 
+	z-index: 1; 
+	pointer-events: none; /* allow click-through in transparent areas */
+}
+
+.regionUI
+{
+	border: 0px solid yellow;
+	position: absolute; 
+	display: flex;
+	flex-direction: row;
+	pointer-events: none;
+}
+
+.buttonUI
+{
+	border: 0px solid lime;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	pointer-events: auto;	
+	filter: drop-shadow(0px 0px 20px white);
+}
+
+.skyColor
+{
+	filter: hue-rotate(240deg) saturate(100%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+.baseColor
+{
+	filter: hue-rotate(24deg) saturate(68%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+.grayColor
+{
+	filter: hue-rotate(0deg) saturate(0%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- note: by using red base images for buttons, can tint (HSV) using filter: hue-rotate(); etc. -->
+
+<div class="mainUI" id="uiDiv" oncontextmenu="return false;">
+
+	<!-- top-left -->
+	<div class="regionUI skyColor" style="top: 10px; left: 10px;" oncontextmenu="return false;">
+	</div>
+
+	<!-- top-right -->
+	<div class="regionUI" style="top: 10px; right: 10px;">
+	</div>
+
+	<!-- bottom-left -->
+	<div class="regionUI" style="bottom: 10px; left: 10px;">
+		<div class="buttonUI" style="width: 128px;  opacity:0.80;">
+			<img src="images/joystick-base.png"/>
+			<div id="stick1" style="position: absolute; left:32px; top:32px;">
+			<img src="images/joystick-red.png"/>		
+			</div>
+		</div>
+	</div>
+
+	<!-- bottom-right -->
+	<div class="regionUI" style="bottom: 10px; right: 10px;">
+		<div class="buttonUI" style="width: 128px; opacity:0.80;">
+			<img src="images/joystick-base.png"/>
+			<div id="stick2" style="position: absolute; left:32px; top:32px;">
+			<img src="images/joystick-blue.png"/>		
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<script>
+
+	// need to run javascript code after a-scene entities and components are loaded
+	AFRAME.registerComponent('screen-controls', 
+	{
+		init: function () 
+		{
+    		this.component = document.getElementById("camera").components["extended-wasd-controls"];
+    		this.joystick1 = new Joystick("stick1", 64, 8);
+    		this.joystick2 = new Joystick("stick2", 64, 8);
+  		},
+
+  		tick: function(time, deltaTime)
+  		{
+  			// console.log( joystick1.value )
+  			// console.log( this.component.movePercent )
+  			this.component.movePercent.x   =  this.joystick1.value.x;
+  			this.component.movePercent.z   = -this.joystick1.value.y;
+  			this.component.rotatePercent.x = -this.joystick2.value.y;
+  			this.component.rotatePercent.y = -this.joystick2.value.x;
+  			
+  			
+  		}
+	});
+
+
+</script>
+
+<!-- 
+	disable press "F" to enter fullscreen mode
+	disable WASD controls attached to default camera
+ -->
+<a-scene 
+	environment="preset: arches; shadow: true;" 
+	keyboard-shortcuts="enterVR: false;" 
+	vr-mode-ui="enabled: false;"
+	screen-controls>
+	
+	<!-- no look controls; control angle with second joystick  -->
+	<a-entity id="camera" camera
+		position="0 1.6 0"
+		extended-wasd-controls="flyEnabled: true; inputType: joystick;">
+	</a-entity>
+	
+</a-scene>
+
+</body>
+</html>
