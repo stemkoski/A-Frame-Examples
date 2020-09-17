@@ -107,7 +107,7 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		this.turnAngle = 0; // around global Y axis
 		this.lookAngle = 0; // around local X axis
 
-		// will = null or an object
+		// this will = null or an object
 		this.lookControls = this.el.components["look-controls"];
 		
 		// allows easy extraction of turn angle
