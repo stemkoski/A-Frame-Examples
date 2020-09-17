@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>VR Art Gallery</title>
+	<meta name="description" content="A-Frame Examples">
+	<script src="js/aframe-master.1.0.4.min.js"></script>
+	<script src="js/aframe-environment-component.min.js"></script>
+	<script src="js/extended-wasd-controls.js"></script>
+</head>
+
+<body>
+
+<script>
+
+// 2D collision system, simulating collisions on a horizontal plane (ignores height)
+//  between a moving object and walls.
+AFRAME.registerComponent("collision-system",
+{
+	schema: 
+    {
+		// wall: static boundaries; represented by 
+		// mover: moving object.
+		type: { type: "string",  default: "wall" },
+
+		// parameters for type "wall"
+		pointA: { type: "vec2", default: {x:0, y:0} },
+		pointB: { type: "vec2", default: {x:4, y:0} },
+		width:  { type: "number", default: 0.5 },
+		height: { type: "number", default: 1 },
+
+		// parameters for type "mover"
+		center: { type: "vec2", default: {x:0, y:0} },
+		radius: { type: "number", default: 0.5 },
+
+		// draw wireframe shapes along boundaries?
+		debug: { type: "boolean", default: false },
+
+		// create wall mesh along boundary
+		wallMesh:        { type: "boolean", default: false },
+		wallMaterialSrc: { type: "string", default: "" }
+
+    },
+
+	init: function()
+	{
+		// type "mover" keeps track of all components with type "wall"
+		if ( this.data.type == "mover" )
+		{
+			this.walls = [];
+			let elements = document.querySelectorAll("[collision-system]");
+			for (let n = 0; n < elements.length; n++)
+			{
+				let element = elements[n];
+				let component = element.components["collision-system"];
+				// console.log(n, element);
+				if ( component.data.type == "wall" )
+					this.walls.push(component); // element.components["collision-system"]
+			}
+			console.log( "the walls", this.walls );
+		}
+
+		// set up debug wireframes
+		let meshHeight = 0.2;	
+		let materialData = "color: red; wireframe: true;";
+
+		if ( this.data.type == "wall" )
+		{
+
+			let A = this.data.pointA;
+			let B = this.data.pointB;
+			// render wireframe boundaries
+			if ( this.data.debug )
+			{
+				let meshPointA = document.createElement("a-cylinder");
+				meshPointA.setAttribute("position", {x:A.x, y:0, z:A.y});
+				meshPointA.setAttribute("radius", this.data.width);
+				meshPointA.setAttribute("height", meshHeight);
+				meshPointA.setAttribute("segments-radial", 16);
+				meshPointA.setAttribute("segments-height", 1);
+				meshPointA.setAttribute("material", materialData);
+				this.el.appendChild(meshPointA);
+
+				let meshPointB = document.createElement("a-cylinder");
+				meshPointB.setAttribute("position",	{x:B.x, y:0, z:B.y});
+				meshPointB.setAttribute("radius", this.data.width);
+				meshPointB.setAttribute("height", meshHeight);
+				meshPointB.setAttribute("segments-radial", 16);
+				meshPointB.setAttribute("segments-height", 1);
+				meshPointB.setAttribute("material", materialData);
+				this.el.appendChild(meshPointB);
+
+				let meshWall = document.createElement("a-box");
+				meshWall.setAttribute("position", {x:(A.x+B.x)/2, y:0, z:(A.y+B.y)/2});
+				let wallLength = Math.sqrt((B.x-A.x)**2 + (B.y-A.y)**2);
+				meshWall.setAttribute("width", wallLength);
+				meshWall.setAttribute("depth", this.data.width * 2);
+				meshWall.setAttribute("height", meshHeight);
+				let rotationY = -Math.atan2( B.y-A.y, B.x-A.x ) * 180 / Math.PI;
+				meshWall.setAttribute("rotation", {x:0, y:rotationY, z:0});
+				meshWall.setAttribute("segments-width", 4);
+				meshWall.setAttribute("segments-depth", 4);
+				meshWall.setAttribute("material", materialData);
+				this.el.appendChild(meshWall);
+			}
+
+			if ( this.data.wallMesh )
+			{
+				let meshWall = document.createElement("a-box");
+				meshWall.setAttribute("position", {x:(A.x+B.x)/2, y:this.data.height/2, z:(A.y+B.y)/2});
+				let wallLength = Math.sqrt((B.x-A.x)**2 + (B.y-A.y)**2);
+				meshWall.setAttribute("width", wallLength);
+				meshWall.setAttribute("depth", this.data.width * 2);
+				meshWall.setAttribute("height", this.data.height );
+				let rotationY = -Math.atan2( B.y-A.y, B.x-A.x ) * 180 / Math.PI;
+				meshWall.setAttribute("rotation", {x:0, y:rotationY, z:0});
+
+				if ( this.data.wallMaterialSrc != "" )
+					meshWall.setAttribute("material", "src", this.data.wallMaterialSrc);
+
+				this.el.appendChild(meshWall);
+			}
+		}
+
+		if ( this.data.type == "mover" )
+		{
+			let C = this.data.center;
+			if ( this.data.debug )
+			{
+				let self = this;
+				let meshMover = document.createElement("a-cylinder");
+				meshMover.addEventListener("loaded", function(event) {
+					console.log("mover loaded!");
+					self.el.object3D.position.set( C.x, 0, C.y );
+				});
+
+				//meshMover.setAttribute("position",	{x:C.x, y:0, z:C.y});
+				meshMover.setAttribute("radius", this.data.radius);
+				meshMover.setAttribute("height", meshHeight);
+				meshMover.setAttribute("segments-radial", 16);
+				meshMover.setAttribute("segments-height", 1);
+				meshMover.setAttribute("material", materialData);
+				this.el.appendChild(meshMover);
+			}
+		}
+
+		this.tickNumber = 0;
+	},
+
+	// find the point on the (2D) line segment from A to B that is closest to point C.
+	closestPointOnSegment: function(C)
+	{
+		if (this.data.type != "wall")
+			return;
+
+		let A = this.data.pointA;
+		let B = this.data.pointB;
+		// m = direction (slope) of line [L(t) = m*t + A] through A and B
+		let m = new THREE.Vector2().subVectors(B, A);
+		// v = vector from A to C
+		let v = new THREE.Vector2().subVectors(C, A);
+		// w = project v onto m
+		let w = m.clone().multiplyScalar( v.dot(m) / m.dot(m) );
+		// find closest point on line (not necessarily segment) to C
+		let P = new THREE.Vector2().addVectors(A, w);
+
+		// solve L(t) = m*t + A = P for time t.
+		// both ( P.x - A.x ) / m.x = t  and  ( P.y - A.y ) / m.y = t  
+		// avoid small/zero components of vector m, to avoid rounding/div by zero errors
+		let t = null;
+		if ( Math.abs(m.x) > 0.001 )
+			t = (P.x - A.x) / m.x;
+		else // should be the case that ( Math.abs(m.y) > 0.001 )
+			t = (P.y - A.y) / m.y;
+		// find closest point on segment (from A to B) to the point C
+		// step 1: since L(0) = A and L(1) = B, bound t to the range from 0 to 1
+		if (t < 0)
+			t = 0;
+		if (t > 1)
+			t = 1;
+		// step 2: calculate and return the point corresponding to (bounded) t value
+		return new THREE.Vector2( m.x * t + A.x, m.y * t + A.y );
+	},
+
+	tick: function(time, deltaTime)
+	{
+		// prevent overlap of type "mover" with any component of type "wall"
+		if ( this.data.type == "mover" )
+		{	
+			for (let n = 0; n < this.walls.length; n++)
+			{
+				// extract 2D (horizontal) position from 3D position
+				let moverCenter = new THREE.Vector2( this.el.object3D.position.x, this.el.object3D.position.z );
+				let wall = this.walls[n];
+
+				let closestPoint = wall.closestPointOnSegment(moverCenter);
+				let distance = closestPoint.distanceTo(moverCenter);
+				// the minimum distance possible between the line segment of a wall and the center of the mover
+				let minDistance = wall.data.width + this.data.radius;
+				let collision = (distance < minDistance);
+				if ( collision )
+				{
+					let minimumTranslationVector = new THREE.Vector2().subVectors(moverCenter, closestPoint).setLength( minDistance );
+					let newPosition = closestPoint.add( minimumTranslationVector );
+					this.el.object3D.position.set( newPosition.x, 0, newPosition.y );
+				}
+			}
+		}		
+	}
+});
+       
+</script>
+<!-- 
+	disable press "F" to enter fullscreen mode.
+ -->
+ 
+<a-scene stats environment="preset: default; lighting: none;" 
+	keyboard-shortcuts="enterVR: false;">
+	
+	<!-- Dim ambient lighting.  -->
+	<a-light type="ambient" color="#444444"></a-light>
+	<a-light type="point" color="#CCCCCC" position="0 3 0"></a-light>
+	
+	<a-assets timeout="10000">
+		<img id="crate" 	src="images/crate.jpg" />
+		<img id="grid" 		src="images/color-grid.png" />
+		<img id="wood" 		src="images/wood.jpg" />
+		<img id="plaster"	src="images/plaster.jpg" />
+	</a-assets>
+
+	<a-entity collision-system="pointA: 0 1; pointB: 2 0; width: 0.1; debug: true; 
+		wallMesh: true; wallMaterialSrc: #plaster;">
+	</a-entity>
+	<a-entity collision-system="pointA: 2 0; pointB: 2 -3; width: 0.1; debug: true;"></a-entity>
+	<a-entity collision-system="pointA: 2 -3; pointB: 0 -3; width: 0.1; debug: true;"></a-entity>
+	
+
+	<a-entity xwasd-controls="acceleration: 4;" xlook-controls 
+		collision-system="type: mover; center: 1 1; radius: 0.2; debug: true;">
+		
+		<!-- moving camera
+		<a-entity id="camera" camera
+		position="0 0.6 0">
+		</a-entity>
+		-->
+	</a-entity>
+
+	<!--
+		create a camera entity
+	<a-entity id="camera" camera
+		position="0 1.6 0"
+		look-controls wasd-controls="acceleration: 4;" boundary>
+	</a-entity>
+	-->
+
+	<!--
+		create a camera entity
+	-->
+
+	<a-entity id="camera" camera
+		position="0 3.6 3"
+		look-controls extended-wasd-controls="">
+	</a-entity>
+
+	
+
+	<!-- walls -->
+	<a-box width="6.5" depth="0.1" height="3" position="0 1.5 -3.1" material="src:#plaster; repeat: 4.2 2;"></a-box>
+	
+	<!-- floor -->  
+	<a-box width="5" depth="5" height="0.1" position="0 0 0" material="src:#wood;" class="bound"></a-box>
+
+
+</a-scene>
+
+</body>
+</html>
