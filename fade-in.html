@@ -13,8 +13,7 @@
 	border: 0px solid pink; 
 	position: fixed; 
 	top: 0px;  
-	width:100%; 
-	height:100%; 
+	width:100%; height:100%; 
 	z-index: 1; 
 	pointer-events: none; /* allow click-through in transparent areas */
 	display: flex;
@@ -46,14 +45,12 @@
 <body>
 
 <div class="mainUI" id="uiDiv" oncontextmenu="return false;">
-
 	<!-- centered -->
 	<div class="regionUI">
 		<div class="buttonUI">
     	<img src="images/buttons/enter.png" id="buttonEnter" />
 		</div>
 	</div>
-
 </div>
 
 <script>
@@ -96,7 +93,6 @@ AFRAME.registerComponent('start', {
 		buttonEnter.addEventListener('touchstart', fadeIn);
 		buttonEnter.addEventListener('mousedown',  fadeIn);
 	}
-
 });
 </script>
 
