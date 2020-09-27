@@ -112,6 +112,8 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		
 		// allows easy extraction of turn angle
 		this.el.object3D.rotation.order = 'YXZ';
+
+		console.log("extended-wasd-controls rev. 6");
 	},
 	
 
@@ -133,8 +135,6 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		//   with desktop/mouse combo but not for tablet/gyroscope combo ("magic window" effect)
 		//   (at least not with this code)
 		// thus, look/turn automatically disabled when look-controls present
-
-		console.log("rev. 6");
 
 		if ( this.lookControls ) // take into account look-controls, if they exist
 		{
