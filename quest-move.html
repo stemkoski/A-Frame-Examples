@@ -135,7 +135,7 @@ AFRAME.registerComponent("controller-move", {
           player.setAttribute("position", pos);
 
 		let textArea = document.querySelector("#textArea");
-        let text = "Test 3: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
+        let text = "Test 4: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
         textArea.setAttribute( "text", "value",  text);
 
 	}
@@ -150,9 +150,9 @@ AFRAME.registerComponent("controller-move", {
 		color = "#001337">
 	</a-sky>
 
-	<a-camera
-	    controller-move>
-    </a-camera>
+	<a-entity id="cameraRig" position="0 1.6 0" controller-move>
+    	<a-camera></a-camera>
+	</a-entity>
 
 	<a-entity 
 	    id="left-controller-entity"
