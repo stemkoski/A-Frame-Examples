@@ -105,30 +105,17 @@ AFRAME.registerComponent('right-controller-listener', {
 	
 });
 
-AFRAME.registerComponent('text-display', {
-	
-	tick: function()
-	{
-		let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
-		let dataRight = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
-
-		let text = "Test 1.";
-		           
-		this.el.setAttribute( "text", "value", text );
-	},
-});
-
 AFRAME.registerComponent("controller-move", {
     init: function() 
     {
-      // grab the camera
-      //var player = this.el;
-      // create a direction vector
-      //var direction = new THREE.Vector3();
+     
+
     },
 
     tick: function()
 	{
+		
+
 		let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
 		
 		// grab the camera
@@ -139,13 +126,17 @@ AFRAME.registerComponent("controller-move", {
 		   // get the cameras world direction
           this.el.sceneEl.camera.getWorldDirection(direction);
           // multiply the direction by a "speed" factor
-          direction.multiplyScalar(0.1 * (-dataLeft.axisY))
+          direction.multiplyScalar(0.1 * dataLeft.axisY);
           // get the current position
-          var pos = player.getAttribute("position")
+          var pos = player.getAttribute("position");
           // add the direction vector
-          pos.add(direction)
+          pos.add(direction);
           // set the new position
           player.setAttribute("position", pos);
+
+		let textArea = document.querySelector("#textArea");
+        let text = "Test 2: " + JSON.stringify(direction);
+        textArea.setAttribute( "text", "value",  text);
 
 	}
 
