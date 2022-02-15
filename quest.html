@@ -119,14 +119,14 @@ AFRAME.registerComponent('text-display', {
 		           "[Y] Button: " + dataLeft.buttonY + "\n" +
 		           "   Trigger: " + dataLeft.trigger + "\n" +
 		           "      Grip: " + dataLeft.grip + "\n" +
-		           "\m" +
+		           "\n" +
 		           "Right Controller" + "\n" +
 		           "Joystick X: " + dataRight.axisX + "\n" +
 		           "Joystick Y: " + dataRight.axisY + "\n" +
 		           "[A] Button: " + dataRight.buttonA + "\n" +
 		           "[B] Button: " + dataRight.buttonB + "\n" +
 		           "   Trigger: " + dataRight.trigger + "\n" +
-		           "      Grip: " + dataRight.grip + "\n" +
+		           "      Grip: " + dataRight.grip + "\n";
 		           
 		this.el.setAttribute( "text", "value", text );
 	},
@@ -205,7 +205,7 @@ AFRAME.registerComponent('text-display', {
 
 	<a-entity
 		id="textArea"
-		position="0 1.5 -2"
+		position="0 1.5 -1.9"
 		geometry="primitive: plane;  width: 3; height: auto"
 		material="color: #444444; transparent: true; opacity: 0.80;"
 		text="anchor: center; baseline: center; wrapCount: 40;
