@@ -126,7 +126,7 @@ AFRAME.registerComponent("controller-move", {
 		   // get the cameras world direction
           this.el.sceneEl.camera.getWorldDirection(direction);
           // multiply the direction by a "speed" factor
-          direction.multiplyScalar(0.1 * dataLeft.axisY);
+          direction.multiplyScalar(dataLeft.axisY);
           // get the current position
           var pos = player.getAttribute("position");
           // add the direction vector
@@ -135,7 +135,7 @@ AFRAME.registerComponent("controller-move", {
           player.setAttribute("position", pos);
 
 		let textArea = document.querySelector("#textArea");
-        let text = "Test 2: " + JSON.stringify(direction);
+        let text = "Test 3: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
         textArea.setAttribute( "text", "value",  text);
 
 	}
