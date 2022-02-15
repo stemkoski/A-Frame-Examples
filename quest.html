@@ -9,27 +9,78 @@
 </head>
 
 <body>
-<a-scene renderer="antialias: true;">
-	  
-	<!-- Default lights: one directional light from top left, one small ambient light.
-		 Adding a light manually will remove the default lighting setup.
+
+<script>
+AFRAME.registerComponent('right-controller-listener', {
+	
+	schema:
+	{
+		tickNumber: {type: 'int', default: 0},
+		buttonA:    {type: 'boolean', default: false},
+		buttonB:    {type: 'boolean', default: false},
+		axisX:      {type: 'float',   default: 0},
+		axisY:      {type: 'float',   default: 0},
+	},
+
+	init: function()
+	{
+		let self = this;
+				
+		this.el.addEventListener("abuttondown", function(event)
+		  { self.data.buttonA = true; } );
 		
-		Custom light setup:
-		<a-entity 
-			light="type: ambient; color: #666666;" 
-		</a-entity>
-		<a-entity 
-			light="type: directional; color: #FFFFFF; castShadow: true;" 
-			position="-1 4 0">
-		</a-entity>
-	-->
+		this.el.addEventListener("abuttonup", function(event)
+		  { self.data.buttonA = false; } );
+		
+		this.el.addEventListener("bbuttondown", function(event)
+		  { self.data.buttonB = true; } );
+		
+		this.el.addEventListener("bbuttonup", function(event)
+		  { self.data.buttonB = false; } );
+
+		this.el.addEventListener('thumbstickmoved', function(event)
+		  { self.data.axisX = event.detail.x; 
+		  	self.data.axisY = event.detail.y; } );
+	},
+
+	tick: function()
+	{
+		this.data.tickNumber += 1;
+	},
+	
+});
+
+AFRAME.registerComponent('text-display', {
+	
+	tick: function()
+	{
+		let data = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
+
+		let text = "Tick: " + data.tickNumber + "\n" +
+		           "[A] Button: " + data.buttonA + "\n" +
+		           "[B] Button: " + data.buttonA + "\n" +
+		           "Joystick X: " + data.axisX + "\n" +
+		           "Joystick Y: " + data.axisY;
+		           
+		this.el.setAttribute( "text", "value", text );
+	},
+	
+});
+</script>
+
+
+<a-scene renderer="antialias: true;">
 		
 	<a-sky 
 		color = "#001337">
 	</a-sky>
 
 	<a-entity oculus-touch-controls="hand: left"></a-entity>
-	<a-entity oculus-touch-controls="hand: right"></a-entity>
+	<a-entity
+		id="right-controller-entity"
+	    oculus-touch-controls="hand: right"
+		right-controller-listener>
+	</a-entity>
 
 	<a-plane
 		width="100" height="100"
@@ -82,6 +133,17 @@
 		color="#8800FF"
 		shadow = "cast: true; receive: true">
 	</a-torus>
+
+	<a-entity
+		id="textArea"
+		position="0 1.5 -2"
+		geometry="primitive: plane;  width: 3; height: auto"
+		material="color: #444444; transparent: true; opacity: 0.80;"
+		text="anchor: center; baseline: center; wrapCount: 40;
+				transparent: true; opacity: 0.90; color: #8888FF;
+				value: 1 \n 2 \n 3 \n 4"
+		text-display>
+	</a-entity>
 
 </a-scene>
 
