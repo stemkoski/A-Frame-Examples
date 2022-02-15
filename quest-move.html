@@ -128,7 +128,7 @@ AFRAME.registerComponent("controller-move", {
         
         direction.y = 0; // no flying, please
         direction.normalize();
-        
+
         // multiply the direction by a "speed" factor
         direction.multiplyScalar(-dataLeft.axisY * 0.1);
           // get the current position
@@ -139,7 +139,7 @@ AFRAME.registerComponent("controller-move", {
           player.setAttribute("position", pos);
 
 		let textArea = document.querySelector("#textArea");
-        let text = "Test 4: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
+        let text = "Test 5: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
         textArea.setAttribute( "text", "value",  text);
 
 	}
