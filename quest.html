@@ -11,15 +11,63 @@
 <body>
 
 <script>
+AFRAME.registerComponent('left-controller-listener', {
+	
+	schema:
+	{
+		buttonX:    {type: 'boolean', default: false},
+		buttonY:    {type: 'boolean', default: false},
+		axisX:      {type: 'float',   default: 0},
+		axisY:      {type: 'float',   default: 0},
+		trigger:    {type: 'boolean', default: false},
+		grip:       {type: 'boolean', default: false},
+	},
+
+	init: function()
+	{
+		let self = this;
+				
+		this.el.addEventListener("xbuttondown", function(event)
+		  { self.data.buttonX = true; } );
+		
+		this.el.addEventListener("xbuttonup", function(event)
+		  { self.data.buttonX = false; } );
+		
+		this.el.addEventListener("ybuttondown", function(event)
+		  { self.data.buttonY = true; } );
+		
+		this.el.addEventListener("ybuttonup", function(event)
+		  { self.data.buttonY = false; } );
+
+		this.el.addEventListener("triggerdown", function(event)
+		  { self.data.trigger = true; } );
+		
+		this.el.addEventListener("triggerup", function(event)
+		  { self.data.trigger = false; } );
+
+		this.el.addEventListener("gripdown", function(event)
+		  { self.data.grip = true; } );
+		
+		this.el.addEventListener("gripup", function(event)
+		  { self.data.grip = false; } );
+
+		this.el.addEventListener('thumbstickmoved', function(event)
+		  { self.data.axisX = event.detail.x; 
+		  	self.data.axisY = event.detail.y; } );
+	},
+	
+});
+
 AFRAME.registerComponent('right-controller-listener', {
 	
 	schema:
 	{
-		tickNumber: {type: 'int', default: 0},
 		buttonA:    {type: 'boolean', default: false},
 		buttonB:    {type: 'boolean', default: false},
 		axisX:      {type: 'float',   default: 0},
 		axisY:      {type: 'float',   default: 0},
+		trigger:    {type: 'boolean', default: false},
+		grip:       {type: 'boolean', default: false},
 	},
 
 	init: function()
@@ -38,14 +86,21 @@ AFRAME.registerComponent('right-controller-listener', {
 		this.el.addEventListener("bbuttonup", function(event)
 		  { self.data.buttonB = false; } );
 
+		this.el.addEventListener("triggerdown", function(event)
+		  { self.data.trigger = true; } );
+		
+		this.el.addEventListener("triggerup", function(event)
+		  { self.data.trigger = false; } );
+
+		this.el.addEventListener("gripdown", function(event)
+		  { self.data.grip = true; } );
+		
+		this.el.addEventListener("gripup", function(event)
+		  { self.data.grip = false; } );
+
 		this.el.addEventListener('thumbstickmoved', function(event)
 		  { self.data.axisX = event.detail.x; 
 		  	self.data.axisY = event.detail.y; } );
-	},
-
-	tick: function()
-	{
-		this.data.tickNumber += 1;
 	},
 	
 });
@@ -54,13 +109,24 @@ AFRAME.registerComponent('text-display', {
 	
 	tick: function()
 	{
-		let data = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
+		let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
+		let dataRight = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
 
-		let text = "Tick: " + data.tickNumber + "\n" +
-		           "[A] Button: " + data.buttonA + "\n" +
-		           "[B] Button: " + data.buttonA + "\n" +
-		           "Joystick X: " + data.axisX + "\n" +
-		           "Joystick Y: " + data.axisY;
+		let text = "Left Controller" + "\n" +
+		           "Joystick X: " + dataLeft.axisX + "\n" +
+		           "Joystick Y: " + dataLeft.axisY + "\n" + 
+		           "[X] Button: " + dataLeft.buttonX + "\n" +
+		           "[Y] Button: " + dataLeft.buttonY + "\n" +
+		           "   Trigger: " + dataLeft.trigger + "\n" +
+		           "      Grip: " + dataLeft.grip + "\n" +
+		           "\m" +
+		           "Right Controller" + "\n" +
+		           "Joystick X: " + dataRight.axisX + "\n" +
+		           "Joystick Y: " + dataRight.axisY + "\n" +
+		           "[A] Button: " + dataRight.buttonA + "\n" +
+		           "[B] Button: " + dataRight.buttonB + "\n" +
+		           "   Trigger: " + dataRight.trigger + "\n" +
+		           "      Grip: " + dataRight.grip + "\n" +
 		           
 		this.el.setAttribute( "text", "value", text );
 	},
@@ -68,14 +134,17 @@ AFRAME.registerComponent('text-display', {
 });
 </script>
 
-
 <a-scene renderer="antialias: true;">
 		
 	<a-sky 
 		color = "#001337">
 	</a-sky>
 
-	<a-entity oculus-touch-controls="hand: left"></a-entity>
+	<a-entity 
+	    id="left-controller-entity"
+	    oculus-touch-controls="hand: left"
+	    left-controller-listener>
+    </a-entity>
 	<a-entity
 		id="right-controller-entity"
 	    oculus-touch-controls="hand: right"
