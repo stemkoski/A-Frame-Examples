@@ -130,13 +130,16 @@ AFRAME.registerComponent("controller-move", {
         direction.normalize();
 
           // multiply the direction by a "speed" factor
-          // direction.multiplyScalar(-dataLeft.axisY * 0.1);
+          //  works for moving forwards/backwards in camera direction
+          direction.multiplyScalar(-dataLeft.axisY * 0.1);
+          
           // get the current position
           var pos = player.getAttribute("position");
           // add the direction vector
-          pos.z += direction.z * -dataLeft.axisY * 0.1;
-          pos.x += direction.x *  dataLeft.axisX * 0.1;
-          // pos.add(direction);
+          // pos.z += direction.z * -dataLeft.axisY * 0.1;
+          // pos.x += direction.x *  dataLeft.axisX * 0.1;
+          
+          pos.add(direction);
           // set the new position
           player.setAttribute("position", pos);
 
