@@ -36,30 +36,34 @@ AFRAME.registerComponent("controller-move", {
         let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
 
         // get data from quest controllers
-        let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"].data;
-        let leftX = dataLeft.axisX;
-        let leftY = dataLeft.axisY;
-        let joystickAngle = Math.atan2(leftY, leftX);
-        let joystickLength = Math.sqrt(leftX * leftX + leftY * leftY);
+        let leftController = document.querySelector("#left-controller-entity");
+        let leftData = leftController.components["controller-listener"].data;
+        let leftJoystickX = leftData.axisX;
+        let leftJoystickY = leftData.axisY;
+        let leftJoystickAngle = Math.atan2(leftJoystickY, leftJoystickX);
+        let leftJoystickLength = Math.sqrt(leftJoystickX * leftJoystickX + leftJoystickY * leftJoystickY);
 
-        if ( joystickLength > 0.001 )
+        // moving on horizontal (XZ) plane
+        if ( leftJoystickLength > 0.001 )
         {
             let distance = this.moveSpeed * deltaTime;
 
-            let angle = cameraAngle + joystickAngle;
-            let right   = -joystickLength * Math.sin(angle) * distance;
-            let forward =  joystickLength * Math.cos(angle) * distance;
+            let angle = cameraAngle + leftJoystickAngle;
+            let right   = -leftJoystickLength * Math.sin(angle) * distance;
+            let forward =  leftJoystickLength * Math.cos(angle) * distance;
                           
-            let pos = this.el.getAttribute("position");
-            pos.z += forward;
-            pos.x += right;
-            this.el.setAttribute("position", pos);
+            let cameraRigPos = this.el.getAttribute("position");
+            cameraRigPos.z += forward;
+            cameraRigPos.x += right;
+            this.el.setAttribute("position", cameraRigPos);
         }
 
-        let dataRight  = document.querySelector("#right-controller-entity").components["controller-listener"].data;
-        let rightX = dataRight.axisX;
-        let rightY = dataRight.axisY;
+        let rightController = document.querySelector("#right-controller-entity");
+        let rightData  = rightController.components["controller-listener"].data;
+        let rightX = rightData.axisX;
+        let rightY = rightData.axisY;
 
+        // turning in horizontal (XZ) plane
         if ( Math.abs(rightX) < 0.10 )
         {           
             this.turnReady = true;
@@ -82,6 +86,53 @@ AFRAME.registerComponent("controller-move", {
                 this.turnReady = false;
             }
         }
+
+        // moving ("climbing") in vertical (Y) direction
+        if (rightData.trigger && rightData.grip)
+        {
+        	let controllerPos = rightController.getAttribute("position");
+        	if ( !rightData.buttonA )
+        	{
+        		this.rightHandPreviousY = controllerPos.y;
+        	}
+        	else // if ( rightData.buttonA )
+        	{
+        		let rightHandCurrentY = controllerPos.y;
+        		let offsetY = rightHandCurrentY - this.rightHandPreviousY;
+
+        		let cameraRigPos = this.el.getAttribute("position")
+        		cameraRigPos.y -= offsetY;
+
+        		this.el.setAttribute("position", cameraRigPos);
+        		// what is now current is considered previous during the next check
+        		this.rightHandPreviousY = rightHandCurrentY;
+        	}
+        }
+
+        // moving ("climbing") in vertical (Y) direction
+        if (leftData.trigger && leftData.grip)
+        {
+        	let leftControllerPos = leftController.getAttribute("position");
+        	if ( !leftData.buttonX )
+        	{
+        		this.leftHandPreviousY = leftControllerPos.y;
+        	}
+        	else // if ( leftData.buttonX )
+        	{
+        		let leftHandCurrentY = leftControllerPos.y;
+        		let offsetY = leftHandCurrentY - this.leftHandPreviousY;
+
+        		let cameraRigPos = this.el.getAttribute("position")
+        		cameraRigPos.y -= offsetY;
+
+        		this.el.setAttribute("position", cameraRigPos);
+        		// what is now current is considered previous during the next check
+        		this.leftHandPreviousY = leftHandCurrentY;
+        	}
+        }
+
+      
+
     }
 
 });
@@ -165,7 +216,7 @@ AFRAME.registerComponent("controller-move", {
         shadow = "cast: true; receive: true">
     </a-torus>
 
-  <!--
+    <!--
     <a-entity
         id="textArea"
         position="0 1.5 -1.9"
@@ -176,7 +227,7 @@ AFRAME.registerComponent("controller-move", {
                 value: 1 \n 2 \n 3 \n 4"
         text-display>
     </a-entity>
-  -->
+    -->
 
 </a-scene>
 
