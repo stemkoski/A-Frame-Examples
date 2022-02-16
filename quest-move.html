@@ -120,6 +120,8 @@ AFRAME.registerComponent("controller-move", {
 
     tick: function()
 	  {
+        let deltaTime = this.clock.getDelta();
+
       	// create a vector to store camera direction
      	  let cameraDirection = new THREE.Vector3();
 		    // get the cameras world direction
@@ -135,7 +137,6 @@ AFRAME.registerComponent("controller-move", {
 
         if ( joystickLength > 0.001 )
         {
-		        let deltaTime = this.clock.getDelta();
 						let distance = this.moveSpeed * deltaTime;
 
 						let angle = cameraAngle + joystickAngle;
@@ -218,7 +219,7 @@ AFRAME.registerComponent("controller-move", {
 		shadow="cast: false; receive: true">
 	</a-plane>
   -->
-  
+
 	<a-torus-knot 
 		p="2" q="3" radius="0.5" radius-tubular="0.1"
 		position = "-2.5 1.5 -4"
