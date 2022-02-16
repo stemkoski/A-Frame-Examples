@@ -108,43 +108,41 @@ AFRAME.registerComponent('right-controller-listener', {
 AFRAME.registerComponent("controller-move", {
     init: function() 
     {
-     
+     		this.clock = new THREE.Clock();
 
     },
 
     tick: function()
-	{
+	  {
 		
+      	// create a vector to store camera direction
+     	  let cameraDirection = new THREE.Vector3();
+		    // get the cameras world direction
+        this.el.sceneEl.camera.getWorldDirection(cameraDirection);
+        let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
 
-		let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
-		
-		// grab the camera
-      	var player = this.el;
-      	// create a direction vector
-     	var direction = new THREE.Vector3();
+        // get data from quest controllers
+		    let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
+		    let x = dataLeft.axisX;
+		    let y = dataLeft.axisY;
+        let joystickAngle = Math.atan2(y, x);
+        let joystickLength = Math.sqrt(x*x + y*y);
 
-		// get the cameras world direction
-        this.el.sceneEl.camera.getWorldDirection(direction);
+        let speed = 1; // unit per second
+        let deltaTime = this.clock.getDelta();
+				let distance = speed * deltaTime;
+
+				let angle = cameraAngle + joystickAngle;
+        let right   = -joystickLength * Math.sin(angle) * distance;
+        let forward =  joystickLength * Math.cos(angle) * distance;
+                  
+        var pos = this.el.getAttribute("position");
+        pos.z += forward;
+        pos.x += right;
+        this.el.setAttribute("position", pos);
         
-        direction.y = 0; // no flying, please
-        direction.normalize();
-
-          // multiply the direction by a "speed" factor
-          //  works for moving forwards/backwards in camera direction
-          direction.multiplyScalar(-dataLeft.axisY * 0.1);
-          
-          // get the current position
-          var pos = player.getAttribute("position");
-          // add the direction vector
-          // pos.z += direction.z * -dataLeft.axisY * 0.1;
-          // pos.x += direction.x *  dataLeft.axisX * 0.1;
-          
-          pos.add(direction);
-          // set the new position
-          player.setAttribute("position", pos);
-
-		let textArea = document.querySelector("#textArea");
-        let text = "Test 6: " + "axisY: " + dataLeft.axisY + " " + JSON.stringify(direction);
+		    let textArea = document.querySelector("#textArea");
+        let text = "Test 7";
         textArea.setAttribute( "text", "value",  text);
 
 	}
