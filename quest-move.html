@@ -2,279 +2,180 @@
 <html>
 
 <head>
-	<title>A-Frame: Quest controller movement</title>
-	<meta name="description" content="Moving around an A-Frame scene with Quest touch controllers.">
-	<script src="js/aframe-master-v1.3.0.min.js"></script>
-	<script src="js/aframe-environment-component.js"></script>
+    <title>A-Frame: Quest controller movement</title>
+    <meta name="description" content="Moving around an A-Frame scene with Quest touch controllers.">
+    <script src="js/aframe-master-v1.3.0.min.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
 
 </head>
 
 <body>
 
 <script>
-AFRAME.registerComponent('left-controller-listener', {
-	
-	schema:
-	{
-		buttonX:    {type: 'boolean', default: false},
-		buttonY:    {type: 'boolean', default: false},
-		axisX:      {type: 'float',   default: 0},
-		axisY:      {type: 'float',   default: 0},
-		trigger:    {type: 'boolean', default: false},
-		grip:       {type: 'boolean', default: false},
-	},
-
-	init: function()
-	{
-		let self = this;
-				
-		this.el.addEventListener("xbuttondown", function(event)
-		  { self.data.buttonX = true; } );
-		
-		this.el.addEventListener("xbuttonup", function(event)
-		  { self.data.buttonX = false; } );
-		
-		this.el.addEventListener("ybuttondown", function(event)
-		  { self.data.buttonY = true; } );
-		
-		this.el.addEventListener("ybuttonup", function(event)
-		  { self.data.buttonY = false; } );
-
-		this.el.addEventListener("triggerdown", function(event)
-		  { self.data.trigger = true; } );
-		
-		this.el.addEventListener("triggerup", function(event)
-		  { self.data.trigger = false; } );
-
-		this.el.addEventListener("gripdown", function(event)
-		  { self.data.grip = true; } );
-		
-		this.el.addEventListener("gripup", function(event)
-		  { self.data.grip = false; } );
-
-		this.el.addEventListener('thumbstickmoved', function(event)
-		  { self.data.axisX = event.detail.x; 
-		  	self.data.axisY = event.detail.y; } );
-	},
-	
-});
-
-AFRAME.registerComponent('right-controller-listener', {
-	
-	schema:
-	{
-		buttonA:    {type: 'boolean', default: false},
-		buttonB:    {type: 'boolean', default: false},
-		axisX:      {type: 'float',   default: 0},
-		axisY:      {type: 'float',   default: 0},
-		trigger:    {type: 'boolean', default: false},
-		grip:       {type: 'boolean', default: false},
-	},
-
-	init: function()
-	{
-		let self = this;
-				
-		this.el.addEventListener("abuttondown", function(event)
-		  { self.data.buttonA = true; } );
-		
-		this.el.addEventListener("abuttonup", function(event)
-		  { self.data.buttonA = false; } );
-		
-		this.el.addEventListener("bbuttondown", function(event)
-		  { self.data.buttonB = true; } );
-		
-		this.el.addEventListener("bbuttonup", function(event)
-		  { self.data.buttonB = false; } );
-
-		this.el.addEventListener("triggerdown", function(event)
-		  { self.data.trigger = true; } );
-		
-		this.el.addEventListener("triggerup", function(event)
-		  { self.data.trigger = false; } );
-
-		this.el.addEventListener("gripdown", function(event)
-		  { self.data.grip = true; } );
-		
-		this.el.addEventListener("gripup", function(event)
-		  { self.data.grip = false; } );
-
-		this.el.addEventListener('thumbstickmoved', function(event)
-		  { self.data.axisX = event.detail.x; 
-		  	self.data.axisY = event.detail.y; } );
-	},
-	
-});
-
 AFRAME.registerComponent("controller-move", {
     init: function() 
     {
-     		this.clock = new THREE.Clock();
+        this.clock = new THREE.Clock();
 
-				this.moveSpeed = 1; // units per second
-     		// press right joystick left/right to turn left/right by N degrees;
-     		//  must return to rest/center position before turning again
-     		this.turnReady = true;
-     		this.turnAngle = 45;
+        this.moveSpeed = 1; // units per second
+        // press right joystick left/right to turn left/right by N degrees;
+        //  must return to rest/center position before turning again
+        this.turnReady = true;
+        this.turnAngle = 45;
     },
 
     tick: function()
-	  {
+    {
         let deltaTime = this.clock.getDelta();
 
-      	// create a vector to store camera direction
-     	  let cameraDirection = new THREE.Vector3();
-		    // get the cameras world direction
+        // create a vector to store camera direction
+        let cameraDirection = new THREE.Vector3();
+        // get the cameras world direction
         this.el.sceneEl.camera.getWorldDirection(cameraDirection);
         let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
 
         // get data from quest controllers
-		    let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
-		    let leftX = dataLeft.axisX;
-		    let leftY = dataLeft.axisY;
+        let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"].data;
+        let leftX = dataLeft.axisX;
+        let leftY = dataLeft.axisY;
         let joystickAngle = Math.atan2(leftY, leftX);
         let joystickLength = Math.sqrt(leftX * leftX + leftY * leftY);
 
         if ( joystickLength > 0.001 )
         {
-						let distance = this.moveSpeed * deltaTime;
+            let distance = this.moveSpeed * deltaTime;
 
-						let angle = cameraAngle + joystickAngle;
-		        let right   = -joystickLength * Math.sin(angle) * distance;
-		        let forward =  joystickLength * Math.cos(angle) * distance;
-		                  
-		        let pos = this.el.getAttribute("position");
-		        pos.z += forward;
-		        pos.x += right;
-		        this.el.setAttribute("position", pos);
+            let angle = cameraAngle + joystickAngle;
+            let right   = -joystickLength * Math.sin(angle) * distance;
+            let forward =  joystickLength * Math.cos(angle) * distance;
+                          
+            let pos = this.el.getAttribute("position");
+            pos.z += forward;
+            pos.x += right;
+            this.el.setAttribute("position", pos);
         }
 
-		    let dataRight  = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
-		    let rightX = dataRight.axisX;
-		    let rightY = dataRight.axisY;
+        let dataRight  = document.querySelector("#right-controller-entity").components["controller-listener"].data;
+        let rightX = dataRight.axisX;
+        let rightY = dataRight.axisY;
 
-				if ( Math.abs(rightX) < 0.10 )
-				{		    
-				    this.turnReady = true;
-		    }
+        if ( Math.abs(rightX) < 0.10 )
+        {           
+            this.turnReady = true;
+        }
 
-		    if ( this.turnReady )
-		    {
-   	    	  if ( rightX > 0.90 )
-		    	  {
-		            let rot = this.el.getAttribute("rotation");
-		    	  	  rot.y -= this.turnAngle;
-			          this.el.setAttribute("rotation", rot);
-			          this.turnReady = false;
-		    	  }
-   	    	  if ( rightX < -0.90 )
-		    	  {
-		            let rot = this.el.getAttribute("rotation");
-		    	  	  rot.y += this.turnAngle;
-			          this.el.setAttribute("rotation", rot);
-			          this.turnReady = false;
-		    	  }
-		    }
-
-		    /*
-		    let textArea = document.querySelector("#textArea");
-        let text = "Debug Text";
-        textArea.setAttribute( "text", "value",  text);
-        */
-	}
+        if ( this.turnReady )
+        {
+            if ( rightX > 0.90 )
+            {
+                let rot = this.el.getAttribute("rotation");
+                rot.y -= this.turnAngle;
+                this.el.setAttribute("rotation", rot);
+                this.turnReady = false;
+            }
+            if ( rightX < -0.90 )
+            {
+                let rot = this.el.getAttribute("rotation");
+                rot.y += this.turnAngle;
+                this.el.setAttribute("rotation", rot);
+                this.turnReady = false;
+            }
+        }
+    }
 
 });
 
 </script>
 
 <a-scene environment="preset: default;" renderer="antialias: true;">
-		
-	<a-sky 
-		color = "#001337">
-	</a-sky>
+        
+    <a-sky 
+        color = "#001337">
+    </a-sky>
 
-	<a-entity id="cameraRig" position="0 0 0" controller-move>
-    	<a-camera></a-camera>
+    <a-entity id="cameraRig" position="0 0 0" controller-move>
+        <a-camera></a-camera>
 
-    	<a-entity 
-		    id="left-controller-entity"
-		    oculus-touch-controls="hand: left"
-		    left-controller-listener>
-    	</a-entity>
+        <a-entity 
+            id="left-controller-entity"
+            oculus-touch-controls="hand: left"
+            controller-listener="hand: left">
+        </a-entity>
 
-		<a-entity
-			id="right-controller-entity"
-		    oculus-touch-controls="hand: right"
-			right-controller-listener>
-		</a-entity>
+        <a-entity
+            id="right-controller-entity"
+            oculus-touch-controls="hand: right"
+            controller-listener="hand: right">
+        </a-entity>
 
-	</a-entity>
+    </a-entity>
 
   <!--
-	<a-plane
-		width="100" height="100"
-		position=" 0.00 0.00 0.00" 
-		rotation="-90 0 0" 
-		color="#666666"
-		shadow="cast: false; receive: true">
-	</a-plane>
+    <a-plane
+        width="100" height="100"
+        position=" 0.00 0.00 0.00" 
+        rotation="-90 0 0" 
+        color="#666666"
+        shadow="cast: false; receive: true">
+    </a-plane>
   -->
 
-	<a-torus-knot 
-		p="2" q="3" radius="0.5" radius-tubular="0.1"
-		position = "-2.5 1.5 -4"
-		color="#CC3333" 
-		shadow = "cast: true; receive: true">
-	</a-torus-knot>
-	
-	<a-box
-		width = "2" height = "1" depth = "1"
-		position = "-1 0.5 -3"
-		rotation = "0 45 0"  
-		color = "#FF8800"
-		shadow = "cast: true; receive: true">
-	</a-box>
-	
-	<a-sphere
-		radius = "1.25"
-		position = "0 1.25 -5"
-		color = "#DDBB00"
-		shadow = "cast: true; receive: true">
-	</a-sphere>
-	
-	<a-cylinder
-		radius = "0.5" height = "1.5"
-		position = " 1 0.75 -3"
-		color = "#008800" 
-		shadow = "cast: true; receive: true">
-	</a-cylinder>
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333" 
+        shadow = "cast: true; receive: true">
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800"
+        shadow = "cast: true; receive: true">
+    </a-box>
+    
+    <a-sphere
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00"
+        shadow = "cast: true; receive: true">
+    </a-sphere>
+    
+    <a-cylinder
+        radius = "0.5" height = "1.5"
+        position = " 1 0.75 -3"
+        color = "#008800" 
+        shadow = "cast: true; receive: true">
+    </a-cylinder>
 
-	<a-cone
-		radius-bottom = "1" radius-top = "0" height = "2"
-		position = "3 1 -4"
-		color = "#4444CC"
-		shadow = "cast: true; receive: true">
-	</a-cone>
-	
-	<a-torus 
-		radius="0.5" radius-tubular="0.1"
-		position = "2 3 -4"
-		rotation = "30 -20 0"
-		color="#8800FF"
-		shadow = "cast: true; receive: true">
-	</a-torus>
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC"
+        shadow = "cast: true; receive: true">
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF"
+        shadow = "cast: true; receive: true">
+    </a-torus>
 
   <!--
-	<a-entity
-		id="textArea"
-		position="0 1.5 -1.9"
-		geometry="primitive: plane;  width: 3; height: auto"
-		material="color: #444444; transparent: true; opacity: 0.80;"
-		text="anchor: center; baseline: center; wrapCount: 40;
-				transparent: true; opacity: 0.90; color: #8888FF;
-				value: 1 \n 2 \n 3 \n 4"
-		text-display>
-	</a-entity>
+    <a-entity
+        id="textArea"
+        position="0 1.5 -1.9"
+        geometry="primitive: plane;  width: 3; height: auto"
+        material="color: #444444; transparent: true; opacity: 0.80;"
+        text="anchor: center; baseline: center; wrapCount: 40;
+                transparent: true; opacity: 0.90; color: #8888FF;
+                value: 1 \n 2 \n 3 \n 4"
+        text-display>
+    </a-entity>
   -->
 
 </a-scene>
