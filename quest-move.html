@@ -5,6 +5,7 @@
 	<title>A-Frame: Quest controller movement</title>
 	<meta name="description" content="Moving around an A-Frame scene with Quest touch controllers.">
 	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
 
 </head>
 
@@ -110,11 +111,15 @@ AFRAME.registerComponent("controller-move", {
     {
      		this.clock = new THREE.Clock();
 
+				this.moveSpeed = 1; // units per second
+     		// press right joystick left/right to turn left/right by N degrees;
+     		//  must return to rest/center position before turning again
+     		this.turnReady = true;
+     		this.turnAngle = 45;
     },
 
     tick: function()
 	  {
-		
       	// create a vector to store camera direction
      	  let cameraDirection = new THREE.Vector3();
 		    // get the cameras world direction
@@ -123,35 +128,65 @@ AFRAME.registerComponent("controller-move", {
 
         // get data from quest controllers
 		    let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
-		    let x = dataLeft.axisX;
-		    let y = dataLeft.axisY;
-        let joystickAngle = Math.atan2(y, x);
-        let joystickLength = Math.sqrt(x*x + y*y);
+		    let leftX = dataLeft.axisX;
+		    let leftY = dataLeft.axisY;
+        let joystickAngle = Math.atan2(leftY, leftX);
+        let joystickLength = Math.sqrt(leftX * leftX + leftY * leftY);
 
-        let speed = 1; // unit per second
-        let deltaTime = this.clock.getDelta();
-				let distance = speed * deltaTime;
+        if ( joystickLength > 0.001 )
+        {
+		        let deltaTime = this.clock.getDelta();
+						let distance = this.moveSpeed * deltaTime;
 
-				let angle = cameraAngle + joystickAngle;
-        let right   = -joystickLength * Math.sin(angle) * distance;
-        let forward =  joystickLength * Math.cos(angle) * distance;
-                  
-        var pos = this.el.getAttribute("position");
-        pos.z += forward;
-        pos.x += right;
-        this.el.setAttribute("position", pos);
-        
+						let angle = cameraAngle + joystickAngle;
+		        let right   = -joystickLength * Math.sin(angle) * distance;
+		        let forward =  joystickLength * Math.cos(angle) * distance;
+		                  
+		        let pos = this.el.getAttribute("position");
+		        pos.z += forward;
+		        pos.x += right;
+		        this.el.setAttribute("position", pos);
+        }
+
+		    let dataRight  = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
+		    let rightX = dataRight.axisX;
+		    let rightY = dataRight.axisY;
+
+				if ( Math.abs(rightX) < 0.10 )
+				{		    
+				    this.turnReady = true;
+		    }
+
+		    if ( this.turnReady )
+		    {
+   	    	  if ( rightX > 0.90 )
+		    	  {
+		            let rot = this.el.getAttribute("rotation");
+		    	  	  rot.y -= this.turnAngle;
+			          this.el.setAttribute("rotation", rot);
+			          this.turnReady = false;
+		    	  }
+   	    	  if ( rightX < -0.90 )
+		    	  {
+		            let rot = this.el.getAttribute("rotation");
+		    	  	  rot.y += this.turnAngle;
+			          this.el.setAttribute("rotation", rot);
+			          this.turnReady = false;
+		    	  }
+		    }
+
+		    /*
 		    let textArea = document.querySelector("#textArea");
-        let text = "Test 7";
+        let text = "Debug Text";
         textArea.setAttribute( "text", "value",  text);
-
+        */
 	}
 
 });
 
 </script>
 
-<a-scene renderer="antialias: true;">
+<a-scene environment="preset: default;" renderer="antialias: true;">
 		
 	<a-sky 
 		color = "#001337">
@@ -174,8 +209,7 @@ AFRAME.registerComponent("controller-move", {
 
 	</a-entity>
 
-	
-
+  <!--
 	<a-plane
 		width="100" height="100"
 		position=" 0.00 0.00 0.00" 
@@ -183,7 +217,8 @@ AFRAME.registerComponent("controller-move", {
 		color="#666666"
 		shadow="cast: false; receive: true">
 	</a-plane>
-
+  -->
+  
 	<a-torus-knot 
 		p="2" q="3" radius="0.5" radius-tubular="0.1"
 		position = "-2.5 1.5 -4"
@@ -228,6 +263,7 @@ AFRAME.registerComponent("controller-move", {
 		shadow = "cast: true; receive: true">
 	</a-torus>
 
+  <!--
 	<a-entity
 		id="textArea"
 		position="0 1.5 -1.9"
@@ -238,6 +274,7 @@ AFRAME.registerComponent("controller-move", {
 				value: 1 \n 2 \n 3 \n 4"
 		text-display>
 	</a-entity>
+  -->
 
 </a-scene>
 
