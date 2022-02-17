@@ -7,137 +7,11 @@
     <script src="js/aframe-master-v1.3.0.min.js"></script>
     <script src="js/aframe-environment-component.js"></script>
     <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
 
 </head>
 
 <body>
-
-<script>
-AFRAME.registerComponent("player-move", {
-    init: function() 
-    {
-        this.clock = new THREE.Clock();
-
-        this.moveSpeed = 1; // units per second
-        // press right joystick left/right to turn left/right by N degrees;
-        //  must return to rest/center position before turning again
-        this.turnReady = true;
-        this.turnAngle = 45;
-    },
-
-    tick: function()
-    {
-        let deltaTime = this.clock.getDelta();
-
-        // create a vector to store camera direction
-        let cameraDirection = new THREE.Vector3();
-        // get the cameras world direction
-        this.el.sceneEl.camera.getWorldDirection(cameraDirection);
-        let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
-
-        // get data from quest controllers
-        let leftController = document.querySelector("#left-controller-entity");
-        let leftData = leftController.components["controller-listener"].data;
-        let leftJoystickX = leftData.axisX;
-        let leftJoystickY = leftData.axisY;
-        let leftJoystickAngle = Math.atan2(leftJoystickY, leftJoystickX);
-        let leftJoystickLength = Math.sqrt(leftJoystickX * leftJoystickX + leftJoystickY * leftJoystickY);
-
-        // moving on horizontal (XZ) plane
-        if ( leftJoystickLength > 0.001 )
-        {
-            let distance = this.moveSpeed * deltaTime;
-
-            let angle = cameraAngle + leftJoystickAngle;
-            let right   = -leftJoystickLength * Math.sin(angle) * distance;
-            let forward =  leftJoystickLength * Math.cos(angle) * distance;
-                          
-            let playerPos = this.el.getAttribute("position");
-            playerPos.z += forward;
-            playerPos.x += right;
-            this.el.setAttribute("position", playerPos);
-        }
-
-        let rightController = document.querySelector("#right-controller-entity");
-        let rightData  = rightController.components["controller-listener"].data;
-        let rightX = rightData.axisX;
-        let rightY = rightData.axisY;
-
-        // turning in horizontal (XZ) plane
-        if ( Math.abs(rightX) < 0.10 )
-        {           
-            this.turnReady = true;
-        }
-
-        if ( this.turnReady )
-        {
-            if ( rightX > 0.90 )
-            {
-                let rot = this.el.getAttribute("rotation");
-                rot.y -= this.turnAngle;
-                this.el.setAttribute("rotation", rot);
-                this.turnReady = false;
-            }
-            if ( rightX < -0.90 )
-            {
-                let rot = this.el.getAttribute("rotation");
-                rot.y += this.turnAngle;
-                this.el.setAttribute("rotation", rot);
-                this.turnReady = false;
-            }
-        }
-
-        // moving ("climbing") in vertical (Y) direction
-        if (rightData.trigger && rightData.grip)
-        {
-        	let controllerPos = rightController.getAttribute("position");
-        	if ( !rightData.buttonA )
-        	{
-        		this.rightHandPreviousY = controllerPos.y;
-        	}
-        	else // if ( rightData.buttonA )
-        	{
-        		let rightHandCurrentY = controllerPos.y;
-        		let offsetY = rightHandCurrentY - this.rightHandPreviousY;
-
-        		let playerPos = this.el.getAttribute("position")
-        		playerPos.y -= offsetY;
-
-        		this.el.setAttribute("position", playerPos);
-        		// what is now current is considered previous during the next check
-        		this.rightHandPreviousY = rightHandCurrentY;
-        	}
-        }
-
-        // moving ("climbing") in vertical (Y) direction
-        if (leftData.trigger && leftData.grip)
-        {
-        	let leftControllerPos = leftController.getAttribute("position");
-        	if ( !leftData.buttonX )
-        	{
-        		this.leftHandPreviousY = leftControllerPos.y;
-        	}
-        	else // if ( leftData.buttonX )
-        	{
-        		let leftHandCurrentY = leftControllerPos.y;
-        		let offsetY = leftHandCurrentY - this.leftHandPreviousY;
-
-        		let playerPos = this.el.getAttribute("position")
-        		playerPos.y -= offsetY;
-
-        		this.el.setAttribute("position", playerPos);
-        		// what is now current is considered previous during the next check
-        		this.leftHandPreviousY = leftHandCurrentY;
-        	}
-        }
-
-      
-
-    }
-
-});
-
-</script>
 
 <a-scene environment="preset: default;" renderer="antialias: true;">
         
@@ -146,6 +20,7 @@ AFRAME.registerComponent("player-move", {
     </a-sky>
 
     <a-entity id="player" position="0 0 0" player-move>
+    	
         <a-camera></a-camera>
 
         <a-entity 
@@ -161,16 +36,6 @@ AFRAME.registerComponent("player-move", {
         </a-entity>
 
     </a-entity>
-
-  <!--
-    <a-plane
-        width="100" height="100"
-        position=" 0.00 0.00 0.00" 
-        rotation="-90 0 0" 
-        color="#666666"
-        shadow="cast: false; receive: true">
-    </a-plane>
-  -->
 
     <a-torus-knot 
         p="2" q="3" radius="0.5" radius-tubular="0.1"
