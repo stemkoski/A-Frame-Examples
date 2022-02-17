@@ -13,7 +13,7 @@
 <body>
 
 <script>
-AFRAME.registerComponent("controller-move", {
+AFRAME.registerComponent("player-move", {
     init: function() 
     {
         this.clock = new THREE.Clock();
@@ -52,10 +52,10 @@ AFRAME.registerComponent("controller-move", {
             let right   = -leftJoystickLength * Math.sin(angle) * distance;
             let forward =  leftJoystickLength * Math.cos(angle) * distance;
                           
-            let cameraRigPos = this.el.getAttribute("position");
-            cameraRigPos.z += forward;
-            cameraRigPos.x += right;
-            this.el.setAttribute("position", cameraRigPos);
+            let playerPos = this.el.getAttribute("position");
+            playerPos.z += forward;
+            playerPos.x += right;
+            this.el.setAttribute("position", playerPos);
         }
 
         let rightController = document.querySelector("#right-controller-entity");
@@ -100,10 +100,10 @@ AFRAME.registerComponent("controller-move", {
         		let rightHandCurrentY = controllerPos.y;
         		let offsetY = rightHandCurrentY - this.rightHandPreviousY;
 
-        		let cameraRigPos = this.el.getAttribute("position")
-        		cameraRigPos.y -= offsetY;
+        		let playerPos = this.el.getAttribute("position")
+        		playerPos.y -= offsetY;
 
-        		this.el.setAttribute("position", cameraRigPos);
+        		this.el.setAttribute("position", playerPos);
         		// what is now current is considered previous during the next check
         		this.rightHandPreviousY = rightHandCurrentY;
         	}
@@ -122,10 +122,10 @@ AFRAME.registerComponent("controller-move", {
         		let leftHandCurrentY = leftControllerPos.y;
         		let offsetY = leftHandCurrentY - this.leftHandPreviousY;
 
-        		let cameraRigPos = this.el.getAttribute("position")
-        		cameraRigPos.y -= offsetY;
+        		let playerPos = this.el.getAttribute("position")
+        		playerPos.y -= offsetY;
 
-        		this.el.setAttribute("position", cameraRigPos);
+        		this.el.setAttribute("position", playerPos);
         		// what is now current is considered previous during the next check
         		this.leftHandPreviousY = leftHandCurrentY;
         	}
@@ -145,7 +145,7 @@ AFRAME.registerComponent("controller-move", {
         color = "#001337">
     </a-sky>
 
-    <a-entity id="cameraRig" position="0 0 0" controller-move>
+    <a-entity id="player" position="0 0 0" player-move>
         <a-camera></a-camera>
 
         <a-entity 
