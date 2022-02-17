@@ -5,114 +5,20 @@
 	<title>Hello, WebVR! - A-Frame</title>
 	<meta name="description" content="Hello, WebVR! - A-Frame">
 	<script src="js/aframe-master-v1.3.0.min.js"></script>
-
+    <script src="js/controller-listener.js"></script>
 </head>
 
 <body>
 
 <script>
-AFRAME.registerComponent('left-controller-listener', {
-	
-	schema:
-	{
-		buttonX:    {type: 'boolean', default: false},
-		buttonY:    {type: 'boolean', default: false},
-		axisX:      {type: 'float',   default: 0},
-		axisY:      {type: 'float',   default: 0},
-		trigger:    {type: 'boolean', default: false},
-		grip:       {type: 'boolean', default: false},
-	},
-
-	init: function()
-	{
-		let self = this;
-				
-		this.el.addEventListener("xbuttondown", function(event)
-		  { self.data.buttonX = true; } );
-		
-		this.el.addEventListener("xbuttonup", function(event)
-		  { self.data.buttonX = false; } );
-		
-		this.el.addEventListener("ybuttondown", function(event)
-		  { self.data.buttonY = true; } );
-		
-		this.el.addEventListener("ybuttonup", function(event)
-		  { self.data.buttonY = false; } );
-
-		this.el.addEventListener("triggerdown", function(event)
-		  { self.data.trigger = true; } );
-		
-		this.el.addEventListener("triggerup", function(event)
-		  { self.data.trigger = false; } );
-
-		this.el.addEventListener("gripdown", function(event)
-		  { self.data.grip = true; } );
-		
-		this.el.addEventListener("gripup", function(event)
-		  { self.data.grip = false; } );
-
-		this.el.addEventListener('thumbstickmoved', function(event)
-		  { self.data.axisX = event.detail.x; 
-		  	self.data.axisY = event.detail.y; } );
-	},
-	
-});
-
-AFRAME.registerComponent('right-controller-listener', {
-	
-	schema:
-	{
-		buttonA:    {type: 'boolean', default: false},
-		buttonB:    {type: 'boolean', default: false},
-		axisX:      {type: 'float',   default: 0},
-		axisY:      {type: 'float',   default: 0},
-		trigger:    {type: 'boolean', default: false},
-		grip:       {type: 'boolean', default: false},
-	},
-
-	init: function()
-	{
-		let self = this;
-				
-		this.el.addEventListener("abuttondown", function(event)
-		  { self.data.buttonA = true; } );
-		
-		this.el.addEventListener("abuttonup", function(event)
-		  { self.data.buttonA = false; } );
-		
-		this.el.addEventListener("bbuttondown", function(event)
-		  { self.data.buttonB = true; } );
-		
-		this.el.addEventListener("bbuttonup", function(event)
-		  { self.data.buttonB = false; } );
-
-		this.el.addEventListener("triggerdown", function(event)
-		  { self.data.trigger = true; } );
-		
-		this.el.addEventListener("triggerup", function(event)
-		  { self.data.trigger = false; } );
-
-		this.el.addEventListener("gripdown", function(event)
-		  { self.data.grip = true; } );
-		
-		this.el.addEventListener("gripup", function(event)
-		  { self.data.grip = false; } );
-
-		this.el.addEventListener('thumbstickmoved', function(event)
-		  { self.data.axisX = event.detail.x; 
-		  	self.data.axisY = event.detail.y; } );
-	},
-	
-});
-
 AFRAME.registerComponent('text-display', {
 	
 	tick: function()
 	{
-		let dataLeft  = document.querySelector("#left-controller-entity").components["left-controller-listener"].data;
-		let dataRight = document.querySelector("#right-controller-entity").components["right-controller-listener"].data;
+		let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"].data;
+		let dataRight = document.querySelector("#right-controller-entity").components["controller-listener"].data;
 
-		let text = "Left Controller" + "\n" +
+		let text = "Left Controller:" + "\n" +
 		           "Joystick X: " + dataLeft.axisX + "\n" +
 		           "Joystick Y: " + dataLeft.axisY + "\n" + 
 		           "[X] Button: " + dataLeft.buttonX + "\n" +
@@ -120,7 +26,7 @@ AFRAME.registerComponent('text-display', {
 		           "   Trigger: " + dataLeft.trigger + "\n" +
 		           "      Grip: " + dataLeft.grip + "\n" +
 		           "----------------------------------- \n" +
-		           "Right Controller" + "\n" +
+		           "Right Controller:" + "\n" +
 		           "Joystick X: " + dataRight.axisX + "\n" +
 		           "Joystick Y: " + dataRight.axisY + "\n" +
 		           "[A] Button: " + dataRight.buttonA + "\n" +
@@ -143,12 +49,12 @@ AFRAME.registerComponent('text-display', {
 	<a-entity 
 	    id="left-controller-entity"
 	    oculus-touch-controls="hand: left"
-	    left-controller-listener>
+	    controller-listener="hand: left">
     </a-entity>
 	<a-entity
 		id="right-controller-entity"
 	    oculus-touch-controls="hand: right"
-		right-controller-listener>
+		controller-listener="hand: right">
 	</a-entity>
 
 	<a-plane
