@@ -17,10 +17,10 @@ AFRAME.registerComponent("player-move", {
         // get data from quest controllers;
         //   requires the "controller-listener" component
         let leftController = document.querySelector("#left-controller-entity");
-        let leftData = leftController.components["controller-listener"].data;
+        let leftData       = leftController.components["controller-listener"];
 
         let rightController = document.querySelector("#right-controller-entity");
-        let rightData  = rightController.components["controller-listener"].data;
+        let rightData       = rightController.components["controller-listener"];
 
         // =====================================================================
         // moving on horizontal (XZ) plane
@@ -41,6 +41,9 @@ AFRAME.registerComponent("player-move", {
             let moveAngle = cameraAngle + leftJoystickAngle;
 
             let moveDistance = this.moveSpeed * deltaTime;
+
+            // move faster if pressing trigger at same time
+            moveDistance *= (1 + 9 * leftData.trigger.value);
 
             // convert move distance and angle to right and forward amounts
             // scale by magnitude of joystick press (smaller press moves player slower)
@@ -88,16 +91,16 @@ AFRAME.registerComponent("player-move", {
         // =====================================================================
 
         // hold trigger + grab, then hold A/X to pull player
-        if (rightData.trigger && rightData.grip)
+        if ( rightData.trigger.pressing && rightData.grip.pressing )
         {
         	let rightHandCurrentPos = rightController.getAttribute("position");
-        	if ( !rightData.buttonA )
+        	if ( !rightData.buttonA.pressing )
         	{
         		this.rightHandPreviousX = rightHandCurrentPos.x;
         		this.rightHandPreviousY = rightHandCurrentPos.y;
         		this.rightHandPreviousZ = rightHandCurrentPos.z;
         	}
-        	else // if ( rightData.buttonA )
+        	else // if ( rightData.buttonA.pressing )
         	{
         		let playerPos = this.el.getAttribute("position")
         		playerPos.x -= (rightHandCurrentPos.x - this.rightHandPreviousX);
@@ -112,16 +115,16 @@ AFRAME.registerComponent("player-move", {
         	}
         }
 
-        if (leftData.trigger && leftData.grip)
+        if ( leftData.trigger.pressing && leftData.grip.pressing )
         {
         	let leftHandCurrentPos = leftController.getAttribute("position");
-        	if ( !leftData.buttonX )
+        	if ( !leftData.buttonX.pressing )
         	{
         		this.leftHandPreviousX = leftHandCurrentPos.x;
         		this.leftHandPreviousY = leftHandCurrentPos.y;
         		this.leftHandPreviousZ = leftHandCurrentPos.z;
         	}
-        	else // if ( rightData.buttonX )
+        	else // if ( rightData.buttonX.pressing )
         	{
         		let playerPos = this.el.getAttribute("position")
         		playerPos.x -= (leftHandCurrentPos.x - this.leftHandPreviousX);
