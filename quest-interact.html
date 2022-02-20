@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>A-Frame: Quest controller movement</title>
+    <meta name="description" content="Moving around an A-Frame scene with Quest touch controllers.">
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-graphics.js"></script>
+    <script src="js/raycaster-controller-grabber.js"></script>
+</head>
+
+<body>
+
+<script>
+// if raycaster is pointing at this object, press trigger to change color
+AFRAME.registerComponent("raycaster-color-change", {
+    init: function () 
+    {
+        this.colors = ["red", "orange", "yellow", "green", "blue", "violet"];
+
+        this.intersecting = false;
+        let self = this;
+
+        // this happens once, when intersection begins
+        this.el.addEventListener("raycaster-intersected", function(event)
+            { self.intersecting = true; } );
+
+        // this happens once, when intersection ends
+        this.el.addEventListener("raycaster-intersected-cleared", function(event)
+            { self.intersecting = false; } );
+
+        this.rightController = document.querySelector("#right-controller-entity");
+        this.rightData       = this.rightController.components["controller-listener"];
+    },
+
+    tick: function()
+    {
+        // this.rightData = this.rightController.components["controller-listener"]; // remove?
+        if (this.intersecting && this.rightData.trigger.pressed )
+        {
+            let index = Math.floor( this.colors.length * Math.random() );
+            let color = this.colors[index];
+            this.el.setAttribute("color", color);
+        }
+        
+        if (!this.intersecting || this.rightData.trigger.released)
+        {
+            this.el.setAttribute("color", "#CCCCCC");
+        }
+    }
+});
+
+
+</script>
+
+<a-scene environment="preset: default;" renderer="antialias: true;">
+        
+    <a-assets>
+        <img id="gradient" src="images/gradient-fade.png" />
+        <img id="border"   src="images/border.png" />
+    </a-assets>
+
+    <a-sky 
+        color = "#001337">
+    </a-sky>
+
+    <a-entity id="player" position="0 0 0" player-move>
+    	
+        <a-camera></a-camera>
+
+        <a-entity 
+            visible="true"
+            id="left-controller-entity"
+            oculus-touch-controls="hand: left"
+            controller-listener="hand: left">
+        </a-entity>
+
+        <a-entity
+            visible="true"
+            id="right-controller-entity"
+            laser-controls="hand: right"
+            raycaster="objects: .raycaster-target, .environmentGround;"
+            raycaster-graphics="beamImageSrc: #gradient; beamLength: 1;"
+            raycaster-controller-grabber
+            controller-listener="hand: right">
+        </a-entity>
+
+    </a-entity>
+
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333"
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800"
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-box>
+
+    <a-sphere
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00"
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-sphere>
+    
+    <a-cylinder
+        radius = "0.5" height = "1.5"
+        position = " 1 0.75 -3"
+        color = "#008800" 
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-cylinder>
+
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC"
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF"
+        class="raycaster-target"
+        raycaster-hover-glow>
+    </a-torus>
+
+    <!-- demo interaction boxes -->
+
+    <a-box
+        width = "0.5" height = "0.5" depth = "0.5"
+        position = "0 1 -2"
+        color = "#EEEEEE"
+        material = "src: #border;"
+        class="raycaster-target grabbable"
+        raycaster-hover-glow
+        raycaster-color-change>
+    </a-box>
+
+    <a-box
+        width = "0.5" height = "0.5" depth = "0.5"
+        position = "-1 1 -2"
+        color = "#EEEEEE"
+        material = "src: #border;"
+        class="raycaster-target grabbable"
+        raycaster-hover-glow
+        raycaster-color-change>
+    </a-box>
+
+    <a-box
+        width = "0.5" height = "0.5" depth = "0.5"
+        position = "1 1 -2"
+        color = "#EEEEEE"
+        material = "src: #border;"
+        class="raycaster-target grabbable"
+        raycaster-hover-glow
+        raycaster-color-change>
+    </a-box>
+    
+
+    <!-- 
+    <a-entity
+        id="textArea"
+        position="0 1.5 -1.9"
+        geometry="primitive: plane;  width: 3; height: auto"
+        material="color: #444444; transparent: true; opacity: 0.80;"
+        text="anchor: center; baseline: center; wrapCount: 40;
+                transparent: true; opacity: 0.90; color: #8888FF;
+                value: \n Debug messages here. \n"
+        >
+    </a-entity>
+    -->
+
+</a-scene>
+
+</body>
+</html>
