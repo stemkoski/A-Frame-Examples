@@ -155,7 +155,7 @@ AFRAME.registerComponent("music-player", {
             "url(" + this.musicDataList[index].audioURL + ")" );
 
         // while loading music:
-        this.textArea.setAttribute("text", "value", "music loading...");
+        this.textArea.setAttribute("text", "value", " . . . music loading . . . ");
 
         // change play button icon to Wait
         this.playButton.setAttribute("material", "src", "#iconWait");
@@ -283,7 +283,6 @@ AFRAME.registerComponent("music-player", {
 
     <a-entity
         position = "0 1 -2"
-        scale = "0.5 0.5 0.5"
         music-player>
     </a-entity>
 
