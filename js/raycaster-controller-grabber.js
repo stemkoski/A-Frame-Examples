@@ -18,8 +18,9 @@ AFRAME.registerComponent("raycaster-controller-grabber", {
     {
         let deltaTime = this.clock.getDelta();
 
-        this.raycaster = this.el.components["raycaster"];
         this.rightData = this.rightController.components["controller-listener"];
+
+        this.raycaster         = this.el.components["raycaster"];
         this.raycasterGraphics = this.el.components["raycaster-graphics"];
 
         if ( this.rightData.grip.pressed &&
@@ -37,9 +38,6 @@ AFRAME.registerComponent("raycaster-controller-grabber", {
                 // Note: not changing the A-Frame DOM tree, because this is temporary
                 //   and will be added back to the scene when dropped.
                 this.el.object3D.attach( entity.object3D );
-
-                // change appearance setting (set by raycaster-graphics)
-                this.raycasterGraphics.beamEntity.setAttribute("material", "color", "cyan");
 
                 // raycaster-graphics keeps setting cursorEntity visible true,
                 //  so force cursor hidden by making setting children visibility to false
@@ -106,7 +104,6 @@ AFRAME.registerComponent("raycaster-controller-grabber", {
             if ( this.rightData.grip.released )
             {
                 // attach element back to root scene
-                // document.querySelector('a-scene').appendChild(this.grabbedElement);
                 this.grabbedElement.sceneEl.object3D.attach( this.grabbedElement.object3D );
 
                 // revert previous changes
@@ -116,10 +113,14 @@ AFRAME.registerComponent("raycaster-controller-grabber", {
                 material.offset.y = 0.001;
                 this.raycasterGraphics.beamEntity.setAttribute("material", material);
 
-                this.raycasterGraphics.beamEntity.setAttribute("material", "color", "white");
                 this.raycasterGraphics.cursorCenter.setAttribute("visible", true);
                 this.raycasterGraphics.cursorBorder.setAttribute("visible", true);
-                this.grabbedElement.setAttribute("material", "emissive", "#444444");
+
+                if ( this.grabbedElement.components["raycaster-hover"] &&
+                     this.grabbedElement.components["raycaster-hover"].data.glowOnHover)
+                {
+                    this.grabbedElement.setAttribute("material", "emissive", "#444444");
+                }
 
                 this.grabbedElement = null;
             }
