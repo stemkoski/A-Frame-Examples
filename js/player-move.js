@@ -8,6 +8,10 @@ AFRAME.registerComponent("player-move", {
 
         this.turnReady = true;
         this.turnAngle = 45;
+
+        // used when getting world position of controllers
+        this.tempVector1 = new THREE.Vector3();
+        this.tempVector2 = new THREE.Vector3();
     },
 
     tick: function()
@@ -93,49 +97,63 @@ AFRAME.registerComponent("player-move", {
         // hold trigger + grab, then hold A/X to pull player
         if ( rightData.trigger.pressing && rightData.grip.pressing )
         {
-        	let rightHandCurrentPos = rightController.getAttribute("position");
+        	// let rightHandCurrentPos = rightController.getAttribute("position");
+            rightController.object3D.getWorldPosition(this.tempVector1);
+
         	if ( !rightData.buttonA.pressing )
         	{
-        		this.rightHandPreviousX = rightHandCurrentPos.x;
-        		this.rightHandPreviousY = rightHandCurrentPos.y;
-        		this.rightHandPreviousZ = rightHandCurrentPos.z;
+        		this.rightHandPreviousX = this.tempVector1.x;
+        		this.rightHandPreviousY = this.tempVector1.y;
+        		this.rightHandPreviousZ = this.tempVector1.z;
         	}
         	else // if ( rightData.buttonA.pressing )
         	{
-        		let playerPos = this.el.getAttribute("position")
-        		playerPos.x -= (rightHandCurrentPos.x - this.rightHandPreviousX);
-        		playerPos.y -= (rightHandCurrentPos.y - this.rightHandPreviousY);
-        		playerPos.z -= (rightHandCurrentPos.z - this.rightHandPreviousZ);
-        		this.el.setAttribute("position", playerPos);
+        		// let playerPos = this.el.getAttribute("position");
+                this.el.object3D.getWorldPosition(this.tempVector2);
+
+        		this.tempVector2.x -= (this.tempVector1.x - this.rightHandPreviousX);
+        		this.tempVector2.y -= (this.tempVector1.y - this.rightHandPreviousY);
+        		this.tempVector2.z -= (this.tempVector1.z - this.rightHandPreviousZ);
+        		this.el.setAttribute("position", 
+                    { x: this.tempVector2.x,
+                      y: this.tempVector2.y,
+                      z: this.tempVector2.z  } );
 
         		// what is now current is considered previous during the next check
-        		this.rightHandPreviousX = rightHandCurrentPos.x;
-        		this.rightHandPreviousY = rightHandCurrentPos.y;
-        		this.rightHandPreviousZ = rightHandCurrentPos.z;
+        		this.rightHandPreviousX = this.tempVector1.x;
+        		this.rightHandPreviousY = this.tempVector1.y;
+        		this.rightHandPreviousZ = this.tempVector1.z;
         	}
         }
 
         if ( leftData.trigger.pressing && leftData.grip.pressing )
         {
-        	let leftHandCurrentPos = leftController.getAttribute("position");
+        	// let leftHandCurrentPos = leftController.getAttribute("position");
+            leftController.object3D.getWorldPosition(this.tempVector1);
+
         	if ( !leftData.buttonX.pressing )
         	{
-        		this.leftHandPreviousX = leftHandCurrentPos.x;
-        		this.leftHandPreviousY = leftHandCurrentPos.y;
-        		this.leftHandPreviousZ = leftHandCurrentPos.z;
+        		this.leftHandPreviousX = this.tempVector1.x;
+        		this.leftHandPreviousY = this.tempVector1.y;
+        		this.leftHandPreviousZ = this.tempVector1.z;
         	}
         	else // if ( rightData.buttonX.pressing )
         	{
-        		let playerPos = this.el.getAttribute("position")
-        		playerPos.x -= (leftHandCurrentPos.x - this.leftHandPreviousX);
-        		playerPos.y -= (leftHandCurrentPos.y - this.leftHandPreviousY);
-        		playerPos.z -= (leftHandCurrentPos.z - this.leftHandPreviousZ);
-        		this.el.setAttribute("position", playerPos);
+        		// let playerPos = this.el.getAttribute("position")
+                this.el.object3D.getWorldPosition(this.tempVector2);
+                
+        		this.tempVector2.x -= (this.tempVector1.x - this.leftHandPreviousX);
+        		this.tempVector2.y -= (this.tempVector1.y - this.leftHandPreviousY);
+        		this.tempVector2.z -= (this.tempVector1.z - this.leftHandPreviousZ);
+        		this.el.setAttribute("position", 
+                    { x: this.tempVector2.x,
+                      y: this.tempVector2.y,
+                      z: this.tempVector2.z  } );
 
         		// what is now current is considered previous during the next check
-        		this.leftHandPreviousX = leftHandCurrentPos.x;
-        		this.leftHandPreviousY = leftHandCurrentPos.y;
-        		this.leftHandPreviousZ = leftHandCurrentPos.z;
+        		this.leftHandPreviousX = this.tempVector1.x;
+        		this.leftHandPreviousY = this.tempVector1.y;
+        		this.leftHandPreviousZ = this.tempVector1.z;
         	}
         }
     }
