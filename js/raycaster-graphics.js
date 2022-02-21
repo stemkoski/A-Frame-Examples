@@ -53,10 +53,18 @@ AFRAME.registerComponent('raycaster-graphics', {
         this.cursorCenter.setAttribute("material", "color", this.data.cursorColor);
         this.cursorCenter.setAttribute("overlay", "");
         this.cursorEntity.appendChild(this.cursorCenter);
+
+        this.rightController = document.querySelector("#right-controller-entity");
     },
 
     tick: function () 
     {
+        this.rightData = this.rightController.components["controller-listener"];
+        // change color of beam when interacting with trigger or grip button
+        if ( this.rightData.trigger.pressing || this.rightData.grip.pressing )
+            this.beamEntity.setAttribute("material", "color", "cyan");
+        else
+            this.beamEntity.setAttribute("material", "color", this.data.beamColor);
 
         // calculate position and rotation of beam
         //  based on model-specific values that customize raycaster line;
@@ -144,18 +152,36 @@ AFRAME.registerComponent("overlay", {
     }
 });
 
-// make objects brighter when raycaster intersects them
-AFRAME.registerComponent('raycaster-hover-glow', {
+// set a variable to indicate when object has focus (targeted by raycaster)
+// optional: make objects brighter when raycaster intersects them
+AFRAME.registerComponent('raycaster-hover', {
+    
+    schema:
+    {
+        hasFocus:    {type: 'boolean', default: false},
+        glowOnHover: {type: 'boolean', default: true},
+    },
+
     init: function () 
     {
         let self = this;
 
         // this happens once, when intersection begins
         this.el.addEventListener("raycaster-intersected", function(event)
-            { self.el.setAttribute("material", "emissive", "#444444"); } );
+            { 
+                self.data.hasFocus = true;
+                if (self.data.glowOnHover)
+                    self.el.setAttribute("material", "emissive", "#444444"); 
+            } 
+        );
 
         // this happens once, when intersection ends
         this.el.addEventListener("raycaster-intersected-cleared", function(event)
-            { self.el.setAttribute("material", "emissive", "#000000"); } );
+            { 
+                self.data.hasFocus = false;
+                if (self.data.glowOnHover)
+                    self.el.setAttribute("material", "emissive", "#000000"); 
+            } 
+        );
     }
 });
