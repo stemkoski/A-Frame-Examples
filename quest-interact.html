@@ -21,25 +21,14 @@ AFRAME.registerComponent("raycaster-color-change", {
     {
         this.colors = ["red", "orange", "yellow", "green", "blue", "violet"];
 
-        this.intersecting = false;
-        let self = this;
-
-        // this happens once, when intersection begins
-        this.el.addEventListener("raycaster-intersected", function(event)
-            { self.intersecting = true; } );
-
-        // this happens once, when intersection ends
-        this.el.addEventListener("raycaster-intersected-cleared", function(event)
-            { self.intersecting = false; } );
-
         this.rightController = document.querySelector("#right-controller-entity");
         this.rightData       = this.rightController.components["controller-listener"];
+        this.hoverData       = this.el.components["raycaster-hover"];
     },
 
     tick: function()
     {
-        // this.rightData = this.rightController.components["controller-listener"]; // remove?
-        if (this.intersecting && this.rightData.trigger.pressed )
+        if (this.hoverData.hasFocus && this.rightData.trigger.pressed )
         {
             let index = Math.floor( this.colors.length * Math.random() );
             let color = this.colors[index];
