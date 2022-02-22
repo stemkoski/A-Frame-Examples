@@ -23,7 +23,7 @@ AFRAME.registerComponent("raycaster-color-change", {
 
         this.rightController = document.querySelector("#right-controller-entity");
         this.rightData       = this.rightController.components["controller-listener"];
-        this.hoverData       = this.el.components["raycaster-hover"];
+        this.hoverData       = this.el.components["raycaster-hover"].data;
     },
 
     tick: function()
@@ -35,7 +35,7 @@ AFRAME.registerComponent("raycaster-color-change", {
             this.el.setAttribute("color", color);
         }
         
-        if (!this.intersecting || this.rightData.trigger.released)
+        if (!this.hoverData.hasFocus || this.rightData.trigger.released)
         {
             this.el.setAttribute("color", "#CCCCCC");
         }
