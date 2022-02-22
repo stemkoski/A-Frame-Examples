@@ -58921,7 +58921,7 @@ var THREE = require('../lib/three');
  */
 module.exports.Component = registerComponent('link', {
   schema: {
-    backgroundColor: {default: 'red', type: 'color'},
+    backgroundColor: {default: 'gray', type: 'color'},
     borderColor: {default: 'white', type: 'color'},
     highlighted: {default: false},
     highlightedColor: {default: '#24CAFF', type: 'color'},
