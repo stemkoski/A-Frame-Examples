@@ -10,85 +10,19 @@
     <script src="js/player-move.js"></script>
     <script src="js/raycaster-graphics.js"></script>
     <script src="js/raycaster-controller-grabber.js"></script>
+    <script src="js/camera-fade.js"></script>
+    <script src="js/link-extras.js"></script>
 </head>
 
 <body>
 
-<script>
-// if raycaster is pointing at this object, press trigger to change color
-AFRAME.registerComponent("raycaster-color-change", {
-    init: function () 
-    {
-        this.colors = ["red", "orange", "yellow", "green", "blue", "violet"];
-
-        this.intersecting = false;
-        let self = this;
-
-        // this happens once, when intersection begins
-        this.el.addEventListener("raycaster-intersected", function(event)
-            { self.intersecting = true; } );
-
-        // this happens once, when intersection ends
-        this.el.addEventListener("raycaster-intersected-cleared", function(event)
-            { self.intersecting = false; } );
-
-        this.rightController = document.querySelector("#right-controller-entity");
-        this.rightData       = this.rightController.components["controller-listener"];
-    },
-
-    tick: function()
-    {
-        // this.rightData = this.rightController.components["controller-listener"]; // remove?
-        if (this.intersecting && this.rightData.trigger.pressed )
-        {
-            let index = Math.floor( this.colors.length * Math.random() );
-            let color = this.colors[index];
-            this.el.setAttribute("color", color);
-        }
-        
-        if (!this.intersecting || this.rightData.trigger.released)
-        {
-            this.el.setAttribute("color", "#CCCCCC");
-        }
-    }
-});
-
-AFRAME.registerComponent("link-extras", {
-    init: function () 
-    {
-
-        // note: modified a-frame code to change background color of portal when fading into the distance
-
-        // construct a torus surrounding link portal
-
-        // used for animating material
-        this.clock = new THREE.Clock();
-
-        // get controllers listener
-        this.barAlpha = 0;
-
-        // change "go" event on associated link
-    },
-
-    tick: function()
-    {
-        let deltaTime = this.clock.getDelta();
-
-        // change material offset x or y or both for spinning-rotating effect?
-
-        // if holding down both triggers within distance X of portal,
-        //  start to fade; 3-second countdown
-        // after that emit the event that triggers the URL change set in init
-    }
-});
-
-</script>
+<script></script>
 
 <a-scene environment="preset: default;" renderer="antialias: true;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
-        <img id="portalBorder"   src="images/border-rainbow.png" />
+        <img id="portalBorder"   src="images/border-rainbow-edge.png" />
         <!-- 360 image for portal preview -->
         <img id="previewForest"   src="images/spherical/forest.jpg">
 
@@ -100,7 +34,10 @@ AFRAME.registerComponent("link-extras", {
 
     <a-entity id="player" position="0 0 0" player-move>
     	
-        <a-camera></a-camera>
+        <a-camera 
+           camera-fade-in="active: true;"
+           camera-fade-out>
+        </a-camera>
 
         <a-entity 
             visible="true"
@@ -120,6 +57,19 @@ AFRAME.registerComponent("link-extras", {
         </a-entity>
 
     </a-entity>
+
+
+    <!-- portal -->
+    
+    <a-link 
+        position="5 1.6 -3" 
+        href="quest-portal-2.html" 
+        title="Forest" 
+        image="#previewForest"
+        link-extras>
+    </a-link>
+    
+    <!-- scenery -->
 
     <a-torus-knot 
         p="2" q="3" radius="0.5" radius-tubular="0.1"
@@ -171,23 +121,6 @@ AFRAME.registerComponent("link-extras", {
         raycaster-hover>
     </a-torus>
 
-    <!-- portal -->
-    
-    <a-link 
-        position="4 1.6 -6" 
-        href="portal-forest.html" 
-        title="Forest" 
-        backgroundColor="blue"
-        image="#previewForest">
-            <a-torus 
-                radius="1" radius-tubular="0.04"
-                position = "0 0 0"
-                rotation = "0 0 0"
-                material="src: #portalBorder; repeat: 16 4; color: yellow;"
-                class="raycaster-target"
-                raycaster-hover>
-            </a-torus>
-    </a-link>
     
     
 

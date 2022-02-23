@@ -58922,7 +58922,7 @@ var THREE = require('../lib/three');
 module.exports.Component = registerComponent('link', {
   schema: {
     backgroundColor: {default: 'gray', type: 'color'},
-    borderColor: {default: 'white', type: 'color'},
+    borderColor: {default: 'gray', type: 'color'},
     highlighted: {default: false},
     highlightedColor: {default: '#24CAFF', type: 'color'},
     href: {default: ''},
@@ -58930,7 +58930,7 @@ module.exports.Component = registerComponent('link', {
     on: {default: 'click'},
     peekMode: {default: false},
     title: {default: ''},
-    titleColor: {default: 'white', type: 'color'},
+    titleColor: {default: '#DDDDDD', type: 'color'},
     visualAspectEnabled: {default: false}
   },
 
