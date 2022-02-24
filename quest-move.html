@@ -19,20 +19,27 @@
         color = "#001337">
     </a-sky>
 
-    <a-entity id="player" position="0 0 0" player-move>
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;">
     	
         <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
 
         <a-entity 
-            id="left-controller-entity"
-            oculus-touch-controls="hand: left"
-            controller-listener="hand: left">
+            id="left-controller"
+            oculus-touch-controls="hand: left">
         </a-entity>
 
         <a-entity
-            id="right-controller-entity"
-            oculus-touch-controls="hand: right"
-            controller-listener="hand: right">
+            id="right-controller"
+            oculus-touch-controls="hand: right">
         </a-entity>
 
     </a-entity>

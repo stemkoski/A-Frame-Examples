@@ -13,28 +13,32 @@
 <script>
 AFRAME.registerComponent('text-display', {
 	
+	init: function()
+	{
+		this.controllerData = document.querySelector("#controller-data").components["controller-listener"];
+		this.text = "";
+	},
+
 	tick: function()
 	{
-		let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"];
-		let dataRight = document.querySelector("#right-controller-entity").components["controller-listener"];
-
-		let text = "Left Controller:" + "\n" +
-		           "Joystick X: " + dataLeft.axisX + "\n" +
-		           "Joystick Y: " + dataLeft.axisY + "\n" + 
-		           "[X] Button: " + dataLeft.buttonX.pressing + "\n" +
-		           "[Y] Button: " + dataLeft.buttonY.pressing + "\n" +
-		           "   Trigger: " + dataLeft.trigger.pressing + "\n" +
-		           "      Grip: " + dataLeft.grip.pressing + "\n" +
+		this.text = 
+		           "Left Controller:" + "\n" +
+		           "Joystick X: " + this.controllerData.leftAxisX + "\n" +
+		           "Joystick Y: " + this.controllerData.leftAxisY + "\n" + 
+		           "[Y] Button: " + this.controllerData.buttonY.pressing + "\n" +
+		           "[X] Button: " + this.controllerData.buttonX.pressing + "\n" +
+		           "   Trigger: " + this.controllerData.leftTrigger.pressing + "\n" +
+		           "      Grip: " + this.controllerData.leftGrip.pressing + "\n" +
 		           "----------------------------------- \n" +
 		           "Right Controller:" + "\n" +
-		           "Joystick X: " + dataRight.axisX + "\n" +
-		           "Joystick Y: " + dataRight.axisY + "\n" +
-		           "[A] Button: " + dataRight.buttonA.pressing + "\n" +
-		           "[B] Button: " + dataRight.buttonB.pressing + "\n" +
-		           "   Trigger: " + dataRight.trigger.pressing + "\n" +
-		           "      Grip: " + dataRight.grip.pressing + "\n";
+		           "Joystick X: " + this.controllerData.rightAxisX + "\n" +
+		           "Joystick Y: " + this.controllerData.rightAxisY + "\n" +
+		           "[B] Button: " + this.controllerData.buttonB.pressing + "\n" +
+		           "[A] Button: " + this.controllerData.buttonA.pressing + "\n" +
+		           "   Trigger: " + this.controllerData.rightTrigger.pressing + "\n" +
+		           "      Grip: " + this.controllerData.rightGrip.pressing + "\n";
 		           
-		this.el.setAttribute( "text", "value", text );
+		this.el.setAttribute( "text", "value", this.text );
 	},
 	
 });
@@ -47,14 +51,18 @@ AFRAME.registerComponent('text-display', {
 	</a-sky>
 
 	<a-entity 
-	    id="left-controller-entity"
-	    oculus-touch-controls="hand: left"
-	    controller-listener="hand: left">
+	    id="controller-data" 
+	    controller-listener="leftControllerId:  #left-controller; 
+	                         rightControllerId: #right-controller;">
+	</a-entity>
+
+	<a-entity 
+	    id="left-controller"
+	    oculus-touch-controls="hand: left">
     </a-entity>
 	<a-entity
-		id="right-controller-entity"
-	    oculus-touch-controls="hand: right"
-		controller-listener="hand: right">
+		id="right-controller"
+	    oculus-touch-controls="hand: right">
 	</a-entity>
 
 	<a-plane

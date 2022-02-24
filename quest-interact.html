@@ -8,8 +8,7 @@
     <script src="js/aframe-environment-component.js"></script>
     <script src="js/controller-listener.js"></script>
     <script src="js/player-move.js"></script>
-    <script src="js/raycaster-graphics.js"></script>
-    <script src="js/raycaster-controller-grabber.js"></script>
+    <script src="js/raycaster-extras.js"></script>
 </head>
 
 <body>
@@ -21,21 +20,20 @@ AFRAME.registerComponent("raycaster-color-change", {
     {
         this.colors = ["red", "orange", "yellow", "green", "blue", "violet"];
 
-        this.rightController = document.querySelector("#right-controller-entity");
-        this.rightData       = this.rightController.components["controller-listener"];
-        this.hoverData       = this.el.components["raycaster-hover"].data;
+        this.controllerData = document.querySelector("#controller-data").components["controller-listener"];        
+        this.hoverData      = this.el.components["raycaster-target"];
     },
 
     tick: function()
     {
-        if (this.hoverData.hasFocus && this.rightData.trigger.pressed )
+        if (this.hoverData.hasFocus && this.controllerData.rightTrigger.pressed )
         {
             let index = Math.floor( this.colors.length * Math.random() );
             let color = this.colors[index];
             this.el.setAttribute("color", color);
         }
         
-        if (!this.hoverData.hasFocus || this.rightData.trigger.released)
+        if (!this.hoverData.hasFocus || this.controllerData.rightTrigger.released)
         {
             this.el.setAttribute("color", "#CCCCCC");
         }
@@ -56,25 +54,30 @@ AFRAME.registerComponent("raycaster-color-change", {
         color = "#001337">
     </a-sky>
 
-    <a-entity id="player" position="0 0 0" player-move>
-    	
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;">
+        
         <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
 
         <a-entity 
-            visible="true"
-            id="left-controller-entity"
-            oculus-touch-controls="hand: left"
-            controller-listener="hand: left">
+            id="left-controller"
+            oculus-touch-controls="hand: left">
         </a-entity>
 
         <a-entity
-            visible="true"
-            id="right-controller-entity"
-            laser-controls="hand: right"
+            id="right-controller"
+            oculus-touch-controls="hand: right"
             raycaster="objects: .raycaster-target, .environmentGround;"
-            raycaster-graphics="beamImageSrc: #gradient; beamLength: 1;"
-            raycaster-controller-grabber
-            controller-listener="hand: right">
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
 
     </a-entity>
@@ -83,8 +86,7 @@ AFRAME.registerComponent("raycaster-color-change", {
         p="2" q="3" radius="0.5" radius-tubular="0.1"
         position = "-2.5 1.5 -4"
         color="#CC3333"
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-torus-knot>
     
     <a-box
@@ -92,32 +94,28 @@ AFRAME.registerComponent("raycaster-color-change", {
         position = "-1 0.5 -3"
         rotation = "0 45 0"  
         color = "#FF8800"
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-box>
 
     <a-sphere
         radius = "1.25"
         position = "0 1.25 -5"
         color = "#DDBB00"
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-sphere>
     
     <a-cylinder
         radius = "0.5" height = "1.5"
         position = " 1 0.75 -3"
         color = "#008800" 
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-cylinder>
 
     <a-cone
         radius-bottom = "1" radius-top = "0" height = "2"
         position = "3 1 -4"
         color = "#4444CC"
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-cone>
     
     <a-torus 
@@ -125,8 +123,7 @@ AFRAME.registerComponent("raycaster-color-change", {
         position = "2 3 -4"
         rotation = "30 -20 0"
         color="#8800FF"
-        class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-torus>
 
     <!-- demo interaction boxes -->
@@ -136,8 +133,7 @@ AFRAME.registerComponent("raycaster-color-change", {
         position = "0 1 -2"
         color = "#EEEEEE"
         material = "src: #border;"
-        class="raycaster-target grabbable"
-        raycaster-hover
+        raycaster-target="canGrab: true;"
         raycaster-color-change>
     </a-box>
 
@@ -146,8 +142,7 @@ AFRAME.registerComponent("raycaster-color-change", {
         position = "-1 1 -2"
         color = "#EEEEEE"
         material = "src: #border;"
-        class="raycaster-target grabbable"
-        raycaster-hover
+        raycaster-target="canGrab: true;"
         raycaster-color-change>
     </a-box>
 
@@ -156,8 +151,7 @@ AFRAME.registerComponent("raycaster-color-change", {
         position = "1 1 -2"
         color = "#EEEEEE"
         material = "src: #border;"
-        class="raycaster-target grabbable"
-        raycaster-hover
+        raycaster-target="canGrab: true;"
         raycaster-color-change>
     </a-box>
     

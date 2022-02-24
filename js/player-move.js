@@ -1,7 +1,14 @@
 AFRAME.registerComponent("player-move", {
 
+    schema:
+    {
+        controllerListenerId:  {type: 'string',  default: "#controller-data"},
+    },
+
     init: function() 
     {
+        this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
+
         this.clock = new THREE.Clock();
 
         this.moveSpeed = 1; // units per second
@@ -12,26 +19,25 @@ AFRAME.registerComponent("player-move", {
         // used when getting world position of controllers
         this.tempVector1 = new THREE.Vector3();
         this.tempVector2 = new THREE.Vector3();
+
+        this.enabled = true;
     },
 
     tick: function()
     {
+        // always update deltaTime!
         let deltaTime = this.clock.getDelta();
 
-        // get data from quest controllers;
-        //   requires the "controller-listener" component
-        let leftController = document.querySelector("#left-controller-entity");
-        let leftData       = leftController.components["controller-listener"];
-
-        let rightController = document.querySelector("#right-controller-entity");
-        let rightData       = rightController.components["controller-listener"];
+        if ( !this.enabled )
+            return;
 
         // =====================================================================
         // moving on horizontal (XZ) plane
         // =====================================================================
 
         // move with left joystick
-        let leftJoystickLength = Math.sqrt(leftData.axisX * leftData.axisX + leftData.axisY * leftData.axisY);
+        let leftJoystickLength = Math.sqrt(this.controllerData.leftAxisX * this.controllerData.leftAxisX + 
+                                           this.controllerData.leftAxisY * this.controllerData.leftAxisY );
 
         if ( leftJoystickLength > 0.001 )
         {
@@ -40,14 +46,14 @@ AFRAME.registerComponent("player-move", {
             this.el.sceneEl.camera.getWorldDirection(cameraDirection);
             let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
 
-            let leftJoystickAngle = Math.atan2(leftData.axisY, leftData.axisX);
+            let leftJoystickAngle = Math.atan2(this.controllerData.leftAxisY, this.controllerData.leftAxisX);
             
             let moveAngle = cameraAngle + leftJoystickAngle;
 
             let moveDistance = this.moveSpeed * deltaTime;
 
             // move faster if pressing trigger at same time
-            moveDistance *= (1 + 9 * leftData.trigger.value);
+            moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
 
             // convert move distance and angle to right and forward amounts
             // scale by magnitude of joystick press (smaller press moves player slower)
@@ -66,21 +72,21 @@ AFRAME.registerComponent("player-move", {
 
         // press right joystick left/right to turn left/right by N degrees;
         //  joystick must return to rest/center position before turning again
-        if ( Math.abs(rightData.axisX) < 0.10 )
+        if ( Math.abs(this.controllerData.rightAxisX) < 0.10 )
         {           
             this.turnReady = true;
         }
 
         if ( this.turnReady )
         {
-            if ( rightData.axisX > 0.90 )
+            if ( this.controllerData.rightAxisX > 0.90 )
             {
                 let rot = this.el.getAttribute("rotation");
                 rot.y -= this.turnAngle;
                 this.el.setAttribute("rotation", rot);
                 this.turnReady = false;
             }
-            if ( rightData.axisX < -0.90 )
+            if ( this.controllerData.rightAxisX < -0.90 )
             {
                 let rot = this.el.getAttribute("rotation");
                 rot.y += this.turnAngle;
@@ -95,20 +101,20 @@ AFRAME.registerComponent("player-move", {
         // =====================================================================
 
         // hold trigger + grab, then hold A/X to pull player
-        if ( rightData.trigger.pressing && rightData.grip.pressing )
+        if ( this.controllerData.rightTrigger.pressing && this.controllerData.rightGrip.pressing )
         {
-        	// let rightHandCurrentPos = rightController.getAttribute("position");
-            rightController.object3D.getWorldPosition(this.tempVector1);
+        	// store rightHandCurrentPosition in tempVector1
+            this.controllerData.rightController.object3D.getWorldPosition(this.tempVector1);
 
-        	if ( !rightData.buttonA.pressing )
+        	if ( !this.controllerData.buttonA.pressing )
         	{
         		this.rightHandPreviousX = this.tempVector1.x;
         		this.rightHandPreviousY = this.tempVector1.y;
         		this.rightHandPreviousZ = this.tempVector1.z;
         	}
-        	else // if ( rightData.buttonA.pressing )
+        	else // if ( this.controllerData.buttonA.pressing )
         	{
-        		// let playerPos = this.el.getAttribute("position");
+        		// store playerPosition in tempVector2
                 this.el.object3D.getWorldPosition(this.tempVector2);
 
         		this.tempVector2.x -= (this.tempVector1.x - this.rightHandPreviousX);
@@ -126,20 +132,20 @@ AFRAME.registerComponent("player-move", {
         	}
         }
 
-        if ( leftData.trigger.pressing && leftData.grip.pressing )
+        if ( this.controllerData.leftTrigger.pressing && this.controllerData.leftGrip.pressing )
         {
-        	// let leftHandCurrentPos = leftController.getAttribute("position");
-            leftController.object3D.getWorldPosition(this.tempVector1);
+        	// store leftHandCurrentPosition in tempVector1
+            this.controllerData.leftController.object3D.getWorldPosition(this.tempVector1);
 
-        	if ( !leftData.buttonX.pressing )
+        	if ( !this.controllerData.buttonX.pressing )
         	{
         		this.leftHandPreviousX = this.tempVector1.x;
         		this.leftHandPreviousY = this.tempVector1.y;
         		this.leftHandPreviousZ = this.tempVector1.z;
         	}
-        	else // if ( rightData.buttonX.pressing )
+        	else // if ( this.controllerData..buttonX.pressing )
         	{
-        		// let playerPos = this.el.getAttribute("position")
+        		// store playerPosition in tempVector2
                 this.el.object3D.getWorldPosition(this.tempVector2);
                 
         		this.tempVector2.x -= (this.tempVector1.x - this.leftHandPreviousX);

@@ -8,8 +8,7 @@
     <script src="js/aframe-environment-component.js"></script>
     <script src="js/controller-listener.js"></script>
     <script src="js/player-move.js"></script>
-    <script src="js/raycaster-graphics.js"></script>
-    <script src="js/raycaster-controller-grabber.js"></script>
+    <script src="js/raycaster-extras.js"></script>
 </head>
 
 <body>
@@ -18,33 +17,31 @@
 
 // uses other custom components: raycaster-graphics, raycaster-controller-grabber
 AFRAME.registerComponent("music-player", {
+
+    schema:
+    {
+        controllerListenerId:  {type: 'string',  default: "#controller-data"},
+    },
+
     init: function () 
     {
+        this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
+
         // set up the physical entity
         this.base = document.createElement("a-entity");
         this.base.setAttribute("geometry", 
-         { primitive: "box", width: 2.0, height: 1.60, depth: 0.04 } );
-        this.base.setAttribute("material", {color: "#CCCCCC"});
-        this.base.setAttribute("class", "raycaster-target grabbable" );
+         { primitive: "box", width: 2.20, height: 1.80, depth: 0.04 } );
+        this.base.setAttribute("material", {color: "#111111"});
+        this.base.setAttribute("raycaster-target", "canGrab: true;" );
         // add component
         this.el.setAttribute("sound", {positional: false, volume: 0.50});
         this.el.appendChild(this.base);
-
-        // add a box to serve as border
-        let baseBorder = document.createElement("a-entity");
-        baseBorder.setAttribute("geometry", 
-         { primitive: "box", width: 2.2, height: 1.8, depth: 0.04 } );
-        baseBorder.setAttribute("material", "color", "black");
-        baseBorder.setAttribute("position", "0 0 -0.01");
-        baseBorder.setAttribute("class", "raycaster-target" );
-        this.base.appendChild(baseBorder);
 
         // add another box to frame button controls
         let buttonBase = document.createElement("a-entity");
         buttonBase.setAttribute("geometry", 
          { primitive: "box", width: 1.999, height: 0.20, depth: 0.04 } );
         buttonBase.setAttribute("material", {color: "#444444"});
-        buttonBase.setAttribute("class", "raycaster-target" );
         buttonBase.setAttribute("position", {x: 0, y: -0.70, z: 0.01});
         this.base.appendChild(buttonBase);
 
@@ -56,8 +53,7 @@ AFRAME.registerComponent("music-player", {
             button.setAttribute("material", "color", "#EEEEEE");
             button.setAttribute("material", "src", materialSrc);        
             button.setAttribute("position", {x: posX, y: posY, z: posZ});
-            button.setAttribute("class", "raycaster-target");
-            button.setAttribute("raycaster-hover", "");
+            button.setAttribute("raycaster-target", "");
             return button;
         }
 
@@ -100,10 +96,6 @@ AFRAME.registerComponent("music-player", {
         // images should be approximately 900 x 500
         this.imageArea.setAttribute("position", {x: 0, y: 0.20, z: 0.04});
         this.base.appendChild(this.imageArea);
-
-        // this.imageArea.setAttribute("material", "src", "url(music/ChauSara/image.jpg)");
-
-        this.rightController = document.querySelector("#right-controller-entity");
         
         let self = this;
 
@@ -167,12 +159,16 @@ AFRAME.registerComponent("music-player", {
 
     tick: function()
     {
-        this.rightData = this.rightController.components["controller-listener"];
-
-        if (this.rightData.trigger.pressed)
+    
+        if (this.controllerData.rightTrigger.pressed)
         {
+            if ( this.buttonIcon == "wait" )
+            {
+                // song loading in process; can not play song or skip ahead;
+                //   just wait patiently...
+            }
             // determine which button was clicked (if any)
-            if ( this.playButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.playButton.components["raycaster-target"].hasFocus )
             {
                 if ( this.buttonIcon == "play" )
                 {
@@ -186,19 +182,15 @@ AFRAME.registerComponent("music-player", {
                     this.playButton.setAttribute("material", "src", "#iconPlay");
                     this.buttonIcon = "play";
                 }
-                else if ( this.buttonIcon == "wait" )
-                {
-                    // just wait patiently.
-                }
             }
-            else if ( this.replayButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.replayButton.components["raycaster-target"].hasFocus )
             {
                 this.el.components["sound"].stopSound();
                 this.el.components["sound"].playSound();
                 this.playButton.setAttribute("material", "src", "#iconPause");
                 this.buttonIcon = "pause";
             }
-            else if ( this.nextButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.nextButton.components["raycaster-target"].hasFocus )
             {
                 this.el.components["sound"].stopSound();
                 this.musicDataIndex++;
@@ -206,7 +198,7 @@ AFRAME.registerComponent("music-player", {
                     this.musicDataIndex = 0;
                 this.loadMusic( this.musicDataIndex );
             }
-            else if ( this.previousButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.previousButton.components["raycaster-target"].hasFocus )
             {
                 this.el.components["sound"].stopSound();
                 this.musicDataIndex--;
@@ -214,14 +206,14 @@ AFRAME.registerComponent("music-player", {
                     this.musicDataIndex = this.musicDataList.length - 1;
                 this.loadMusic( this.musicDataIndex );
             }
-            else if ( this.volumeDownButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.volumeDownButton.components["raycaster-target"].hasFocus )
             {
                 let volume = this.el.getAttribute("sound").volume;
                 if (volume >= 0.10)
                     volume -= 0.10;
                 this.el.setAttribute("sound", "volume", volume);
             }
-            else if ( this.volumeUpButton.components["raycaster-hover"].data.hasFocus )
+            else if ( this.volumeUpButton.components["raycaster-target"].hasFocus )
             {
                 let volume = this.el.getAttribute("sound").volume;
                 if (volume <= 0.90)
@@ -258,32 +250,37 @@ AFRAME.registerComponent("music-player", {
     </a-sky>
 
     <!-- player entity -->
-    <a-entity id="player" position="0 0 0" player-move>
-    	
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;">
+        
         <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
 
         <a-entity 
-            visible="true"
-            id="left-controller-entity"
-            oculus-touch-controls="hand: left"
-            controller-listener="hand: left">
+            id="left-controller"
+            oculus-touch-controls="hand: left">
         </a-entity>
 
         <a-entity
-            visible="true"
-            id="right-controller-entity"
-            laser-controls="hand: right"
+            id="right-controller"
+            oculus-touch-controls="hand: right"
             raycaster="objects: .raycaster-target, .environmentGround;"
-            raycaster-graphics="beamImageSrc: #gradient; beamLength: 1;"
-            raycaster-controller-grabber
-            controller-listener="hand: right">
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
 
     </a-entity>
 
     <a-entity
         position = "0 1 -2"
-        music-player>
+        music-player="controllerListenerId: #controller-data;">
     </a-entity>
 
     <a-torus-knot 
@@ -291,7 +288,7 @@ AFRAME.registerComponent("music-player", {
         position = "-2.5 1.5 -4"
         color="#CC3333"
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-torus-knot>
     
     <a-box
@@ -300,7 +297,7 @@ AFRAME.registerComponent("music-player", {
         rotation = "0 45 0"  
         color = "#FF8800"
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-box>
 
     <a-sphere
@@ -308,7 +305,7 @@ AFRAME.registerComponent("music-player", {
         position = "0 1.25 -5"
         color = "#DDBB00"
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-sphere>
     
     <a-cylinder
@@ -316,7 +313,7 @@ AFRAME.registerComponent("music-player", {
         position = " 1 0.75 -3"
         color = "#008800" 
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-cylinder>
 
     <a-cone
@@ -324,7 +321,7 @@ AFRAME.registerComponent("music-player", {
         position = "3 1 -4"
         color = "#4444CC"
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-cone>
     
     <a-torus 
@@ -333,7 +330,7 @@ AFRAME.registerComponent("music-player", {
         rotation = "30 -20 0"
         color="#8800FF"
         class="raycaster-target"
-        raycaster-hover>
+        raycaster-target>
     </a-torus>
 
     <!-- demo interaction boxes -->
