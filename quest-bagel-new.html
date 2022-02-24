@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello, WebVR! - A-Frame</title>
+	<meta name="description" content="Hello, WebVR! - A-Frame">
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+    <script src="js/controller-listener.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent('text-display', {
+	
+	tick: function()
+	{
+		let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"];
+		let dataRight = document.querySelector("#right-controller-entity").components["controller-listener"];
+
+	},
+	
+});
+
+AFRAME.registerComponent('gamepad-model', {
+	
+	init: function()
+	{
+		let centerBoxWidth = 0.75; 
+		let centerBoxHeight = 0.50;
+		let stickRadius = 0.070; // half this for knob radius, and also maximum offset
+		let buttonRadius = 0.040;
+
+        this.centerBox = document.createElement("a-entity");
+        this.centerBox.setAttribute("geometry", 
+         { primitive: "box", width: centerBoxWidth, height: centerBoxHeight, depth: 0.05 } );
+        this.centerBox.setAttribute("material", "color", "#444444");
+        this.el.appendChild(this.centerBox);
+
+        this.leftSide = document.createElement("a-entity");
+        this.leftSide.setAttribute("geometry", 
+         { primitive: "cylinder", radius: centerBoxHeight/2, height: 0.05, thetaStart: 180, thetaLength: 180 } );
+        this.leftSide.setAttribute("material", "color", "#BB8888");
+        this.leftSide.setAttribute("position", {x: -centerBoxWidth/2, y: 0, z: 0});
+        this.leftSide.setAttribute("rotation", "90 0 0");
+        //this.leftSide.setAttribute("scale", "0.75 1 1")
+        this.el.appendChild(this.leftSide);
+
+        this.leftStickBase = document.createElement("a-entity");
+        this.leftStickBase.setAttribute("geometry", 
+         { primitive: "cylinder", radius: stickRadius, height: 0.05 } );
+        this.leftStickBase.setAttribute("material", 
+          { src: "#circleBlank", color: "#CCCCCC" } );
+        this.leftStickBase.setAttribute("position", {x: -0.17, y: 0.005, z: 0});
+        this.leftSide.appendChild( this.leftStickBase );
+
+		this.leftStickKnob = document.createElement("a-entity");
+        this.leftStickKnob.setAttribute("geometry", 
+         { primitive: "cylinder", radius: stickRadius/2, height: 0.05 } );
+        this.leftStickKnob.setAttribute("material", "color", "#444444");
+        this.leftStickKnob.setAttribute("position", {x: 0, y: 0.002, z: 0});
+        this.leftStickBase.appendChild( this.leftStickKnob );
+
+        this.leftButtonY = document.createElement("a-entity");
+        this.leftButtonY.setAttribute("geometry", 
+         { primitive: "cylinder", radius: buttonRadius, height: 0.05 } );
+        this.leftButtonY.setAttribute("material", 
+        	{ src: "#circleY", color: "white"} );
+        this.leftButtonY.setAttribute("position", {x: -0.05, y: 0.005, z: -0.06});
+        this.leftButtonY.setAttribute("rotation", "0 90 0");
+        this.leftSide.appendChild( this.leftButtonY );
+
+        this.leftButtonX = document.createElement("a-entity");
+        this.leftButtonX.setAttribute("geometry", 
+         { primitive: "cylinder", radius: buttonRadius, height: 0.05 } );
+        this.leftButtonX.setAttribute("material", 
+        	{ src: "#circleX", color: "white"} );
+        this.leftButtonX.setAttribute("position", {x: -0.05, y: 0.005, z:  0.06});
+        this.leftButtonX.setAttribute("rotation", "0 90 0");
+        this.leftSide.appendChild( this.leftButtonX );
+
+        this.rightSide = document.createElement("a-entity");
+        this.rightSide.setAttribute("geometry", 
+         { primitive: "cylinder", radius: centerBoxHeight/2, height: 0.05, thetaStart: 0, thetaLength: 180 } );
+        this.rightSide.setAttribute("material", "color", "#8888BB");
+        this.rightSide.setAttribute("position", {x: centerBoxWidth/2, y: 0, z: 0});
+        this.rightSide.setAttribute("rotation", "90 0 0");
+        //this.rightSide.setAttribute("scale", "0.75 1 1")
+        this.el.appendChild(this.rightSide);
+
+        this.rightStickBase = document.createElement("a-entity");
+        this.rightStickBase.setAttribute("geometry", 
+         { primitive: "cylinder", radius: stickRadius, height: 0.05 } );
+        this.rightStickBase.setAttribute("material", 
+          { src: "#circleBlank", color: "#CCCCCC" } );
+        this.rightStickBase.setAttribute("position", {x: 0.17, y: 0.005, z: 0});
+        this.rightSide.appendChild( this.rightStickBase );
+
+		this.rightStickKnob = document.createElement("a-entity");
+        this.rightStickKnob.setAttribute("geometry", 
+         { primitive: "cylinder", radius: stickRadius/2, height: 0.05 } );
+        this.rightStickKnob.setAttribute("material", "color", "#444444");
+        this.rightStickKnob.setAttribute("position", {x: 0, y: 0.002, z: 0});
+        this.rightStickBase.appendChild( this.rightStickKnob );
+
+        this.rightButtonB = document.createElement("a-entity");
+        this.rightButtonB.setAttribute("geometry", 
+         { primitive: "cylinder", radius: buttonRadius, height: 0.05 } );
+        this.rightButtonB.setAttribute("material", 
+        	{ src: "#circleB", color: "white"} );
+        this.rightButtonB.setAttribute("position", {x: 0.05, y: 0.005, z: -0.06});
+        this.rightButtonB.setAttribute("rotation", "0 90 0");
+        this.rightSide.appendChild( this.rightButtonB );
+
+        this.rightButtonA = document.createElement("a-entity");
+        this.rightButtonA.setAttribute("geometry", 
+         { primitive: "cylinder", radius: buttonRadius, height: 0.05 } );
+        this.rightButtonA.setAttribute("material", 
+        	{ src: "#circleA", color: "white"} );
+        this.rightButtonA.setAttribute("position", {x: 0.05, y: 0.005, z:  0.06});
+        this.rightButtonA.setAttribute("rotation", "0 90 0");
+        this.rightSide.appendChild( this.rightButtonA );
+
+	},
+
+	tick: function()
+	{
+		let dataLeft  = document.querySelector("#left-controller-entity").components["controller-listener"];
+		let dataRight = document.querySelector("#right-controller-entity").components["controller-listener"];
+
+		// during tick: if grabbed:
+		//  button pressed -> highlight, released -> un-highlight
+		//  controller stick axisX and axisY -> shift x/z of knob element (max 0.03)
+	},
+	
+});
+</script>
+
+<a-scene renderer="antialias: true;">
+		
+	<a-assets>
+        <img id="circleBlank" src="images/circle-blank.png" />
+        <img id="circleA"     src="images/circle-A.png" />
+        <img id="circleB"     src="images/circle-B.png" />
+        <img id="circleX"     src="images/circle-X.png" />
+        <img id="circleY"     src="images/circle-Y.png" />
+    </a-assets>
+
+	<a-sky 
+		color = "#001337">
+	</a-sky>
+
+	<a-entity
+	   gamepad-model
+	   position="0 1.6 -1">
+	  </a-entity>
+
+	<a-entity 
+	    id="left-controller-entity"
+	    oculus-touch-controls="hand: left"
+	    controller-listener="hand: left">
+    </a-entity>
+	<a-entity
+		id="right-controller-entity"
+	    oculus-touch-controls="hand: right"
+		controller-listener="hand: right">
+	</a-entity>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#666666"
+		shadow="cast: false; receive: true">
+	</a-plane>
+
+	<a-torus-knot 
+		p="2" q="3" radius="0.5" radius-tubular="0.1"
+		position = "-2.5 1.5 -4"
+		color="#CC3333" 
+		shadow = "cast: true; receive: true">
+	</a-torus-knot>
+	
+	<a-box
+		width = "2" height = "1" depth = "1"
+		position = "-1 0.5 -3"
+		rotation = "0 45 0"  
+		color = "#FF8800"
+		shadow = "cast: true; receive: true">
+	</a-box>
+	
+	<a-sphere
+		radius = "1.25"
+		position = "0 1.25 -5"
+		color = "#DDBB00"
+		shadow = "cast: true; receive: true">
+	</a-sphere>
+	
+	<a-cylinder
+		radius = "0.5" height = "1.5"
+		position = " 1 0.75 -3"
+		color = "#008800" 
+		shadow = "cast: true; receive: true">
+	</a-cylinder>
+
+	<a-cone
+		radius-bottom = "1" radius-top = "0" height = "2"
+		position = "3 1 -4"
+		color = "#4444CC"
+		shadow = "cast: true; receive: true">
+	</a-cone>
+	
+	<a-torus 
+		radius="0.5" radius-tubular="0.1"
+		position = "2 3 -4"
+		rotation = "30 -20 0"
+		color="#8800FF"
+		shadow = "cast: true; receive: true">
+	</a-torus>
+
+	<a-entity
+		id="textArea" 
+		position="0 1.5 -1.9"
+		geometry="primitive: plane;  width: 3; height: auto"
+		material="color: #444444; transparent: true; opacity: 0.80;"
+		text="anchor: center; baseline: center; wrapCount: 40;
+				transparent: true; opacity: 0.90; color: #8888FF;
+				value: [debug messages here]"
+		text-display>
+	</a-entity>
+
+</a-scene>
+
+</body>
+</html>
