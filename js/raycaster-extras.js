@@ -65,6 +65,7 @@ AFRAME.registerComponent('raycaster-extras', {
 
         this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
 
+        this.intersectionPoint = null;
         this.focusedElement = null;
         this.grabbedElement = null;
 
@@ -124,10 +125,17 @@ AFRAME.registerComponent('raycaster-extras', {
 
         // update which element has focus ===================================================================
         
-        if ( this.raycaster.intersectionDetail.intersections && this.raycaster.intersectionDetail.intersections.length > 0 )
+        if (this.raycaster.intersectionDetail.intersections && 
+            this.raycaster.intersectionDetail.intersections.length > 0 )
+        {
             this.focusedElement = this.raycaster.intersectionDetail.els[0];
+            this.intersectionPoint = this.raycaster.intersectionDetail.intersections[0].point;
+        }
         else
+        {
             this.focusedElement = null;
+            this.intersectionPoint = null;
+        }
 
         // move cursor entity to point of intersection ======================================================
 
@@ -146,9 +154,10 @@ AFRAME.registerComponent('raycaster-extras', {
         {
             this.cursorEntity.setAttribute("visible", true)
 
-            let point = this.raycaster.intersectionDetail.intersections[0].point;
             this.cursorEntity.setAttribute("position", 
-                {x: point.x, y: point.y, z: point.z} );
+                { x: this.intersectionPoint.x, 
+                  y: this.intersectionPoint.y, 
+                  z: this.intersectionPoint.z } );
 
             // shorten raycaster
             let dist = this.raycaster.intersectionDetail.intersections[0].distance;
@@ -157,7 +166,7 @@ AFRAME.registerComponent('raycaster-extras', {
         else
         {
             this.cursorEntity.setAttribute("visible", false)
-            this.el.setAttribute("raycaster", "far", 20);
+            this.el.setAttribute("raycaster", "far", 12);
         }
 
         // grab element =====================================================================================
@@ -177,7 +186,7 @@ AFRAME.registerComponent('raycaster-extras', {
 
                 // raycaster-graphics keeps setting cursorEntity visible true,
                 //  so force cursor hidden by making setting children visibility to false
-                //  why? easier to focus on object without cursor in the way
+                //  why? easier to focus on object without cursor in the way.
                 this.cursorCenter.setAttribute("visible", false);
                 this.cursorBorder.setAttribute("visible", false);
 
@@ -214,14 +223,14 @@ AFRAME.registerComponent('raycaster-extras', {
                     let moveDistance = this.moveSpeed * deltaTime * this.controllerData.rightAxisY;
                     this.tempVector.setLength(moveDistance);
 
-                    
+
                     // temporarily attach element back to root scene
                     this.grabbedElement.sceneEl.object3D.attach( this.grabbedElement.object3D );
                     // translate
                     this.grabbedElement.object3D.position.sub( this.tempVector );
                     // reattach to controller
                     this.el.object3D.attach( this.grabbedElement.object3D );
-                    
+
 
                     // repeat and move (animate) texture of beam entity
                     let material = this.beamEntity.getAttribute("material");
