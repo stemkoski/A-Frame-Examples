@@ -13,18 +13,18 @@ AFRAME.registerComponent('controller-listener', {
         
         this.leftAxisX   = 0;
         this.leftAxisY   = 0;
-        this.leftTrigger = {pressed: false, pressing: false, released: false, value: 0};
-        this.leftGrip    = {pressed: false, pressing: false, released: false, value: 0};
+        this.leftTrigger = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false, value: 0};
+        this.leftGrip    = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false, value: 0};
 
         this.rightAxisX   = 0;
         this.rightAxisY   = 0;
-        this.rightTrigger = {pressed: false, pressing: false, released: false, value: 0};
-        this.rightGrip    = {pressed: false, pressing: false, released: false, value: 0};
+        this.rightTrigger = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false, value: 0};
+        this.rightGrip    = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false, value: 0};
 
-        this.buttonA = {pressed: false, pressing: false, released: false};
-        this.buttonB = {pressed: false, pressing: false, released: false};
-        this.buttonX = {pressed: false, pressing: false, released: false};
-        this.buttonY = {pressed: false, pressing: false, released: false};
+        this.buttonA = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false};
+        this.buttonB = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false};
+        this.buttonX = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false};
+        this.buttonY = {queuePress: false, queueRelease: false, pressed: false, pressing: false, released: false};
 
         // event listeners
         let self = this;
@@ -36,28 +36,28 @@ AFRAME.registerComponent('controller-listener', {
             self.leftAxisY = event.detail.y; } );
 
         this.leftController.addEventListener("triggerdown", function(event)
-          { self.leftTrigger.pressed = true; } );        
+          { self.leftTrigger.queuePress = true; } );        
         this.leftController.addEventListener("triggerup", function(event)
-          { self.leftTrigger.released = true; } );
+          { self.leftTrigger.queueRelease = true; } );
         this.leftController.addEventListener('triggerchanged', function (event) 
           { self.leftTrigger.value = event.detail.value; } );
 
         this.leftController.addEventListener("gripdown", function(event)
-          { self.leftGrip.pressed = true; } );        
+          { self.leftGrip.queuePress = true; } );        
         this.leftController.addEventListener("gripup", function(event)
-          { self.leftGrip.released = true; } );
+          { self.leftGrip.queueRelease = true; } );
         this.leftController.addEventListener('gripchanged', function (event) 
           { self.leftGrip.value = event.detail.value; } );
 
         this.leftController.addEventListener("xbuttondown", function(event)
-            { self.buttonX.pressed = true; } );
+            { self.buttonX.queuePress = true; } );
         this.leftController.addEventListener("xbuttonup", function(event)
-            { self.buttonX.released = true; } );
+            { self.buttonX.queueRelease = true; } );
         
         this.leftController.addEventListener("ybuttondown", function(event)
-            { self.buttonY.pressed = true; } );
+            { self.buttonY.queuePress = true; } );
         this.leftController.addEventListener("ybuttonup", function(event)
-            { self.buttonY.released = true; } );
+            { self.buttonY.queueRelease = true; } );
 
         // right controller
 
@@ -66,53 +66,56 @@ AFRAME.registerComponent('controller-listener', {
             self.rightAxisY = event.detail.y; } );
 
         this.rightController.addEventListener("triggerdown", function(event)
-          { self.rightTrigger.pressed = true; } );        
+          { self.rightTrigger.queuePress = true; } );        
         this.rightController.addEventListener("triggerup", function(event)
-          { self.rightTrigger.released = true; } );
+          { self.rightTrigger.queueRelease = true; } );
         this.rightController.addEventListener('triggerchanged', function (event) 
           { self.rightTrigger.value = event.detail.value; } );
 
         this.rightController.addEventListener("gripdown", function(event)
-          { self.rightGrip.pressed = true; } );        
+          { self.rightGrip.queuePress = true; } );        
         this.rightController.addEventListener("gripup", function(event)
-          { self.rightGrip.released = true; } );
+          { self.rightGrip.queueRelease = true; } );
         this.rightController.addEventListener('gripchanged', function (event) 
           { self.rightGrip.value = event.detail.value; } );
         
         this.rightController.addEventListener("abuttondown", function(event)
-            { self.buttonA.pressed = true; } );        
+            { self.buttonA.queuePress = true; } );        
         this.rightController.addEventListener("abuttonup", function(event)
-            { self.buttonA.released = true; } );
+            { self.buttonA.queueRelease = true; } );
         
         this.rightController.addEventListener("bbuttondown", function(event)
-            { self.buttonB.pressed = true; } );
+            { self.buttonB.queuePress = true; } );
         this.rightController.addEventListener("bbuttonup", function(event)
-            { self.buttonB.released = true; } );        
+            { self.buttonB.queueRelease = true; } );        
     },
     
     updateButtonState: function( stateObject )
     {
-        // if button was recently pressed: 
-        //   on first tick, pressing becomes true, 
-        //   then on next tick, pressed becomes false.
-        if (stateObject.pressed)
+        // clear pressed/released data,
+        //  because it is only true for one frame.
+        stateObject.pressed = false;
+        stateObject.released = false;
+
+        // if button was recently pressed
+        if (stateObject.queuePress && !stateObject.pressing)
         {
-           if (!stateObject.pressing)
-             stateObject.pressing = true;
-           else
-             stateObject.pressed = false;
+           stateObject.pressed = true;
+           stateObject.pressing = true;
         }
 
         // if button was recently released:
         //   on first tick, pressing becomes false, 
         //   then on next tick, released becomes false. 
-        if (stateObject.released)
+        if (stateObject.queueRelease)
         {
-           if (stateObject.pressing)
-             stateObject.pressing = false;
-           else
-             stateObject.released = false;
+           stateObject.pressing = false;
+           stateObject.released = true;
         }
+
+        // data processed; clear queues
+        stateObject.queuePress = false;
+        stateObject.queueRelease = false;
     }, 
 
     tick: function()

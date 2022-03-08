@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Quest controller data demo</title>
+	<meta name="description" content="Hello, WebVR! - A-Frame">
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+    <script src="js/controller-listener.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent('text-display', {
+	
+	init: function()
+	{
+		this.controllerData = document.querySelector("#controller-data").components["controller-listener"];
+		this.text = "";
+	},
+
+	tick: function()
+	{
+		this.text = 
+		           "Left Controller:" + "\n" +
+		           "Joystick X: " + this.controllerData.leftAxisX + "\n" +
+		           "Joystick Y: " + this.controllerData.leftAxisY + "\n" + 
+		           "[Y] Button: " + this.controllerData.buttonY.pressing + "\n" +
+		           "[X] Button: " + this.controllerData.buttonX.pressing + "\n" +
+		           "   Trigger: " + this.controllerData.leftTrigger.pressing + "\n" +
+		           "      Grip: " + this.controllerData.leftGrip.pressing + "\n" +
+		           "----------------------------------- \n" +
+		           "Right Controller:" + "\n" +
+		           "Joystick X: " + this.controllerData.rightAxisX + "\n" +
+		           "Joystick Y: " + this.controllerData.rightAxisY + "\n" +
+		           "[B] Button: " + this.controllerData.buttonB.pressing + "\n" +
+		           "[A] Button: " + this.controllerData.buttonA.pressing + "\n" +
+		           "   Trigger: " + this.controllerData.rightTrigger.pressing + "\n" +
+		           "      Grip: " + this.controllerData.rightGrip.pressing + "\n";
+		           
+		this.el.setAttribute( "text", "value", this.text );
+	},
+	
+});
+</script>
+
+<a-scene renderer="antialias: true;">
+		
+	<a-sky 
+		color = "#001337">
+	</a-sky>
+
+	<a-entity 
+	    id="controller-data" 
+	    controller-listener="leftControllerId:  #left-controller; 
+	                         rightControllerId: #right-controller;">
+	</a-entity>
+
+	<a-entity 
+	    id="left-controller"
+	    oculus-touch-controls="hand: left">
+    </a-entity>
+	<a-entity
+		id="right-controller"
+	    oculus-touch-controls="hand: right">
+	</a-entity>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#666666"
+		shadow="cast: false; receive: true">
+	</a-plane>
+
+	<a-torus-knot 
+		p="2" q="3" radius="0.5" radius-tubular="0.1"
+		position = "-2.5 1.5 -4"
+		color="#CC3333" 
+		shadow = "cast: true; receive: true">
+	</a-torus-knot>
+	
+	<a-box
+		width = "2" height = "1" depth = "1"
+		position = "-1 0.5 -3"
+		rotation = "0 45 0"  
+		color = "#FF8800"
+		shadow = "cast: true; receive: true">
+	</a-box>
+	
+	<a-sphere
+		radius = "1.25"
+		position = "0 1.25 -5"
+		color = "#DDBB00"
+		shadow = "cast: true; receive: true">
+	</a-sphere>
+	
+	<a-cylinder
+		radius = "0.5" height = "1.5"
+		position = " 1 0.75 -3"
+		color = "#008800" 
+		shadow = "cast: true; receive: true">
+	</a-cylinder>
+
+	<a-cone
+		radius-bottom = "1" radius-top = "0" height = "2"
+		position = "3 1 -4"
+		color = "#4444CC"
+		shadow = "cast: true; receive: true">
+	</a-cone>
+	
+	<a-torus 
+		radius="0.5" radius-tubular="0.1"
+		position = "2 3 -4"
+		rotation = "30 -20 0"
+		color="#8800FF"
+		shadow = "cast: true; receive: true">
+	</a-torus>
+
+	<a-entity
+		id="textArea"
+		position="0 1.5 -1.9"
+		geometry="primitive: plane;  width: 3; height: auto"
+		material="color: #444444; transparent: true; opacity: 0.80;"
+		text="anchor: center; baseline: center; wrapCount: 40;
+				transparent: true; opacity: 0.90; color: #8888FF;
+				value: 1 \n 2 \n 3 \n 4"
+		text-display>
+	</a-entity>
+
+</a-scene>
+
+</body>
+</html>
