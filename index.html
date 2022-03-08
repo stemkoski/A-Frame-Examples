@@ -10,9 +10,9 @@
 <br/>
 
 <hr/>
-The goal of this collection is to provide a set of basic and instructive examples that introduce the various features of the <a class="toc" href="https://aframe.io/">A-Frame</a> library.
+The goal of this collection is to provide a set of basic and instructive examples that introduce the various features of the <a class="toc" href="https://aframe.io/">A-Frame</a> library, and to introduce new A-Frame components.
 <br/><br/>
-Examples can be viewed using a normal web browser. Some examples contain interactive virtual reality components that require a VR headset (such as the Oculus Go or Oculus Quest, which were used to test different sets of examples).
+Examples can be viewed using a normal web browser. Some examples contain interactive virtual reality components that require a VR headset (Oculus Quest).
 <br/><br/>
 Source code hosted at <a class="toc" href="https://github.com/stemkoski/A-Frame-Examples">GitHub</a>.
 <hr/>
@@ -256,6 +256,85 @@ Source code hosted at <a class="toc" href="https://github.com/stemkoski/A-Frame-
 </td></tr>
 </table>
 
+<hr>
+<br/>
+<div class="bigTitle">New Quest Examples</div>
+<br/><br/>
+<center>
+The following examples require a Quest VR headset and controllers.
+</center>
+<br/><br/>
+<hr>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="quest-controllers.html">
+<img src="images/demo/quest-controllers.jpg" class="demo-image"/></a></td>
+<td class="demo-title"><a href="quest-controllers.html">Quest Controller Data</a></td></tr>
+<tr><td class="demo-text">
+	Conveniently access all Quest controller input data from the "controller-listener" component. Includes support for
+	discrete events (button pressed, button released) and continuous events (button pressing: the state between pressed and released). 
+	Used in all examples that follow.<br/><br/>
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="quest-extras.html">
+<img src="images/demo/quest-extras.jpg" class="demo-image"/></a></td>
+<td class="demo-title"><a href="quest-extras.html">Quest Player Movement and Raycaster Interaction</a></td></tr>
+<tr><td class="demo-text">
+	The "raycaster-extras" component adds graphical improvements to the raycaster system, appearing similar
+	to the Quest home screen: the raycaster beam is a cylinder with a gradient texture applied, and the point of
+	intersection is indicated by a cursor. Entities with the new "raycaster-target" component class 
+	can set booleans that cause an object to glow when the raycaster is pointing towards it, 
+	and enabled an object to be grabbed by holding the right grip button. 
+	While being held, an object can be pulled towards or pushed from the controller with the right joystick. 
+	<br/><br/>
+	The "player-move" component simplifies movement in a scene. 
+	A navigation mesh class may be set, in which case a marker will appear indicating when the beam is pointing at the corresponding mesh, and 	the right trigger activates the teleportation. 
+	Additionally, the left joystick
+	controls first-person navigation, movement forward/backward and left/right.
+	Pressing the left trigger while moving increases movement speed. 
+	While holding the left grip button, the left joystick
+	instead causes the user to fly up/down and turn left/right.<br/><br/>
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="quest-music.html">
+<img src="images/demo/quest-music.jpg" class="demo-image"/></a></td>
+<td class="demo-title"><a href="quest-music.html">Quest Music Player</a></td></tr>
+<tr><td class="demo-text">
+	The "music-player" component creates a music player that plays audio files and displays an image and text for the currently playing song. It includes buttons that support standard music player functions: play/pause, replay, previous/next song, volume up/down. Play modes include: play current song once, automatically repeat current song, and play all music in list.<br/><br/>
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="quest-book.html">
+<img src="images/demo/quest-book.jpg" class="demo-image"/></a></td>
+<td class="demo-title"><a href="quest-book.html">Quest PDF Book Reader</a></td></tr>
+<tr><td class="demo-text">
+	The "interactive-book" component creates a interactive model of a book with pages rendered from a PDF file
+	using the <a href="">pdf.js</a> library. Pointing at the book and pressing the right trigger enables interactivity (indicated by the power light changing from red to green). While activated, the "player-move" component is deactivated; moving the Quest joysticks left/right and pressing the A/B/X/Y buttons will turn the pages of the book. Clicking on the book with the right trigger a second time will pause the interaction and reactivate the "player-move" component.<br/><br/>
+</td></tr>
+</table>
+
+<table class="demo-table">
+<tr><td rowspan="2"><a href="quest-bagel.html">
+<img src="images/demo/quest-bagel.jpg" class="demo-image"/></a></td>
+<td class="demo-title"><a href="quest-bagel.html">Quest Video Game Player</a></td></tr>
+<tr><td class="demo-text">
+	A collection of new A-Frame components and libraries create a working* handheld video game player in VR. 
+	The new "gamepad-model" component creates the gamepad model; pointing at the model and pressing the right trigger activates the gamepad (indicated by the power light changing from red to green). While activated, the "player-move" component is deactivated; moving the Quest joysticks and pressing the A/B/X/Y buttons will be shown in the gamepad model. Games created with BAGEL (the <a href="https://github.com/stemkoski/BAGEL-Javascript">Basic Adaptable Game Engine Library</a>) can be easily ported and run in A-Frame (using the Quest controllers for game input) using the "BAGEL-game-component" component. When a game is in progress, clicking on the gamepad with the right trigger will pause the game and reactivate the "player-move" component.
+	<br>(*Note: Playing the game sometimes causes A-Frame to freeze for an unknown reason; this is currently being investigated.)
+	<br/><br/>
+</td></tr>
+</table>
+
+<br/><br/><br/>
+
+<!-- DEPRECATED EXAMPLES -->
+
+<!--
 <table class="demo-table">
 <tr><td rowspan="2"><a href="laser-controls.html">
 <img src="images/demo/laser-controls.png" class="demo-image"/></a></td>
@@ -285,6 +364,7 @@ Source code hosted at <a class="toc" href="https://github.com/stemkoski/A-Frame-
 </td></tr>
 </table>
 
+-->
 
 </body>
 </html>
