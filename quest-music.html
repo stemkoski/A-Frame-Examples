@@ -9,224 +9,30 @@
     <script src="js/controller-listener.js"></script>
     <script src="js/player-move.js"></script>
     <script src="js/raycaster-extras.js"></script>
+    <script src="js/music-player.js"></script>
 </head>
 
 <body>
 
 <script>
-
-// uses other custom components: raycaster-graphics, raycaster-controller-grabber
-AFRAME.registerComponent("music-player", {
-
-    schema:
+// load music into global variable for access by music-player component
+window["MusicData"] = [
     {
-        controllerListenerId:  {type: 'string',  default: "#controller-data"},
+        audioURL: "music/ChauSara/Mando.mp3", 
+        imageURL: "music/ChauSara/image.jpg", 
+        songText: "Artist: Chau Sara --- Song: Mondo \n (music provided by Lofi Girl)"
     },
-
-    init: function () 
     {
-        this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
-
-        // set up the physical entity
-        this.base = document.createElement("a-entity");
-        this.base.setAttribute("geometry", 
-         { primitive: "box", width: 2.20, height: 1.80, depth: 0.04 } );
-        this.base.setAttribute("material", {color: "#111111"});
-        this.base.setAttribute("raycaster-target", "canGrab: true;" );
-        // add component
-        this.el.setAttribute("sound", {positional: false, volume: 0.50});
-        this.el.appendChild(this.base);
-
-        // add another box to frame button controls
-        let buttonBase = document.createElement("a-entity");
-        buttonBase.setAttribute("geometry", 
-         { primitive: "box", width: 1.999, height: 0.20, depth: 0.04 } );
-        buttonBase.setAttribute("material", {color: "#444444"});
-        buttonBase.setAttribute("position", {x: 0, y: -0.70, z: 0.01});
-        this.base.appendChild(buttonBase);
-
-        function initButton(materialSrc, posX, posY, posZ)
-        {
-            let button = document.createElement("a-entity");
-            button.setAttribute("geometry", 
-              { primitive: "box", width: 0.16, height: 0.16, depth: 0.04 } );
-            button.setAttribute("material", "color", "#EEEEEE");
-            button.setAttribute("material", "src", materialSrc);        
-            button.setAttribute("position", {x: posX, y: posY, z: posZ});
-            button.setAttribute("raycaster-target", "");
-            return button;
-        }
-
-        this.previousButton = initButton("#iconPrevious", -0.90, 0, 0.01);
-        buttonBase.appendChild( this.previousButton );
-
-        this.replayButton = initButton("#iconReplay", -0.70, 0, 0.01);
-        buttonBase.appendChild( this.replayButton );
-
-        this.playButton = initButton("#iconPlay", -0.50, 0, 0.01);
-        buttonBase.appendChild( this.playButton );
-
-        this.nextButton = initButton("#iconNext", -0.30, 0, 0.01);
-        buttonBase.appendChild( this.nextButton );
-
-        this.volumeUpButton = initButton("#iconVolumeUp", 0.90, 0, 0.01);
-        buttonBase.appendChild( this.volumeUpButton );
-
-        this.volumeDownButton = initButton("#iconVolumeDown", 0.70, 0, 0.01);
-        buttonBase.appendChild( this.volumeDownButton );
-
-        // create text area to display music information
-        this.textArea = document.createElement("a-entity");
-        this.textArea.setAttribute("geometry", 
-          { primitive: "plane", width: 2, height: 0.2 } );
-        this.textArea.setAttribute("material",
-          { color: "#000000" } );
-        this.textArea.setAttribute("text",
-          { anchor: "center", baseline: "center", wrapCount: 40,
-            color: "#8888FF", value: "" } );
-        this.textArea.setAttribute("position", {x: 0, y: -0.50, z: 0.03});
-        this.base.appendChild(this.textArea);
-
-        // create area to display image art
-        this.imageArea = document.createElement("a-entity");
-        this.imageArea.setAttribute("geometry", 
-          { primitive: "plane", width: 2, height: 1.2 } );
-        // adding some emission so image can be seen more easily
-        this.textArea.setAttribute("material", { emission: "#222222" } );
-        // images should be approximately 900 x 500
-        this.imageArea.setAttribute("position", {x: 0, y: 0.20, z: 0.04});
-        this.base.appendChild(this.imageArea);
-        
-        let self = this;
-
-        this.el.addEventListener("sound-loaded", function(event)
-            {
-                // change "loading music..." to song name 
-                self.textArea.setAttribute("text", "value", 
-                self.musicDataList[self.musicDataIndex].songText );
-                self.playButton.setAttribute("material", "src", "#iconPlay");
-                self.buttonIcon = "play";
-            }
-        );
-
-        this.el.addEventListener("sound-ended", function(event)
-            {
-                self.playButton.setAttribute("material", "src", "#iconPlay");
-                self.buttonIcon = "play";
-            }
-        );
-
-        // TODO: manage this with a schema
-        this.musicDataList = [];
-        this.addMusicData("music/ChauSara/Mando.mp3",
-                          "music/ChauSara/image.jpg",
-                          "Artist: Chau Sara --- Song: Mondo \n (music provided by Lofi Girl)" );
-        this.addMusicData("music/Osaki/Reflections.mp3",
-                          "music/Osaki/image.jpg",
-                          "Artist: Osaki --- Song: Reflections \n (music provided by Lofi Girl)" );
-        this.addMusicData("music/Khutko/Violet.mp3",
-                          "music/Khutko/image.jpg",
-                          "Artist: Khutko --- Song: Violet \n (music provided by Lofi Girl)" );
-        this.musicDataIndex = 0;
-        this.buttonIcon = "wait";
-        this.loadMusic( this.musicDataIndex );
+        audioURL: "music/Osaki/Reflections.mp3", 
+        imageURL: "music/Osaki/image.jpg", 
+        songText: "Artist: Osaki --- Song: Reflections \n (music provided by Lofi Girl)"
     },
-
-    addMusicData: function(audioURL, imageURL, songText)
     {
-        let musicData = {"audioURL": audioURL, "imageURL": imageURL, "songText": songText};
-        this.musicDataList.push( musicData );
-    },
-
-    loadMusic: function(index)
-    {
-        this.imageArea.setAttribute("material", "src", 
-            "url(" + this.musicDataList[index].imageURL + ")" );
-
-        this.el.setAttribute("sound", "src", 
-            "url(" + this.musicDataList[index].audioURL + ")" );
-
-        // while loading music:
-        this.textArea.setAttribute("text", "value", " . . . music loading . . . ");
-
-        // change play button icon to Wait
-        this.playButton.setAttribute("material", "src", "#iconWait");
-        this.buttonIcon = "wait";
-
-        // used by event listener
-        this.musicDataIndex = index;
-    },
-
-    tick: function()
-    {
-    
-        if (this.controllerData.rightTrigger.pressed)
-        {
-            if ( this.buttonIcon == "wait" )
-            {
-                // song loading in process; can not play song or skip ahead;
-                //   just wait patiently...
-            }
-            // determine which button was clicked (if any)
-            else if ( this.playButton.components["raycaster-target"].hasFocus )
-            {
-                if ( this.buttonIcon == "play" )
-                {
-                    this.el.components["sound"].playSound();
-                    this.playButton.setAttribute("material", "src", "#iconPause");
-                    this.buttonIcon = "pause";
-                }
-                else if ( this.buttonIcon == "pause" ) 
-                {
-                    this.el.components["sound"].pauseSound();
-                    this.playButton.setAttribute("material", "src", "#iconPlay");
-                    this.buttonIcon = "play";
-                }
-            }
-            else if ( this.replayButton.components["raycaster-target"].hasFocus )
-            {
-                this.el.components["sound"].stopSound();
-                this.el.components["sound"].playSound();
-                this.playButton.setAttribute("material", "src", "#iconPause");
-                this.buttonIcon = "pause";
-            }
-            else if ( this.nextButton.components["raycaster-target"].hasFocus )
-            {
-                this.el.components["sound"].stopSound();
-                this.musicDataIndex++;
-                if (this.musicDataIndex == this.musicDataList.length)
-                    this.musicDataIndex = 0;
-                this.loadMusic( this.musicDataIndex );
-            }
-            else if ( this.previousButton.components["raycaster-target"].hasFocus )
-            {
-                this.el.components["sound"].stopSound();
-                this.musicDataIndex--;
-                if (this.musicDataIndex == -1)
-                    this.musicDataIndex = this.musicDataList.length - 1;
-                this.loadMusic( this.musicDataIndex );
-            }
-            else if ( this.volumeDownButton.components["raycaster-target"].hasFocus )
-            {
-                let volume = this.el.getAttribute("sound").volume;
-                if (volume >= 0.10)
-                    volume -= 0.10;
-                this.el.setAttribute("sound", "volume", volume);
-            }
-            else if ( this.volumeUpButton.components["raycaster-target"].hasFocus )
-            {
-                let volume = this.el.getAttribute("sound").volume;
-                if (volume <= 0.90)
-                    volume += 0.10;
-                this.el.setAttribute("sound", "volume", volume);
-            }
-        }
-
-    } // end of tick()
-
-});
-
-
+        audioURL: "music/Khutko/Violet.mp3", 
+        imageURL: "music/Khutko/image.jpg", 
+        songText: "Artist: Khutko --- Song: Violet \n (music provided by Lofi Girl)"
+    }
+];
 </script>
 
 <a-scene environment="preset: default;" renderer="antialias: true;">
@@ -241,6 +47,9 @@ AFRAME.registerComponent("music-player", {
         <img id="iconNext"       src="images/icon-next.jpg" />        
         <img id="iconPrevious"   src="images/icon-previous.jpg" />        
         <img id="iconReplay"     src="images/icon-replay.jpg" />        
+        <img id="iconPlayOnce"   src="images/icon-play-once.jpg" />        
+        <img id="iconPlayLoop"   src="images/icon-play-loop.jpg" />        
+        <img id="iconPlayAll"    src="images/icon-play-all.jpg" />        
         <img id="iconVolumeUp"   src="images/icon-volume-up.jpg" />        
         <img id="iconVolumeDown" src="images/icon-volume-down.jpg" />        
     </a-assets>
@@ -253,7 +62,8 @@ AFRAME.registerComponent("music-player", {
     <a-entity 
         id="player" 
         position="0 0 0" 
-        player-move="controllerListenerId: #controller-data;">
+        player-move="controllerListenerId: #controller-data;
+                     navigationMeshClass: environmentGround;">
         
         <a-camera></a-camera>
     
@@ -280,7 +90,8 @@ AFRAME.registerComponent("music-player", {
 
     <a-entity
         position = "0 1 -2"
-        music-player="controllerListenerId: #controller-data;">
+        music-player="controllerListenerId: #controller-data;
+                      musicDataVariableName: MusicData;">
     </a-entity>
 
     <a-torus-knot 
@@ -332,21 +143,6 @@ AFRAME.registerComponent("music-player", {
         class="raycaster-target"
         raycaster-target>
     </a-torus>
-
-    <!-- demo interaction boxes -->
-
-    <!-- 
-    <a-entity
-        id="textArea"
-        position="0 1.5 -1.9"
-        geometry="primitive: plane;  width: 3; height: auto"
-        material="color: #444444; transparent: true; opacity: 0.80;"
-        text="anchor: center; baseline: center; wrapCount: 40;
-                transparent: true; opacity: 0.90; color: #8888FF;
-                value: \n Debug messages here. \n"
-        >
-    </a-entity>
-    -->
 
 </a-scene>
 
