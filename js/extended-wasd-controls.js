@@ -134,8 +134,6 @@ AFRAME.registerComponent('extended-wasd-controls', {
 		//   (at least not with this code)
 		// thus, look/turn automatically disabled when look-controls present
 
-		console.log("rev. 6");
-
 		if ( this.lookControls ) // take into account look-controls, if they exist
 		{
 			// this code is only useful when trying to combine 
