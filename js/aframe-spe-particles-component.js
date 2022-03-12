@@ -323,7 +323,7 @@ AFRAME.registerComponent("spe-particles", {
     this.pauseTickId = undefined
     this.emitterID = uniqueEmitterID++
     this.pauseTick = this.pauseTick.bind(this)
-    this.defaultTexture = new THREE.DataTexture(new Uint8Array(3).fill(255), 1, 1, THREE.RGBFormat)
+    this.defaultTexture = new THREE.DataTexture(new Uint8Array(4).fill(255), 1, 1, THREE.RGBAFormat)
     this.defaultTexture.needsUpdate = true
   },
 
@@ -1087,7 +1087,7 @@ SPE.ShaderAttribute.prototype.resetUpdateRange = function() {
 
 SPE.ShaderAttribute.prototype.resetDynamic = function() {
 	'use strict';
-	this.bufferAttribute.usage = this.dynamicBuffer; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
+	this.bufferAttribute.usage = this.dynamicBuffer;
 };
 
 /**
@@ -1111,7 +1111,7 @@ SPE.ShaderAttribute.prototype.forceUpdateAll = function() {
 	this.bufferAttribute.array = this.typedArray.array;
 	this.bufferAttribute.updateRange.offset = 0;
 	this.bufferAttribute.updateRange.count = -1;
-	this.bufferAttribute.dynamic = false; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
+	this.bufferAttribute.dynamic = false; // ???
 	this.bufferAttribute.needsUpdate = true;
 };
 
@@ -1180,7 +1180,7 @@ SPE.ShaderAttribute.prototype._createBufferAttribute = function( size ) {
 	}
 
 	this.bufferAttribute = new THREE.BufferAttribute( this.typedArray.array, this.componentSize );
-	this.bufferAttribute.usage = this.dynamicBuffer; // LJS: stop A-Frame warnings ".dynamic" -> ".usage"
+	this.bufferAttribute.usage = this.dynamicBuffer;
 };
 
 /**
@@ -1209,7 +1209,7 @@ SPE.shaderChunks = {
     uniforms: [
         'uniform float deltaTime;',
         'uniform float runTime;',
-        'uniform sampler2D texture;',
+        'uniform sampler2D tex;',
         'uniform vec4 textureAnimation;',
         'uniform float scale;',
     ].join( '\n' ),
@@ -1450,7 +1450,7 @@ SPE.shaderChunks = {
         '    #endif',
 
         '',
-        '    vec4 rotatedTexture = texture2D( texture, vUv );',
+        '    vec4 rotatedTexture = texture2D( tex, vUv );',
     ].join( '\n' )
 };
 
@@ -2464,7 +2464,7 @@ SPE.Group = function( options ) {
 
     // Map of uniforms to be applied to the ShaderMaterial instance.
     this.uniforms = {
-        texture: {
+        tex: {
             type: 't',
             value: this.texture
         },
@@ -2629,7 +2629,7 @@ SPE.Group.prototype._applyAttributesToGeometry = function() {
 
             // // Add the attribute to the geometry if it doesn't already exist.
             else {
-                geometry.setAttribute( attr, attribute.bufferAttribute ); // LJS: stop A-Frame warnings "addAttribute()" -> "setAttribute()"
+                geometry.setAttribute( attr, attribute.bufferAttribute );
             }
 
             // Mark the attribute as needing an update the next time a frame is rendered.
