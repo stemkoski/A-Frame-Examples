@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame: Physics component</title>
+	<meta name="description" content="A-Frame Examples">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+	<script src="js/aframe-v1.3.0.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+	<script src="js/physx.release.js"></script>
+	<script src="js/physics.js"></script>
+
+</head>
+
+<body>
+	  
+<a-scene environment="preset: default;" physx="autoLoad: true; delay: 1000; wasmUrl: js/physx.release.wasm; useDefaultScene: false;">
+
+	<a-assets>
+		<img id="crate" src="images/crate.jpg" />
+		<img id="pixels" src="images/pixels.png" />
+		<img id="ball" src="images/basketball-gray.png" />
+	</a-assets>
+
+	<!-- camera -->
+	<a-entity camera look-controls wasd-controls="acceleration:10" position="0 1.6 0"></a-entity>
+
+  <!-- Floor -->
+  <a-box physx-body="type: static;" 
+           position="0 0.02 0" rotation="0 0 0" 
+           width="20" depth="20" height="0.1"
+           material="src: #crate; repeat: 10 10;">
+  </a-box>
+
+  <!-- TODO: REPLACE WALL PLANES WITH BOXES
+  <a-plane position="0 0.51 -10" rotation="0 0 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+
+  <a-plane position="0 0.51 10" rotation="0 0 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+
+  <a-plane position="-10 0.51 0" rotation="0 90 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+
+  <a-plane position="10 0.51 0" rotation="0 90 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+  -->
+
+  <!-- Dynamic objects -->
+  
+  <a-box physx-body="type: dynamic;"
+         position="-5 3 -5" rotation="10 20 30" 
+         material="src:#crate;">
+  </a-box>
+
+  <a-cylinder physx-body="type: dynamic;"
+              position="-3 3 -5" rotation="5 10 15" 
+              radius="0.25" height="1" color="cyan">
+  </a-cylinder>
+  
+  <a-entity physx-body="type: dynamic;"
+            geometry="primitive: icosahedron; radius: 0.5;" 
+            position="-1 3 -5" rotation="53 37 42"
+            material="src: #pixels; repeat: 10 10;">
+  </a-entity>
+
+  <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
+            position="1 6 -5" 
+            radius="0.5" 
+            material="src:#ball; color:red;">
+  </a-sphere>
+
+  <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
+            position="2.5 6 -5.1" 
+            radius="0.5" 
+            material="src:#ball; color:orange;">
+  </a-sphere>
+
+  <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
+            position="3 4 -5" 
+            radius="0.5" 
+            material="src:#ball; color:yellow;">
+  </a-sphere>
+
+  <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
+            position="3.5 8 -4.8" 
+            radius="0.5" 
+            material="src:#ball; color:green;">
+  </a-sphere>
+
+  <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
+            position="5 2 -5" 
+            radius="0.5" 
+            material="src:#ball; color:blue;">
+  </a-sphere>
+
+</a-scene>
+
+
+</body>
+</html>
