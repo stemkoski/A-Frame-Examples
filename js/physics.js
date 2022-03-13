@@ -1,19 +1,11 @@
-/* global AFRAME, PHYSX, THREE, VARTISTE */
+// This is a modification of the physics/PhysX libraries
+//   from the VARTISTE project @ https://vartiste.xyz/ 
+//   by Zachary Capalbo https://github.com/zach-capalbo/vartiste
+// with the goal of creating a simplified standalone codebase.
 
-// Note: This file is part of the aframe-vartiste-toolkit, so you don't need to include this if you're using the toolkit
+// original documentation: https://vartiste.xyz/docs.html#physics.js
 
-/* // JS files included manually
-
-if (typeof PHYSX == 'undefined')
-{
-  require('./wasm/physx.release.js')
-}
-
-if (typeof VARTISTE == 'undefined')
-{
-  const {Pool} = require('./pool.js')
-}
-*/
+// in this version: removed "dual-wielding"-related and "breakable" components.
 
 // ======================================================================
 
@@ -54,11 +46,13 @@ class Pool {
   }
 }
 
-// ======================================================================
+// ==================================================================================================
 
-// patching in required Util functions
+// patching in required Util functions from VARTISTE
 
 Util = {}
+
+Pool.init(Util);
 
 // Copies `matrix` into `obj`'s (a `THREE.Object3D`) `matrix`, and decomposes
 // it to `obj`'s position, rotation, and scale
@@ -67,16 +61,7 @@ Util.applyMatrix = function(matrix, obj) {
   matrix.decompose(obj.position, obj.rotation, obj.scale)
 }
 
-// ======================================================================
-
-// patching in required VARTISTE-Util functions
-
-var VARTISTE = {};
-VARTISTE.Util = {};
-
-Pool.init(VARTISTE.Util);
-
-VARTISTE.Util.traverseCondition = function(obj3D, condition, fn) 
+Util.traverseCondition = function(obj3D, condition, fn) 
 {
   if (!condition(obj3D)) return;
 
@@ -87,7 +72,7 @@ VARTISTE.Util.traverseCondition = function(obj3D, condition, fn)
   }
 }
 
-VARTISTE.Util.positionObject3DAtTarget = function(obj, target, {scale, transformOffset, transformRoot} = {}) 
+Util.positionObject3DAtTarget = function(obj, target, {scale, transformOffset, transformRoot} = {}) 
 {
   if (typeof transformRoot === 'undefined') transformRoot = obj.parent
 
@@ -117,20 +102,80 @@ VARTISTE.Util.positionObject3DAtTarget = function(obj, target, {scale, transform
   Util.applyMatrix(destMat, obj)
 }
 
-// unknown if needed
+// untested functions
 
-// VARTISTE.Util.whenLoaded = function()
+// Executes function `fn` when `entity` has finished loading, or immediately
+// if it has already loaded. `entity` may be a single `a-entity` element, or
+// an array of `a-entity` elements. If `fn` is not provided, it will return a
+// `Promise` that will resolve when `entity` is loaded (or immediately if
+// `entity` is already loaded).
+Util.whenLoaded = function(entity, fn) {
+  if (Array.isArray(entity) && fn) return whenLoadedAll(entity, fn)
+  if (Array.isArray(entity)) return awaitLoadingAll(entity)
+  if (fn) return whenLoadedSingle(entity, fn)
+  return awaitLoadingSingle(entity)
+}
 
-// VARTISTE.Util.whenComponentInitialized = function()
+function whenLoadedSingle(entity, fn) {
+  if (entity.hasLoaded)
+  {
+    fn()
+  }
+  else
+  {
+    entity.addEventListener('loaded', fn)
+  }
+}
 
+function whenLoadedAll(entities, fn) {
+  let allLoaded = entities.map(() => false)
+  for (let i = 0; i < entities.length; ++i)
+  {
+    let ii = i
+    let entity = entities[ii]
+    whenLoadedSingle(entity, () => {
+      allLoaded[ii] = true
+      if (allLoaded.every(t => t)) fn()
+    })
+  }
+}
 
-VARTISTE.Util.applyMatrix = function(matrix, obj) {
-  obj.matrix.copy(matrix)
-  matrix.decompose(obj.position, obj.rotation, obj.scale)
+function awaitLoadingSingle(entity) {
+  return new Promise((r, e) => whenLoadedSingle(entity, r))
+}
+
+async function awaitLoadingAll(entities) {
+  for (let entity of entities)
+  {
+    await awaitLoadingSingle(entity)
+  }
+}
+
+Util.whenComponentInitialized = function(el, component, fn) {
+  if (el && el.components[component] && el.components[component].initialized) {
+    return Promise.resolve(fn ? fn() : undefined)
+  }
+
+  return new Promise((r, e) => {
+    if (el && el.components[component] && el.components[component].initialized) {
+      return Promise.resolve(fn ? fn() : undefined)
+    }
+
+    let listener = (e) => {
+      if (e.detail.name === component) {
+        el.removeEventListener('componentinitialized', listener);
+        if (fn) fn();
+        r();
+      }
+    };
+    el.addEventListener('componentinitialized', listener)
+  })
 }
 
 // ========================================================================================
+
 // Extra utility functions for dealing with PhysX
+
 const PhysXUtil = {
     // Gets the world position transform of the given object3D in PhysX format
     object3DPhysXTransform: (() => {
@@ -627,7 +672,7 @@ AFRAME.registerSystem('physx', {
         this.worldHelper.position.copy(transform.translation);
         this.worldHelper.quaternion.copy(transform.rotation);
         obj.getWorldScale(this.worldHelper.scale)
-        VARTISTE.Util.positionObject3DAtTarget(obj, this.worldHelper);
+        Util.positionObject3DAtTarget(obj, this.worldHelper);
     }
   }
 })
@@ -974,7 +1019,7 @@ AFRAME.registerComponent('physx-body', {
     }
 
     let shapes = []
-    VARTISTE.Util.traverseCondition(this.el.object3D,
+    Util.traverseCondition(this.el.object3D,
       o => {
         if (o.el && o.el.hasAttribute("physx-no-collision")) return false;
         if (o.el && !o.el.object3D.visible && !o.el.hasAttribute("physx-hidden-collision")) return false;
@@ -1415,7 +1460,7 @@ AFRAME.registerComponent('physx-joint', {
     }
 
 
-    VARTISTE.Util.whenLoaded([this.el, this.bodyEl, this.data.target], () => {
+    Util.whenLoaded([this.el, this.bodyEl, this.data.target], () => {
       this.createJoint()
     })
   },
@@ -1471,17 +1516,17 @@ AFRAME.registerComponent('physx-joint', {
     }
   },
   getTransform(el) {
-    VARTISTE.Util.positionObject3DAtTarget(this.worldHelperParent, el.object3D, {scale: this.targetScale})
+    Util.positionObject3DAtTarget(this.worldHelperParent, el.object3D, {scale: this.targetScale})
 
-    VARTISTE.Util.positionObject3DAtTarget(this.worldHelper, this.el.object3D, {scale: this.targetScale});
+    Util.positionObject3DAtTarget(this.worldHelper, this.el.object3D, {scale: this.targetScale});
 
     let transform = PhysXUtil.matrixToTransform(this.worldHelper.matrix);
 
     return transform;
   },
   async createJoint() {
-    await VARTISTE.Util.whenComponentInitialized(this.bodyEl, 'physx-body')
-    await VARTISTE.Util.whenComponentInitialized(this.data.target, 'physx-body')
+    await Util.whenComponentInitialized(this.bodyEl, 'physx-body')
+    await Util.whenComponentInitialized(this.data.target, 'physx-body')
     await this.bodyEl.components['physx-body'].physxRegisteredPromise;
     await this.data.target.components['physx-body'].physxRegisteredPromise;
 
@@ -1503,229 +1548,6 @@ AFRAME.registerComponent('physx-joint', {
   }
 })
 
-// Allows a dynamic object to be manipulated by more than one manipulator at
-// once (e.g., by both hands). The object should have the `clickable` class, or
-// clickable descendents should have the `propogate-grab` attribute set. Joints
-// will automatically be created and destroyed at grab sites, and will use
-// "wobbly sword" physics constraints.
-//
-// This is the easiest way to create non-kinematic grabbing.
-AFRAME.registerComponent('dual-wieldable', {
-  schema: {
-    grabbedState: {default: 'wielded'},
-  },
-  init() {
-    let target = document.createElement('a-entity')
-    this.el.parentEl.append(target)
-
-    if (this.el.hasAttribute('manipulator-weight'))
-    {
-      target.setAttribute('manipulator-weight', this.el.getAttribute('manipulator-weight'))
-    }
-
-    target.setAttribute('dual-wield-target', {target: this.el, grabbedState: this.data.grabbedState})
-    this.el.setAttribute('redirect-grab', target)
-    this.el.classList.add('grab-root')
-  }
-})
-
-AFRAME.registerSystem('dual-wield-target', {
-  schema: {
-    movementEvents: {default: ['teleported']},
-  },
-  init() {
-    this.handleMovement = this.handleMovement.bind(this);
-
-    for (let event of this.data.movementEvents) {
-      this.el.addEventListener(event, this.handleMovement)
-    }
-  },
-  handleMovement(e) {
-    let oldWorldPosition = new THREE.Vector3
-    let oldWorldRotation = new THREE.Quaternion
-    let newWorldPosition = new THREE.Vector3
-    this.el.querySelectorAll('*[dual-wield-target]').forEach(el => {
-      if (!el.components) return;
-
-      let component = el.components['dual-wield-target'];
-      if (!component.data.target.is(component.data.grabbedState)) return;
-
-      let activeJoint = component.joints.find(j => j.is("grabbed"))
-      if (!activeJoint) return;
-
-      let oldTransform = activeJoint.components['physx-body'].rigidBody.getGlobalPose()
-      oldWorldPosition.copy(oldTransform.translation)
-
-      activeJoint.object3D.getWorldPosition(newWorldPosition)
-      newWorldPosition.sub(oldWorldPosition)
-
-      console.log("Teleporting diff", newWorldPosition)
-
-      component.data.target.object3D.position.add(newWorldPosition)
-      component.data.target.components['physx-body'].resetBodyPose()
-    })
-  }
-})
-
-// Helper component for facilitating [`dual-wieldable`](#dual-wieldable)
-AFRAME.registerComponent('dual-wield-target', {
-  schema: {
-    // Max number of manipulators that can grab this
-    numberOfJoints: {default: 2},
-
-    // The object that's actually being grabbed
-    target: {type: 'selector'},
-
-    // Alternate, "wobbly sword" constraint presets
-    wobblySword: {default: false},
-
-    // State to set on target when grabbed via constraint
-    grabbedState: {default: 'wielded'},
-  },
-  events: {
-    stateadded: function(e) {
-      if (e.detail === 'grabbed')
-      {
-        this.el['redirect-grab'] = this.joints.find(j => !j.is("grabbed")) || this.nullTarget
-
-        let el = VARTISTE.Util.resolveGrabRedirection(e.target);
-        if (el === this.nullTarget) {
-          console.warn("Used up all dual-wield-targets. not grabbing.")
-          return;
-        }
-        console.log("starting dual grab target for", e, el)
-        let rigidBody = el.components['physx-body'].rigidBody;
-
-        // TODO: Fix order of state and grabbing manipulator in VARTISTE
-        VARTISTE.Util.callLater(() => {
-          let manipulator = el.grabbingManipulator;
-          console.log("manipulator", manipulator)
-
-          manipulator.offset.set(0, 0, 0)
-          VARTISTE.Util.positionObject3DAtTarget(el.object3D, manipulator.endPoint)
-          el.components['physx-body'].resetBodyPose()
-
-          if (el.hasAttribute('manipulator-weight'))
-          {
-            el.components['manipulator-weight'].lastPos.copy(el.object3D.position)
-            el.components['manipulator-weight'].lastRot.copy(el.object3D.quaternion)
-          }
-
-          el.setAttribute('physx-joint', 'type: D6')
-
-          this.updateHandParameters();
-        })
-      }
-    },
-    stateremoved: function(e) {
-      if (e.detail === 'grabbed')
-      {
-        let el = e.target
-        console.log("Ending dual wield", el)
-        el.removeAttribute('physx-joint')
-
-        this.el['redirect-grab'] = this.joints.find(j => !j.is("grabbed")) || this.nullTarget
-
-        this.updateHandParameters();
-      }
-    }
-  },
-  init() {
-    this.jointMap = new Map();
-    this.joints = []
-    for (let i = 0; i < this.data.numberOfJoints; ++i)
-    {
-      let joint = document.createElement('a-entity')
-      this.el.append(joint)
-      joint.classList.add("dual-wield-joint");
-      joint.setAttribute('physx-material', 'collidesWithLayers: 0; collisionLayers: 0')
-      joint.setAttribute('physx-body', 'type: kinematic')
-
-      if (this.el.hasAttribute('manipulator-weight'))
-      {
-        joint.setAttribute('manipulator-weight', this.el.getAttribute('manipulator-weight'))
-      }
-
-      // let vis = document.createElement('a-entity')
-      // joint.append(vis)
-      // vis.setAttribute('geometry', 'primitive: sphere; radius: 0.05')
-      // vis.setAttribute('physx-no-collision')
-
-      this.joints.push(joint)
-    }
-    this.el['redirect-grab'] = this.joints[0]
-
-    let nullTarget = document.createElement('a-entity')
-    this.el.append(nullTarget)
-    this.nullTarget = nullTarget
-  },
-  updateHandParameters() {
-    let grabbedCount = 0
-    for (let joint of this.joints)
-    {
-        if (joint.hasAttribute('physx-joint')) grabbedCount++;
-    }
-    if (grabbedCount === 1)
-    {
-      this.setSingleHandParameters()
-    }
-    else if (grabbedCount > 1)
-    {
-      this.setMultiHandParameters()
-    }
-
-    if (grabbedCount > 0)
-    {
-      this.data.target.addState(this.data.grabbedState)
-    }
-    else
-    {
-      this.data.target.removeState(this.data.grabbedState)
-    }
-  },
-  setSingleHandParameters() {
-    for (let joint of this.joints)
-    {
-      if (joint.hasAttribute('physx-joint'))
-      {
-        if (this.data.wobblySword)
-        {
-            joint.setAttribute('physx-joint-constraint', {
-                                  limitCone: {x: 0.001, y: 0.001},
-                                  stiffness: 1000, damping: 100, restitution: 0,
-                                  limitTwist: {x: 0, y: 0},
-            })
-            joint.setAttribute('physx-joint', {type: 'D6', target: this.data.target})
-        }
-        else
-        {
-          joint.setAttribute('physx-joint', {type: 'D6', target: this.data.target, softFixed: true, breakForce: {x: 10, y: 10}})
-        }
-      }
-    }
-  },
-  setMultiHandParameters() {
-    for (let joint of this.joints)
-    {
-      if (joint.hasAttribute('physx-joint'))
-      {
-        if (this.data.wobblySword)
-        {
-          joint.setAttribute('physx-joint-constraint', {
-                                  limitCone: {x: Math.PI/2, y: Math.PI/2},
-                                  stiffness: 0.5, damping: 1, restitution: 0,
-                                  limitTwist: {x: -Math.PI/2, y: Math.PI/2},
-          })
-          joint.setAttribute('physx-joint', {type: 'D6', target: this.data.target})
-        }
-        else
-        {
-          joint.setAttribute('physx-joint', {type: 'D6', target: this.data.target, softFixed: true})
-        }
-      }
-    }
-  }
-})
 
 AFRAME.registerSystem('physx-contact-event', {
   init() {
@@ -1787,7 +1609,7 @@ AFRAME.registerComponent('physx-contact-event', {
         }
         thisWorld.multiplyScalar(1.0 / impulseSum)
         this.system.worldHelper.position.copy(thisWorld)
-        VARTISTE.Util.positionObject3DAtTarget(this.localHelper, this.system.worldHelper)
+        Util.positionObject3DAtTarget(this.localHelper, this.system.worldHelper)
         this.eventDetail.position.copy(this.localHelper.position)
       }
       else
@@ -2005,12 +1827,12 @@ AFRAME.registerComponent('gltf-entities', {
       }
 
       currentRootEl.append(el)
-      VARTISTE.Util.whenLoaded(el, () => {
+      Util.whenLoaded(el, () => {
         el.setObject3D('mesh', obj3d)
         obj3d.updateMatrix()
-        VARTISTE.Util.applyMatrix(obj3d.matrix, el.object3D)
+        Util.applyMatrix(obj3d.matrix, el.object3D)
         obj3d.matrix.identity()
-        VARTISTE.Util.applyMatrix(obj3d.matrix, obj3d)
+        Util.applyMatrix(obj3d.matrix, obj3d)
       })
       currentRootEl = el
     }
@@ -2022,91 +1844,3 @@ AFRAME.registerComponent('gltf-entities', {
   }
 })
 
-// NOT YET IMPLEMENTED. Only kind of works
-AFRAME.registerComponent("breakable-bodies", {
-  dependencies: ['physx-material'],
-  schema: {
-    autoBody: {default: false},
-    breakForce: {type: 'vec2', default: {x: 100, y: 100}},
-    breakDelay: {default: 6000},
-  },
-  events: {
-    object3dset: function(e) {
-      if (e.target !== this.el) return;
-
-      if (this.data.autoBody) {
-        this.setupAutobody(this.el.object3D)
-      }
-      this.findTarget(this.el)
-      this.setupJoints()
-      this.jointTime = this.el.sceneEl.time
-    }
-  },
-  init() {
-    this.el.setAttribute('physx-material', 'collisionGroup', Math.round(Math.random() * 1000) + 1)
-  },
-  findTarget(el) {
-    if (el.hasAttribute('physx-body')) {
-      this.target = el;
-      return true;
-    }
-
-    for (let c of el.children)
-    {
-      if (this.findTarget(c)) return true;
-    }
-
-    return false;
-  },
-  setupJoints(el) {
-    if (el === undefined) el = this.el;
-
-    if (el.hasAttribute('physx-body')) {
-      el.setAttribute('physx-joint__breakable', {type: 'Fixed',
-                                                 breakForce: this.data.breakDelay <= 0 ? this.data.breakForce : {x: -1, y: -1},
-                                                 target: this.target})
-    }
-
-    for (let c of el.children)
-    {
-        this.setupJoints(c)
-    }
-  },
-  setupAutobody(obj3d) {
-    if (obj3d.type === 'Mesh') {
-      let el = document.createElement('a-entity')
-      el.setAttribute('physx-material', this.el.getAttribute('physx-material'))
-      el.setAttribute('physx-body', 'type: dynamic')
-
-      if (this.el.classList.contains("clickable"))
-      {
-        el.classList.add("clickable")
-      }
-
-      this.el.append(el)
-      VARTISTE.Util.whenLoaded(el, () => {
-        el.setObject3D('mesh', obj3d)
-        obj3d.updateMatrix()
-        VARTISTE.Util.applyMatrix(obj3d.matrix, el.object3D)
-        obj3d.matrix.identity()
-        VARTISTE.Util.applyMatrix(obj3d.matrix, obj3d)
-      })
-
-      return
-    }
-
-    for (let child of obj3d.children)
-    {
-      this.setupAutobody(child)
-    }
-  },
-  tick(t,dt) {
-    if (!this.jointTime) return
-    if (this.data.breakDelay <= 0) return;
-    if (t - this.jointTime < this.data.breakDelay) return
-
-    console.log("Setting break force")
-    this.el.querySelectorAll('a-entity[physx-joint__breakable]').forEach(el => el.setAttribute('physx-joint__breakable', 'breakForce', this.data.breakForce))
-    delete this.jointTime
-  }
-})
