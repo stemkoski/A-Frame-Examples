@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>A-Frame Examples</title>
+    <meta name="description" content="Testing VRM Avatars">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+
+    <script src="js/aframe-v1.3.0.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+
+    <script src="js/mmdparser.js"></script>
+    <script src="js/CCDIKSolver.js"></script>
+    <script src="js/BVHLoader.js"></script>
+    <script src="js/MMDLoader.js"></script>
+    <script src="js/aframe-vrm.js"></script>
+    
+</head>
+
+<body>
+
+<script>
+// if raycaster is pointing at this object, press trigger to change color
+AFRAME.registerComponent("vrm-test", {
+    init: function () 
+    {
+
+        // replace GLTF MeshBasicMaterial with Material that supports shading
+        this.el.addEventListener("model-loaded", function(eventData) {
+          console.log("model-loaded!");
+          let model = eventData.detail.model;
+          model.traverse((obj) => {
+            if (obj.isMesh) 
+            {
+              let newMaterial = new THREE.MeshLambertMaterial(
+                {alphaTest: 0.5, alphaWrite: false, emissive: "#111111"});
+              newMaterial.map = obj.material.map;
+              obj.material = newMaterial;
+            }
+          });
+
+        });
+        // Material replacement complete
+
+        // look-at object (check: string used by querySelector?)
+        this.el.setAttribute("vrm", "lookAt", "a-camera");
+
+    },
+
+    tick: function()
+    {
+        
+    }
+});
+
+
+</script>
+
+<a-scene environment="preset: default;" renderer="antialias: true;">
+        
+    <a-assets>
+        <img id="gradient" src="images/gradient-fade.png" />
+    </a-assets>
+
+    <a-sky 
+        color = "#000337">
+    </a-sky>
+
+    <!-- vrm-anim="src:models/normal-walk.vmd" -->
+    <!-- vrm-anim="" -->
+    <a-entity vrm="src: models/avatar.vrm;" 
+              vrm-anim="src: models/normal-walk.vmd;"  
+              position="0 0 -1"
+              rotation="0 180 0"
+              vrm-test
+              >          
+    </a-entity>
+
+  
+
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;
+                     navigationMeshClass: environmentGround;">
+        
+        <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
+
+        <a-entity 
+            id="left-controller"
+            oculus-touch-controls="hand: left">
+        </a-entity>
+
+        <a-entity
+            id="right-controller"
+            oculus-touch-controls="hand: right"
+            raycaster="objects: .raycaster-target, .environmentGround;"
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
+        </a-entity>
+
+    </a-entity>
+
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333"
+        raycaster-target>
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1.1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800"
+        class = ""
+        raycaster-target>
+    </a-box>
+
+    <a-sphere
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00"
+        raycaster-target>
+    </a-sphere>
+    
+    <a-cylinder
+        radius = "0.5" height = "1.5"
+        position = " 1 0.75 -3"
+        color = "#008800" 
+        raycaster-target>
+    </a-cylinder>
+
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC"
+        raycaster-target>
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF"
+        raycaster-target>
+    </a-torus>
+
+   
+
+</a-scene>
+
+</body>
+</html>
