@@ -2,8 +2,8 @@
 <html>
 
 <head>
-	<title>A-Frame: Physics component</title>
-	<meta name="description" content="A-Frame Examples">
+	<title>A-Frame: Physics</title>
+	<meta name="description" content="A-Frame Physics">
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
 	<script src="js/aframe-v1.3.0.js"></script>
 	<script src="js/aframe-environment-component.js"></script>
@@ -21,6 +21,7 @@
 		<img id="crate" src="images/crate.jpg" />
 		<img id="pixels" src="images/pixels.png" />
 		<img id="ball" src="images/basketball-gray.png" />
+		<img id="hexagons" src="images/hexagons.png"/>
 	</a-assets>
 
 	<!-- camera -->
@@ -28,20 +29,35 @@
 
   <!-- Floor -->
   <a-box physx-body="type: static;" 
-           position="0 0.02 0" rotation="0 0 0" 
+           position="0 0.02 0"
            width="20" depth="20" height="0.1"
            material="src: #crate; repeat: 10 10;">
   </a-box>
 
-  <!-- TODO: REPLACE WALL PLANES WITH BOXES
-  <a-plane position="0 0.51 -10" rotation="0 0 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+  <!-- Walls -->
+  <a-box physx-body="type: static;" 
+           position="0 0.51 -10"
+           width="20" depth="0.1" height="1"
+           material="src: #crate; repeat: 10 10;">
+  </a-box>
 
-  <a-plane position="0 0.51 10" rotation="0 0 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+  <a-box physx-body="type: static;" 
+           position="0 0.51 10"
+           width="20" depth="0.1" height="1"
+           material="src: #crate; repeat: 10 10;">
+  </a-box>
 
-  <a-plane position="-10 0.51 0" rotation="0 90 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
+  <a-box physx-body="type: static;" 
+           position="10 0.51 0"
+           width="0.1" depth="20" height="1"
+           material="src: #crate; repeat: 10 10;">
+  </a-box>
 
-  <a-plane position="10 0.51 0" rotation="0 90 0" width="20" height="1" material="src: #crate; repeat: 20 1; transparent: true; opacity: 0.5; side:double;"></a-plane>
-  -->
+  <a-box physx-body="type: static;" 
+           position="-10 0.51 0"
+           width="0.1" depth="20" height="1"
+           material="src: #crate; repeat: 10 10;">
+  </a-box>
 
   <!-- Dynamic objects -->
   
@@ -52,7 +68,8 @@
 
   <a-cylinder physx-body="type: dynamic;"
               position="-3 3 -5" rotation="5 10 15" 
-              radius="0.25" height="1" color="cyan">
+              radius="0.25" height="1"
+              material="src: #hexagons">
   </a-cylinder>
   
   <a-entity physx-body="type: dynamic;"
