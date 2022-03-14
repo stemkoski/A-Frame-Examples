@@ -196,6 +196,9 @@ AFRAME.registerComponent('raycaster-extras', {
                 // focused element is now also the grabbed element
                 this.grabbedElement = this.focusedElement;
                 this.grabbedElement.components["raycaster-target"].isGrabbed = true;
+
+                // emit an event
+                this.grabbedElement.emit( "raycaster-grabbed", {el: this.grabbedElement} );
             }
 
         }
@@ -270,6 +273,9 @@ AFRAME.registerComponent('raycaster-extras', {
                 
                 if ( this.grabbedElement.components["raycaster-target"].data.glowOnHover )
                      this.grabbedElement.setAttribute("material", "emissive", "#444444");
+
+                // emit an event
+                this.grabbedElement.emit( "raycaster-released", {el: this.grabbedElement} );
 
                 this.grabbedElement = null;
             }
