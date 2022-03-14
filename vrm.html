@@ -48,18 +48,23 @@ AFRAME.registerComponent("vrm-test", {
         // look-at object (check: string used by querySelector?)
         this.el.setAttribute("vrm", "lookAt", "a-camera");
 
+        this.clock = new THREE.Clock();
     },
 
     tick: function()
     {
-        
+        this.clock.getDelta();
+        let t = this.clock.elapsedTime;
+        this.el.object3D.position.set( Math.sin(t), 0, -1.5 + Math.cos(t) );
+        this.el.object3D.lookAt( Math.sin(t - 0.01), 0, -1.5 + Math.cos(t - 0.01) );
+
     }
 });
 
 
 </script>
 
-<a-scene environment="preset: default;" renderer="antialias: true;">
+<a-scene environment="preset: default; shadow: true;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
@@ -76,6 +81,7 @@ AFRAME.registerComponent("vrm-test", {
               position="0 0 -1"
               rotation="0 180 0"
               vrm-test
+              shadow="cast: true; receive: false;"
               >          
     </a-entity>
 
@@ -83,7 +89,7 @@ AFRAME.registerComponent("vrm-test", {
 
     <a-entity 
         id="player" 
-        position="0 0 0" 
+        position="0 0 1" 
         player-move="controllerListenerId: #controller-data;
                      navigationMeshClass: environmentGround;">
         
@@ -122,7 +128,7 @@ AFRAME.registerComponent("vrm-test", {
         position = "-1.1 0.5 -3"
         rotation = "0 45 0"  
         color = "#FF8800"
-        class = ""
+        shadow="cast: true; receive: true;"
         raycaster-target>
     </a-box>
 
@@ -130,6 +136,7 @@ AFRAME.registerComponent("vrm-test", {
         radius = "1.25"
         position = "0 1.25 -5"
         color = "#DDBB00"
+        shadow="cast: true; receive: true;"
         raycaster-target>
     </a-sphere>
     
@@ -137,6 +144,7 @@ AFRAME.registerComponent("vrm-test", {
         radius = "0.5" height = "1.5"
         position = " 1 0.75 -3"
         color = "#008800" 
+        shadow="cast: true; receive: true;"
         raycaster-target>
     </a-cylinder>
 
