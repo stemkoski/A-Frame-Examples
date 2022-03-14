@@ -1,0 +1,160 @@
+<html>
+<head>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- <script src="js/aframe-master.1.0.4.min.js"></script> -->
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/aframe-spe-particles-component.js"></script>
+    <script src="js/aframe-sprite-particles-component.js"></script>
+    <script src="js/extended-wasd-controls.js"></script>
+</head>
+<body>
+
+<a-scene environment="preset: tron; fog: 0;" keyboard-shortcuts="enterVR: false;" >
+
+    <!-- adding in look controls -->
+    <a-entity id="camera" camera look-controls
+      position="0 1.6 0"
+      extended-wasd-controls="flyEnabled: true; turnEnabled: false; lookEnabled: false;
+      maxLookEnabled: false; coordinateLookControls: true;">
+    </a-entity>
+
+    <!-- mark starting position -->
+    <a-cylinder radius="0.2" height="0.2" color="white"></a-cylinder>    
+
+    <a-entity position="-4 1.5 -1">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+      <a-entity spe-particles="
+        texture: images/particles/sparkle.png;
+        color: #FFFF00, #FF0000; 
+        size: 1, 0;
+        distribution: SPHERE;
+        radius: 0.001;
+        velocity: 0.2;
+        velocity-spread: 0.1; 
+        angle: 0, 6.28;
+        particle-count: 1000;
+        blending: additive;
+        maxAge: 3; ">
+      </a-entity> 
+    </a-entity>
+    
+    <!-- multicolor -->
+    <a-entity position="-4 1.5 -3">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+      <a-entity sprite-particles="texture: images/particles/circle.png; spawnRate: 100; lifeTime: 3; radialType: sphere; radialPosition: 0.3; color: red..orange, blue..purple; scale: 0,1,0"></a-entity>
+    </a-entity>
+
+    <!-- trails -->
+    <a-entity position="-4 1.5 -5">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+      <a-entity sprite-particles="texture: images/blob.png; spawnRate: 2; lifeTime: 3; trailLifeTime: 0.5; velocity: -0.2 1 0 .. 0.2 1 0; acceleration: 0 -0.5 0; trailInterval: 0.05; opacity: 1,0; color: red,orange; scale: 1,0.5; "></a-entity>
+    </a-entity>
+
+    <!-- clouds & rain -->
+    <a-entity position="-6 1.5 -9">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+       <a-entity sprite-particles="texture: images/particles/fog.png; position: -1 3 -1 .. 1 3 1; velocity: -.1 -.05 -.1 .. .1 .05 .1; spawnRate: 50; lifeTime: 10; scale: 5,8; opacity: 0,1,0; color: #AAAAAA"></a-entity>
+      <a-entity sprite-particles="texture: images/particles/rain.png; color: cyan..blue; position: -1 1.8 -1 .. 1 2.0 1; spawnRate: 200; velocity: 0 -10 0; lifeTime: .5; scale: 1; opacity: 0.2"></a-entity>
+    </a-entity>
+
+    <!-- smoke -->
+    <a-entity position="-2 1.5 -7">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+      <a-entity sprite-particles="texture: images/particles/fog.png; velocity: .1 1 -.1..0.3 1 .1; lifeTime: 4; scale: 2,6; opacity: 0,1,0; color: #aaa,#222; "></a-entity>
+    </a-entity>
+
+    <!-- star fountain -->
+    <a-entity position="0 1.5 -7">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+      <a-entity 
+          spe-particles="
+          texture: images/particles/star.png;
+          color: #FF0000, #FFFF00, #00FFFF, #FF00FF;
+          distribution: BOX;
+          opacity: 1,1,1,0;
+          velocity: 0 0.5 0;
+          velocity-spread: 0.2 0 0.2; 
+          blending: normal;
+          particle-count: 100;
+          angle: 0, 6.28;
+          maxAge: 3; ">
+      </a-entity> 
+
+      <!-- firework -- set active-multiplier to a large number
+           and also set duration < max-age for a single burst -->
+      <a-entity position="0 5 0"
+        spe-particles="
+        texture: images/particles/sparkle.png;
+        color: yellow, red, cyan, black; 
+        distribution: sphere; 
+        randomize-velocity: true;
+        radius: 0.01; 
+        particle-count: 800; 
+        velocity: 1; 
+        velocity-spread: 0.5; 
+        drag: 1; 
+        max-age: 2;
+        blending: additive;
+        active-multiplier: 1000; 
+        size: 1, 1, 1, 0">
+    </a-entity>
+    </a-entity>
+
+    <!-- fire ball -->
+    <a-entity position="2 1.5 -7">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+        <a-entity 
+            spe-particles="
+            texture: images/particles/snowflake.png; 
+            particle-count: 200; 
+            max-age: 3; 
+            blending: additive;
+            distribution: sphere; 
+            velocity: 0.04;
+            velocity-spread: 0.03;
+            radius: 0.01;
+            color: #FF4400, #FF1100, #FF0000, #880000;
+            opacity: 0.1;
+            size: 3, 3, 3, 0">
+        </a-entity>
+    </a-entity>
+
+    <!-- snow -->
+    <a-entity position="6 1.5 -9">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+       <a-entity sprite-particles="texture: images/particles/snowflake.png; color: #ccc; position: -1 1 -1 .. 1 1 1; spawnRate: 50; velocity: .1 -.7 .1..0.1 -.3 .1; rotation: -360..360,-360..360; lifeTime: 4; opacity:0,1,1,1,0; scale: 0.5;"></a-entity>
+    </a-entity>
+
+    <a-entity position="4 1.5 -5">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+    </a-entity>
+
+    <a-entity position="4 1.5 -3">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+    </a-entity>
+
+    <!-- frames / spritesheet -->
+    <a-entity position="4 1.5 -1">
+      <a-cylinder position="0 -1 0" radius="0.2" height="1" color="gray"></a-cylinder>
+       <a-entity sprite-particles="texture: images/red-particle.png; textureFrame: 8 4; spawnRate: 1; lifeTime: 1; textureLoop: 1; scale: 4; blending:additive;"></a-entity>
+    </a-entity>
+
+  <!-- water fountain 
+    <a-cylinder position="-3 2 -4" radius="0.1" height="0.1" color="gray">
+        <a-entity
+            spe-particles="
+            texture: images/particles/snowflake.png; 
+            color: #0000FF, #00FFFF, #FFFFFF; 
+            opacity: 1, 1, 0;
+            size: 1, 1, 0;
+            velocity: 0 4 0; 
+            velocity-spread: 2 0 2; 
+            acceleration: 0 -6 0;
+            particle-count: 1000;">
+        </a-entity>
+    </a-cylinder>    
+  -->
+
+</a-scene>
+</body>
+</html>
