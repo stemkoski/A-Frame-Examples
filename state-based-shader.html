@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - custom shaders</title>
+	<meta name="description" content="A-Frame - custom shaders">
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+</head>
+
+<body>
+
+<script>
+
+AFRAME.registerComponent('life', {
+
+  schema: {
+    updateInterval: {type: 'float',  default: 1.0},
+  },
+
+  init: function() {
+
+    console.log("life started")
+    const rtWidth = 512;
+    const rtHeight = 512;
+
+    this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+    this.renderTarget0.texture.magFilter = THREE.NearestFilter;
+    this.renderTarget0.texture.minFilter = THREE.NearestFilter;
+    this.renderTarget0.texture.generateMipmaps = false;
+
+    this.renderTarget1 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+    this.renderTarget1.texture.magFilter = THREE.NearestFilter;
+    this.renderTarget1.texture.minFilter = THREE.NearestFilter;
+    this.renderTarget1.texture.generateMipmaps = false;
+
+    // ================================================
+
+    let self = this;
+
+    this.material1 = new THREE.ShaderMaterial( {
+
+      uniforms: {
+        time:       { value: 1.0 },
+        tex:        { type: "t", value: self.renderTarget0.texture},
+      },
+
+      vertexShader: `
+      varying vec2 vUv;
+
+      void main() 
+      {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      }
+      `,
+
+      fragmentShader: `
+      varying vec2 vUv;
+      uniform sampler2D tex;
+      // uniform float timeMsec;
+
+      void main() 
+      {
+          vec4 color = texture2D(tex, vUv);
+          color = vec4( color.rgb + 0.02, 1.0 );
+          gl_FragColor = color;
+      }
+      `
+
+    });
+    
+    // =========================================================
+    
+    const texture = new THREE.TextureLoader().load( 'images/color-grid.png' );
+    this.material0 = new THREE.MeshBasicMaterial({ map: texture }); // after first update, switch to material0.map to this.renderTarget1.texture
+    // separate scene #0 for texture processing
+    const geometry0 = new THREE.PlaneGeometry(2, 2);
+    const plane0 = new THREE.Mesh(geometry0, this.material0);
+    this.rtScene0 = new THREE.Scene();
+    this.rtScene0.add(plane0);
+
+
+    // this.material1 is define above
+    // separate scene #1 for texture processing
+    const geometry1 = new THREE.PlaneGeometry(2, 2);
+    const plane1 = new THREE.Mesh(geometry1, this.material1);
+    this.rtScene1 = new THREE.Scene();
+    this.rtScene1.add(plane1);
+
+    // both scenes can use the same basic camera
+    this.rtCamera = new THREE.OrthographicCamera();
+    this.rtCamera.position.z = 0.1;
+
+    // only update textures periodically
+    this.timer = 0;
+    this.clock = new THREE.Clock();
+
+    // initialize during first tick()
+    this.plane0 = null;
+    this.plane1 = null;
+
+  },
+
+  tick: function() {
+
+    if (this.plane0 == null)
+    {
+        this.plane0 = document.querySelector("#plane0");
+        this.plane1 = document.querySelector("#plane1");
+        this.plane0.object3D.children[0].material = this.material0;
+        this.plane1.object3D.children[0].material = this.material1;
+    }
+
+    let deltaTime = this.clock.getDelta();
+    this.timer += deltaTime;
+
+    if (this.timer > this.data.updateInterval)
+    {
+       console.log("tick update")
+       // reset the timer
+       this.timer = 0;
+
+       // during first update, material0 is using texture data from a separate source
+
+       // take a snapshot of scene0, copy it into renderTarget0. 
+       //  the texture from renderTarget0 is used in material1,
+       //  so this updates material1 in the main scene. 
+       this.el.sceneEl.renderer.setRenderTarget(this.renderTarget0);
+       this.el.sceneEl.renderer.render(this.rtScene0, this.rtCamera);
+       this.el.sceneEl.renderer.setRenderTarget(null);
+
+       // connect up the loop: now, redirect material0 to get texture data from renderTarget1 
+       // (this has no effect after first update)
+       this.material0.map = this.renderTarget1.texture;
+       
+       // take a snapshot of scene1, copy it into renderTarget1. 
+       //  the texture from renderTarget1 is used in material0,
+       //  so this updates material0 in the main scene. 
+       this.el.sceneEl.renderer.setRenderTarget(this.renderTarget1);
+       this.el.sceneEl.renderer.render(this.rtScene1, this.rtCamera);
+       this.el.sceneEl.renderer.setRenderTarget(null);
+    }
+
+  },
+
+});
+
+</script>
+
+<a-scene environment>
+		
+	<a-sky color = "#000337"></a-sky>	
+	
+  <a-entity life></a-entity>
+
+	<a-plane 
+    id="plane0"
+		position = "-1.1 1 -2"
+    width="2" height="2">
+	</a-plane>
+
+  <a-plane 
+    id="plane1"
+    position = "1.1 1 -2"
+    width="2" height="2">
+  </a-plane>
+
+</a-scene>
+
+</body>
+</html>

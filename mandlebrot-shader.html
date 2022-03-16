@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - custom shaders</title>
+	<meta name="description" content="A-Frame - custom shaders">
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+
+</head>
+
+<body>
+
+<script>
+AFRAME.registerShader('mandlebrot', {
+  schema: 
+  {
+    timeMsec:    {type: 'time',  is: 'uniform'},
+    tex:         {type: 'map',   is: 'uniform'},
+  },
+
+  vertexShader: `
+  varying vec2 vUv;
+
+  void main() 
+  {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }
+  `,
+
+  fragmentShader: `
+  varying vec2 vUv;
+  uniform sampler2D tex;
+  uniform float timeMsec;
+
+  void main() 
+  {
+    vec2 c = 2.0 * (vUv - 0.5) - vec2(0.5, 0);
+    vec2 v = vec2(0,0);
+    float m = 0.0;
+    const float r = 5.0;
+
+    for (int n = 0; n < 128; ++n)
+    {
+      v = vec2(v.x * v.x - v.y * v.y, v.x * v.y * 2.0) + c;
+
+      // measure how quickly point escapes
+      if (dot(v, v) < (r * r - 1.0))
+      {
+        m++;
+      }
+
+      v = clamp(v, -r, r);
+    }
+
+    if (m > 127.0)
+      gl_FragColor = vec4(0.06, 0, 0.125, 0.80);
+    else
+      gl_FragColor = texture2D(tex, vec2(0, 1.0 - m / 128.0));
+  }
+  `,
+});  
+
+AFRAME.registerShader('julia', {
+  schema: 
+  {
+    timeMsec:    {type: 'time',  is: 'uniform'},
+    tex:         {type: 'map',   is: 'uniform'},
+    c:           {type: 'vec2',  is: 'uniform', default: {x:0.0, y:0.0}}, 
+  },
+
+  vertexShader: `
+  varying vec2 vUv;
+
+  void main() 
+  {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }
+  `,
+
+  fragmentShader: `
+  varying vec2 vUv;
+  uniform vec2 c;
+  uniform sampler2D tex;
+  uniform float timeMsec;
+
+  void main() 
+  {
+    vec2 v = 3.0 * (vUv - 0.5) - vec2(0, 0);
+    float m = 0.0;
+    const float r = 5.0;
+
+    for (int n = 0; n < 128; ++n)
+    {
+      v = vec2(v.x * v.x - v.y * v.y, v.x * v.y * 2.0) + c;
+
+      // measure how quickly point escapes
+      if (dot(v, v) < (r * r - 1.0))
+      {
+        m++;
+      }
+
+      v = clamp(v, -r, r);
+    }
+
+    if (m > 127.0)
+      gl_FragColor = vec4(0.06, 0, 0.125, 0.80);
+    else
+      gl_FragColor = texture2D(tex, vec2(0, 1.0 - m / 128.0));
+  }
+  `,
+});  
+
+AFRAME.registerComponent("c-mover", {
+
+  init: function()
+  {
+      this.clock = new THREE.Clock();
+      this.sphere = document.getElementById("cSphere");
+      this.juliaPlane = document.getElementById("julia-plane");
+  },
+
+  tick: function()
+  {
+      let amplitude = 0.7;
+      let speedMult = 0.1;
+      this.clock.getDelta();
+      let time = this.clock.elapsedTime;
+      let x = amplitude * Math.sin(1.32 * time * speedMult); 
+      let y = amplitude * Math.cos(1.00 * time * speedMult);
+      this.sphere.object3D.position.set(x,y,0);
+
+      this.juliaPlane.object3D.children[0].material.uniforms.c.value.set(x - 0.5, y); // -0.5: mandlebrot image shifted left
+  },
+
+});
+
+</script>
+
+<a-scene environment>
+		
+	<a-assets>
+    <img id="gradientRainbow" src="images/gradient-rainbow.png"/>
+    <img id="gradient" src="images/gradient-fade.png" />
+	</a-assets>
+
+	<a-sky color = "#000337"></a-sky>	
+	
+  <a-entity 
+    id="player" 
+    position="0 0 0" 
+    player-move="controllerListenerId: #controller-data;
+                 navigationMeshClass: environmentGround;">
+    
+    <a-camera></a-camera>
+
+    <a-entity 
+        id="controller-data" 
+        controller-listener="leftControllerId:  #left-controller; 
+                             rightControllerId: #right-controller;">
+    </a-entity>
+
+    <a-entity 
+        id="left-controller"
+        oculus-touch-controls="hand: left">
+    </a-entity>
+
+    <a-entity
+        id="right-controller"
+        oculus-touch-controls="hand: right"
+        raycaster="objects: .raycaster-target, .environmentGround;"
+        raycaster-extras="controllerListenerId: #controller-data; 
+                          beamImageSrc: #gradient; beamLength: 0.5;">
+    </a-entity>
+
+  </a-entity>
+
+	<a-plane 
+		position = "-1.1 1 -2"
+    width="2" height="2"
+		material = "shader: mandlebrot; tex: #gradientRainbow; transparent: true; side: double;">
+
+    <a-sphere id="cSphere" radius="0.02" c-mover></a-sphere>
+
+	</a-plane>
+
+  <a-plane 
+    id="julia-plane"
+    position = "1.1 1 -2"
+    width="2" height="2"
+    material = "shader: julia; tex: #gradientRainbow; transparent: true; side: double;">
+  </a-plane>
+
+</a-scene>
+
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - custom shaders</title>
+	<meta name="description" content="A-Frame - custom shaders">
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+
+</head>
+
+<body>
+
+<script>
+AFRAME.registerShader('raymarching', {
+  schema: 
+  {
+    timeMsec:    {type: 'time',  is: 'uniform'},
+    tex:         {type: 'map',   is: 'uniform'},
+    rayOrigin:   {type: 'vec3',  is: 'uniform', default: {x:0, y:0, z:-1}},
+  },
+
+  vertexShader: `
+  varying vec2 vUv;
+
+  void main() 
+  {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }
+  `,
+
+  fragmentShader: `
+
+  varying vec2 vUv;
+  uniform sampler2D tex;
+  uniform float timeMsec;
+
+  #define MAX_STEPS 50
+  #define MAX_DIST 30.0
+  #define SURF_DIST 0.001
+  
+  // shapes ----------------------------------------------------------------
+
+  float sdSphere(vec3 p, vec3 center, float radius)
+  {
+    return length(p - center) - radius;
+  }
+
+  float sdPlane(vec3 p, vec3 normal, float height) // always normalize the normal
+  {
+    return dot(p, normal) + height;
+  }
+
+  float sdPlaneLow(vec3 p, float height) // horizonal plane
+  {
+    return p.y + height;
+  }
+
+  float sdBox(vec3 p, vec3 b)
+  {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+  }
+
+  float sdRoundBox(vec3 p, vec3 b, float r)
+  {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+  }
+
+  // operations ------------------------------------------------------------
+
+  vec4 opUnion(vec4 obj1, vec4 obj2)
+  {
+    return obj1.w < obj2.w ? obj1 : obj2;
+  }
+
+  vec3 mod3(vec3 x, vec3 y)
+  {
+    return x - y * floor(x / y);
+  }
+
+  // smoothed square wave
+  float ssw(float x)
+  {
+    float s = sin(3.1416 * x);
+    return 0.5 + 0.5 * s / sqrt(0.01 + s * s);
+  }
+
+  // TODO: specify colors
+  vec3 checkerboard2(vec2 uv, vec2 size)
+  {
+    uv /= size;
+    float isLight = ssw(ssw(uv.x) + ssw(uv.y) - 0.5);
+    return mix(vec3(0.2, 0.2, 0.2), vec3(0.8, 0.8, 0.8), isLight);
+  }
+
+  mat3 rotateY(float theta)
+  {
+    float c = cos(theta);
+    float s = sin(theta);
+
+    return mat3( c, 0, s,
+                 0, 1, 0,
+                -s, 0, c  );
+  }
+
+  mat3 rotateX(float theta)
+  {
+    float c = cos(theta);
+    float s = sin(theta);
+
+    return mat3( 1, 0,  0,
+                 0, c, -s,
+                 0, s,  c  );
+  }
+
+  // main ------------------------------------------------------------------
+
+  // combine all scene elements
+  vec4 GetScene(vec3 p)
+  {
+    const vec3 red    = vec3(1.00, 0.25, 0.25);
+    const vec3 orange = vec3(1.00, 0.50, 0.00);
+    const vec3 yellow = vec3(1.00, 1.00, 0.00);
+    const vec3 green  = vec3(0.00, 1.00, 0.00);
+    const vec3 blue   = vec3(0.25, 0.25, 1.00);
+    const vec3 violet = vec3(0.50, 0.00, 1.00);
+
+    vec4 checkerPlane = vec4(checkerboard2(p.xz, vec2(0.5,0.5)), sdPlaneLow(p, 0.5));
+
+    float time = timeMsec / 1000.0;
+    vec4 box1 = vec4(red,  sdRoundBox( rotateY(0.73 * time) * rotateX(time) * (p + vec3( 0.4, 0.0, -0.8)), vec3(0.2, 0.2, 0.2), 0.05) );
+    vec4 box2 = vec4(blue, sdRoundBox( rotateY(0.73 * time) * rotateX(time) * (p + vec3(-0.4, 0.0, -0.8)), vec3(0.2, 0.2, 0.2), 0.05) );
+
+    vec4 scene = vec4(0,0,0,0);
+    scene = checkerPlane;
+    scene = opUnion(scene, box1);
+    scene = opUnion(scene, box2);
+    return scene;
+  }
+
+  float Raymarch(vec3 rayOrigin, vec3 rayDirection)
+  {
+    float dO = 0.0;
+    vec4 dS;
+    for (int i = 0; i < MAX_STEPS; i++)
+    {
+      vec3 p = rayOrigin + dO * rayDirection;
+      dS = GetScene(p);
+      dO += dS.w;
+      if (dS.w < SURF_DIST || dO > MAX_DIST)
+        break;
+    }
+
+    return dO;
+  }
+
+  vec3 GetNormal(vec3 p)
+  {
+    vec2 epsilon = vec2(0.01, 0);
+    vec3 n = GetScene(p).w - vec3(
+      GetScene(p - epsilon.xyy).w,
+      GetScene(p - epsilon.yxy).w,
+      GetScene(p - epsilon.yyx).w
+      );
+    return normalize(n);
+  }
+
+  // to simulate point light: vec3 lightDirection = normalize(lightPosition - p);
+
+  vec3 GetLightD(vec3 p, vec3 lightDirection)
+  {
+    lightDirection = normalize(lightDirection);
+
+    vec3 normal = GetNormal(p);
+
+    float diffuse = clamp(dot(normal, lightDirection), 0.2, 1.0);
+
+    vec4 scene = GetScene(p);
+    vec3 color = scene.rgb;
+
+    return diffuse * color;
+  }
+
+  uniform vec3 rayOrigin;
+
+  void main() 
+  {
+      vec2 uv = vUv - 0.5;
+
+      vec3 rayDirection = normalize(vec3(uv.x, uv.y, 1));
+
+      vec4 col = vec4(0,0,0,1);
+
+      float ray_distance = Raymarch(rayOrigin, rayDirection);
+
+      if (ray_distance < MAX_DIST)
+      {
+        vec3 p = rayOrigin + rayDirection * ray_distance;
+
+        vec3 lightDirection = vec3(0, 4, -1);
+
+        vec3 diffuseColor = GetLightD(p, lightDirection);
+
+        float dist = smoothstep(10.0, 0.0, 4.0 * length(p));
+        float fogStart = 5.0;
+        float fogEnd = 10.0;
+        float fogPercent = clamp((length(p) - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+        vec3 fogColor = vec3(0, 0, 0);
+
+        col.rgb = mix(diffuseColor, fogColor, fogPercent);
+      }
+      else
+      {
+        col.rgb = vec3(0,0,0);
+      }
+
+      gl_FragColor = col;
+  }
+  `,
+});
+
+</script>
+
+<a-scene environment>
+		
+	<a-assets>
+    <img id="gradientRainbow" src="images/gradient-rainbow.png"/>
+    <img id="gradient" src="images/gradient-fade.png" />
+	</a-assets>
+
+	<a-sky color = "#000337"></a-sky>	
+	
+  <a-entity 
+    id="player" 
+    position="0 0 0" 
+    player-move="controllerListenerId: #controller-data;
+                 navigationMeshClass: environmentGround;">
+    
+    <a-camera></a-camera>
+
+    <a-entity 
+        id="controller-data" 
+        controller-listener="leftControllerId:  #left-controller; 
+                             rightControllerId: #right-controller;">
+    </a-entity>
+
+    <a-entity 
+        id="left-controller"
+        oculus-touch-controls="hand: left">
+    </a-entity>
+
+    <a-entity
+        id="right-controller"
+        oculus-touch-controls="hand: right"
+        raycaster="objects: .raycaster-target, .environmentGround;"
+        raycaster-extras="controllerListenerId: #controller-data; 
+                          beamImageSrc: #gradient; beamLength: 0.5;">
+    </a-entity>
+
+  </a-entity>
+
+  
+	<a-plane 
+    id="raymarch-plane"
+		position = "0 1 -2"
+    width="2" height="2"
+		material = "shader: raymarching; transparent: true;">
+	</a-plane>
+  
+
+</a-scene>
+
+</body>
+</html>
