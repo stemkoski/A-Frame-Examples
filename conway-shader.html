@@ -31,12 +31,12 @@ AFRAME.registerComponent('conway-game-of-life', {
     const rtWidth = 1024;
     const rtHeight = 1024;
 
-    this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+    this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight, {depthBuffer: false});
     this.renderTarget0.texture.magFilter = THREE.NearestFilter;
     this.renderTarget0.texture.minFilter = THREE.NearestFilter;
     this.renderTarget0.texture.generateMipmaps = false;
 
-    this.renderTarget1 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+    this.renderTarget1 = new THREE.WebGLRenderTarget(rtWidth, rtHeight, {depthBuffer: false});
     this.renderTarget1.texture.magFilter = THREE.NearestFilter;
     this.renderTarget1.texture.minFilter = THREE.NearestFilter;
     this.renderTarget1.texture.generateMipmaps = false;
@@ -162,7 +162,6 @@ AFRAME.registerComponent('conway-game-of-life', {
     // initialize during first tick()
     this.plane0 = null;
     this.plane1 = null;
-
   },
 
   tick: function() {
@@ -171,8 +170,6 @@ AFRAME.registerComponent('conway-game-of-life', {
     {
         this.plane0 = document.querySelector(this.data.displayPlaneId);
         this.plane1 = document.querySelector(this.data.hiddenPlaneId);
-        console.log(this.plane0)
-        console.log(this.plane1)
         
         this.plane0.object3D.children[0].material = this.material0;
         this.plane1.object3D.children[0].material = this.material1;
@@ -193,7 +190,7 @@ AFRAME.registerComponent('conway-game-of-life', {
        //  so this updates material1 in the main scene. 
        this.el.sceneEl.renderer.setRenderTarget(this.renderTarget0);
        this.el.sceneEl.renderer.render(this.rtScene0, this.rtCamera);
-       this.el.sceneEl.renderer.setRenderTarget(null);
+       // this.el.sceneEl.renderer.setRenderTarget(null);
 
        // connect up the loop: after material1 has copied initial data,
        //  set material0 state to copy pixel data from renderTarget1 
