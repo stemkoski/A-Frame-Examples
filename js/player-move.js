@@ -186,24 +186,26 @@ AFRAME.registerComponent("player-move", {
         // turning in horizontal (XZ) plane
         // =====================================================================
 
-        // while pressing left grip,
-        //  press left joystick left/right to turn left/right by N degrees;
+        // while pressing left grip, press left joystick left/right to turn left/right by N degrees;
+        // -or- just press right joystick left/right to turn left/right by N degrees.
         //  joystick must return to rest/center position before turning again
-        if ( Math.abs(this.controllerData.leftAxisX) < 0.10 )
+        let leftX  = this.controllerData.leftAxisX;
+        let rightX = this.controllerData.rightAxisX;
+        
+        if ( Math.abs(leftX) < 0.10 && Math.abs(rightX) < 0.10 )
         {           
             this.turnReady = true;
         }
 
-        if ( this.data.motionEnabled &&
-             this.turnReady &&
-             this.controllerData.leftGrip.pressing && 
-             Math.abs(this.controllerData.leftAxisX) > 0.90 )
+        if ( this.data.motionEnabled && this.turnReady &&
+             ((this.controllerData.leftGrip.pressing && Math.abs(leftX) > 0.90) || Math.abs(rightX) > 0.90)
+           )
         {
             this.startAngle = this.el.getAttribute("rotation").y;
 
-            if ( this.controllerData.leftAxisX > 0.90 )
+            if ( leftX > 0.90 || rightX > 0.90 )
                 this.endAngle = this.startAngle - this.turnAngle;
-            if ( this.controllerData.leftAxisX < -0.90 )
+            if ( leftX < -0.90 || rightX < -0.90 )
                 this.endAngle = this.startAngle + this.turnAngle;
 
             this.turnInProgress = true;
