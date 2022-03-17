@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rainbow Quest (work in progress)</title>
+    <meta name="description" content="Rainbow Quest (work in progress)">
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+    <script src="js/rainbow-quest.js"></script>
+</head>
+
+<body>
+
+<script>
+// if raycaster is pointing at this object, press trigger to change color
+AFRAME.registerComponent("rainbow-quest", {
+    init: function () 
+    {
+        this.rainbowQuest = new RainbowQuest();        
+        this.rainbowQuest.generateDungeon();
+
+        let test = this.rainbowQuest.getCellWithType();
+        while (test == null)
+        {
+            console.log("Unsolvable dungeon created, restarting...");
+            this.rainbowQuest.reset();
+            this.rainbowQuest.generateDungeon();
+            test = this.rainbowQuest.getCellWithType();
+        }
+
+
+        // merge geometries to reduce number of draw calls and save FPS
+        // (x,y,z): min corner of the box
+        function createBoxGeom(x,y,z, w,h,d)
+        {
+            let boxGeom = new THREE.BoxGeometry(w, h, d);
+            boxGeom.translate(x + w/2, y + h/2, z + d/2);
+            return boxGeom;
+        }
+
+        // walls
+
+        let wallGeomArray = [];
+        let wallHeight = 2;
+        let wallThick = 0.02;
+
+        // change wall sizes to prevent overlap, and also prevent gaps between walls
+
+        for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
+            for (let j = 0; j < this.rainbowQuest.numCellVert+1; j++)
+                if (this.rainbowQuest.horizWallArray[i][j].visible)
+                    wallGeomArray.push( createBoxGeom(i, 0, j, 1, wallHeight, wallThick) );
+
+        for (let i = 0; i < this.rainbowQuest.numCellHoriz+1; i++)
+            for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
+                if (this.rainbowQuest.vertWallArray[i][j].visible)
+                {
+                    if (i < this.rainbowQuest.numCellHoriz && this.rainbowQuest.horizWallArray[i][j].visible)
+                        wallGeomArray.push( createBoxGeom(i, 0, j + wallThick, wallThick, wallHeight, 1 - wallThick) );
+                    else
+                        wallGeomArray.push( createBoxGeom(i, 0, j, wallThick, wallHeight, 1) );
+                }
+
+        let wallGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomArray );
+
+        let loader = new THREE.TextureLoader();
+        let wallDiffuse = loader.load("images/stone-wall-diffuse.jpg");
+        wallDiffuse.repeat.set(2,2);
+        wallDiffuse.wrapS = THREE.RepeatWrapping;
+        wallDiffuse.wrapT = THREE.RepeatWrapping;
+        let wallNormal = loader.load("images/stone-wall-normal.jpg");
+        wallNormal.repeat.set(2,2);
+        wallNormal.wrapS = THREE.RepeatWrapping;
+        wallNormal.wrapT = THREE.RepeatWrapping;
+        let wallMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:wallDiffuse, normalMap:wallNormal});
+
+        let wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        let wallElement = document.getElementById("wallEntity");
+        wallElement.setObject3D( "mesh", wall );
+
+        // path and solid region tiles
+
+        let pathGeomArray = [];
+        let solidGeomArray = [];
+
+        for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
+            for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
+            {
+                let cell = this.rainbowQuest.cellArray[i][j];
+                
+                // color rooms separately later
+                if (cell.type == Cell.ROOM)
+                    continue;
+
+                // create a "tile" at the bottom of this location
+                if (cell.type == Cell.PATH)
+                    pathGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
+
+                if (cell.type == Cell.SOLID)
+                    solidGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
+            }
+
+        if (pathGeomArray.length == 0)
+            console.log("ERROR, NEED TO REDO generateDungeon because there are NO PATHS")
+
+        let pathGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( pathGeomArray );
+
+        let pathDiffuse = loader.load("images/floor-diffuse.jpg");
+        let pathNormal = loader.load("images/floor-normal.jpg");
+        let pathMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:pathDiffuse, normalMap:pathNormal});
+
+        let path = new THREE.Mesh(pathGeometry, pathMaterial);
+        let pathElement = document.getElementById("pathEntity");
+        pathElement.setObject3D( "mesh", path );
+
+        let solidGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( solidGeomArray );
+        let solidMaterial = new THREE.MeshLambertMaterial({color: "#000000"});
+        let solid = new THREE.Mesh(solidGeometry, solidMaterial);
+        let solidElement = document.getElementById("solidEntity");
+        solidElement.setObject3D( "mesh", solid );
+
+        // start
+        // orb 1 2 3 4 5 6
+        // fire fire ice ice goal goal goal
+        let roomColorArray = [
+          "#CCCCCC", 
+          "#FFCCCC", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#DDAAFF",
+          "#880000", "#880000", "#000088", "#000088",
+          "#444444", "#444444", "#444444" ];
+
+
+        let roomElement = document.getElementById("roomEntity");
+        for (let i = 0; i < 14; i++)
+        {
+            let room = this.rainbowQuest.roomArray[i];
+            let baseColor = roomColorArray[i];
+
+            let roomEntity = document.createElement("a-entity");
+            roomEntity.setAttribute("id", "room" + room.id);
+            roomEntity.setAttribute("position", {x: room.x + room.w/2, y: 0, z: room.y + room.h/2});
+            this.el.appendChild(roomEntity);
+
+            let roomFloor = document.createElement("a-entity");
+            roomFloor.setAttribute("geometry", 
+              { primitive: "box", width: room.w, height: 0.04, depth: room.h } );
+            roomFloor.setAttribute("material", "color", baseColor);
+            roomFloor.classList.add("navMesh"); // enable teleporting here
+            roomFloor.setAttribute("raycaster-target", "glowOnHover", "false");
+            roomEntity.appendChild(roomFloor);
+
+            // special code for each room type...
+        }
+
+
+
+
+
+        // minimap ------------------------------------------
+
+        // will also need to store visited data and update only on cell entry, to minimize texture re-upload to GPU
+        // NOT lots of little planes, the drawcalls would be AWFUL and LAAAAAAAAG
+        this.canvas = document.getElementById("minimapCanvas");
+        this.minimapContext = this.canvas.getContext("2d");
+        this.minimapPlane = document.getElementById("minimapPlane");
+
+        this.rainbowQuest.drawMap(this.minimapContext);
+        let material = this.minimapPlane.getObject3D('mesh').material;
+        material.map.needsUpdate = true;
+        //this.minimapPlane.object3D.children[0].material.map.needsUpdate = true;
+
+        /*
+        // TODO: minimap graphics
+        let picArray = [   
+            " ", "❤️", "🔥", "☀️", "🍀", "💧", "🌑",
+            "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
+        */
+
+        this.el.setAttribute("position", "0 0.5 0");
+        this.el.setAttribute("rotation", "0 180 0");
+        // mini model for inspection
+        // this.el.setAttribute("scale", "0.1 0.1 0.1");
+        // life size
+        this.el.setAttribute("scale", "2 2 2");
+        
+        this.controllerData = document.querySelector("#controller-data").components["controller-listener"];        
+    },
+
+    tick: function()
+    {
+
+    }
+});
+
+
+</script>
+
+<a-scene stats environment="preset: default;">
+        
+    <a-assets>
+        <img id="gradient" src="images/gradient-fade.png" />
+        <img id="wallDiffuse" src="images/stone-wall-diffuse.jpg" />
+        <img id="wallNormal" src="images/stone-wall-normal.jpg" />
+        <img id="floorDiffuse" src="images/floor-diffuse.jpg" />
+        <img id="floorNormal" src="images/floor-normal.jpg" />
+        <canvas id="minimapCanvas" width="600" height="600"></canvas>
+    </a-assets>
+
+    <a-sky 
+        color = "#000337">
+    </a-sky>
+
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;
+                     navigationMeshClass: navMesh;">
+        
+        <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
+
+        <a-entity 
+            id="left-controller"
+            oculus-touch-controls="hand: left">
+
+            <a-plane id="minimapPlane" width="0.5" height="0.5" material="src: #minimapCanvas" position="0 -0.1 0.2" rotation="-30 0 0"></a-plane>
+
+        </a-entity>
+
+        <a-entity
+            id="right-controller"
+            oculus-touch-controls="hand: right"
+            raycaster="objects: .raycaster-target, .environmentGround, .test;"
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
+        </a-entity>
+
+    </a-entity>
+
+    <a-entity rainbow-quest>
+        <a-entity id="pathEntity" raycaster-target="glowOnHover: false;" class="navMesh"></a-entity>
+        <a-entity id="wallEntity" raycaster-target="glowOnHover: false;" ></a-entity>
+        <a-entity id="roomEntity"></a-entity>
+        <a-entity id="solidEntity"></a-entity>
+    </a-entity>    
+
+
+</a-scene>
+</body>
+
+</html>
