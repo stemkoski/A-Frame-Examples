@@ -222,8 +222,10 @@ AFRAME.registerComponent('raycaster-extras', {
                 // if not pulling entity that is too close, then okay to move it
                 if ( !(this.controllerData.rightAxisY > 0 && distance < 0.05) )
                 {
-                    
-                    let moveDistance = this.moveSpeed * deltaTime * this.controllerData.rightAxisY;
+                    let moveDistance = 2 * this.moveSpeed * deltaTime * this.controllerData.rightAxisY;
+                    // move faster if pressing trigger at same time
+                    moveDistance *= (1 + 1 * this.controllerData.rightTrigger.value);
+
                     this.tempVector.setLength(moveDistance);
 
 
