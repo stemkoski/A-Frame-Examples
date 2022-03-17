@@ -67,11 +67,11 @@ AFRAME.registerComponent("rainbow-quest", {
         let wallGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomArray );
 
         let loader = new THREE.TextureLoader();
-        let wallDiffuse = loader.load("images/stone-wall-diffuse.jpg");
+        let wallDiffuse = loader.load("images/stone-wall-diffuse-256.jpg");
         wallDiffuse.repeat.set(2,2);
         wallDiffuse.wrapS = THREE.RepeatWrapping;
         wallDiffuse.wrapT = THREE.RepeatWrapping;
-        let wallNormal = loader.load("images/stone-wall-normal.jpg");
+        let wallNormal = loader.load("images/stone-wall-normal-256.jpg");
         wallNormal.repeat.set(2,2);
         wallNormal.wrapS = THREE.RepeatWrapping;
         wallNormal.wrapT = THREE.RepeatWrapping;
@@ -108,8 +108,8 @@ AFRAME.registerComponent("rainbow-quest", {
 
         let pathGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( pathGeomArray );
 
-        let pathDiffuse = loader.load("images/floor-diffuse.jpg");
-        let pathNormal = loader.load("images/floor-normal.jpg");
+        let pathDiffuse = loader.load("images/floor-diffuse-256.jpg");
+        let pathNormal = loader.load("images/floor-normal-256.jpg");
         let pathMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:pathDiffuse, normalMap:pathNormal});
 
         let path = new THREE.Mesh(pathGeometry, pathMaterial);
@@ -201,10 +201,6 @@ AFRAME.registerComponent("rainbow-quest", {
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
-        <img id="wallDiffuse" src="images/stone-wall-diffuse.jpg" />
-        <img id="wallNormal" src="images/stone-wall-normal.jpg" />
-        <img id="floorDiffuse" src="images/floor-diffuse.jpg" />
-        <img id="floorNormal" src="images/floor-normal.jpg" />
         <canvas id="minimapCanvas" width="600" height="600"></canvas>
     </a-assets>
 
