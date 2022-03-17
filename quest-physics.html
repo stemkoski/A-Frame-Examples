@@ -15,7 +15,7 @@
 <body>
 
 <script>
-// if raycaster is pointing at this object, press trigger to change color
+
 AFRAME.registerComponent("physics-grab", {
     init: function () 
     {
@@ -88,7 +88,8 @@ AFRAME.registerComponent("physics-grab", {
          class="environmentGround"
            position="0 0.02 0"
            width="20" depth="20" height="0.1"
-           material="src: #crate; repeat: 10 10;">
+           material="src: #crate; repeat: 10 10;"
+           shadow="receive: true;">
   </a-box>
 
   <!-- Walls -->
@@ -114,6 +115,16 @@ AFRAME.registerComponent("physics-grab", {
            position="-10 0.51 0"
            width="0.1" depth="20" height="1"
            material="src: #crate; repeat: 5 1;">
+  </a-box>
+
+  <!-- Ramp -->
+  <a-box
+    
+    physx-body="type: static;"
+           depth="5" width="5"
+           position="0 1 -10"
+           rotation="45 0 0"
+           material="src: #crate; color: #888888; repeat: 5 1;">
   </a-box>
 
   <!-- Dynamic objects -->
@@ -168,7 +179,8 @@ AFRAME.registerComponent("physics-grab", {
             physics-grab
             position="1 6 -5" 
             radius="0.5" 
-            material="src:#ball; color:red;">
+            material="src:#ball; color:red;"
+            shadow="cast: true;">
   </a-sphere>
 
   <a-sphere physx-body="type: dynamic;" physx-material="restitution: 0.8;"
@@ -215,32 +227,32 @@ AFRAME.registerComponent("physics-grab", {
 
     <a-box
         physx-body="type: kinematic;"
-        width="0.1" depth="1" height="4"
-        position = "-1 1 -2"
+        width="0.1" depth="4" height="1"
+        position = "-9 1 -4"
         color = "#BBBBBB"
         raycaster-target="canGrab: true;">
     </a-box>
 
     <a-box
         physx-body="type: kinematic;"
-        width="0.1" depth="1" height="4"
-        position = "1 1 -2"
+        width="0.1" depth="4" height="1"
+        position = "9 1 -4"
         color = "#BBBBBB"
         raycaster-target="canGrab: true;">
     </a-box>
 
     <a-box
         physx-body="type: kinematic;"
-        width="0.1" depth="1" height="4"
-        position = "-3 1 -2"
+        width="0.1" depth="4" height="1"
+        position = "-9 1 4"
         color = "#BBBBBB"
         raycaster-target="canGrab: true;">
     </a-box>
 
     <a-box
         physx-body="type: kinematic;"
-        width="0.1" depth="1" height="4"
-        position = "3 1 -2"
+        width="0.1" depth="4" height="1"
+        position = "9 1 4"
         color = "#BBBBBB"
         raycaster-target="canGrab: true;">
     </a-box>
