@@ -656,7 +656,8 @@ class RainbowQuest
 			context.stroke();
 		}
 
-		let cellSize = 15;
+		let canvasSize = 512;
+		let cellSize = canvasSize / this.numCellHoriz;
 
 		let roomColorArray = [
           "#CCCCCC", 
@@ -680,12 +681,13 @@ class RainbowQuest
 			    color = roomColorArray[ cell.roomId ];
 
 			  context.fillStyle = color;
-			  let canvasX = 600 - i * cellSize    - cellSize;
-			  let canvasY = 600 - j * cellSize    - cellSize;
-			  context.fillRect(canvasX,canvasY, cellSize,cellSize);
+			  let canvasX = canvasSize - i * cellSize    - cellSize;
+			  let canvasY = canvasSize - j * cellSize    - cellSize;
+			  context.fillRect(Math.floor(canvasX),Math.floor(canvasY), Math.ceil(cellSize),Math.ceil(cellSize));
 			}
 		}
 
+		context.lineWidth = 2
 		// horizontal walls
 		for (let i = 0; i < this.numCellHoriz; i++)
 		{
@@ -694,8 +696,8 @@ class RainbowQuest
 			  if ( !this.horizWallArray[i][j].visible )
 			    continue;
 
-			  let canvasX = 600 - i * cellSize - cellSize;
-			  let canvasY = 600 - j * cellSize;
+			  let canvasX = canvasSize - i * cellSize - cellSize;
+			  let canvasY = canvasSize - j * cellSize;
 
 			  drawLine(canvasX, canvasY,
 			           canvasX + cellSize, canvasY);
@@ -710,8 +712,8 @@ class RainbowQuest
 			  if ( !this.vertWallArray[i][j].visible )
 			    continue;
 
-			  let canvasX = 600 - i * cellSize;
-			  let canvasY = 600 - j * cellSize - cellSize;
+			  let canvasX = canvasSize - i * cellSize;
+			  let canvasY = canvasSize - j * cellSize - cellSize;
 
 			  drawLine(canvasX, canvasY,
 			           canvasX, canvasY + cellSize);

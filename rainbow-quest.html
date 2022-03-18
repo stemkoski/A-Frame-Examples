@@ -41,6 +41,30 @@ AFRAME.registerComponent("rainbow-quest", {
             return boxGeom;
         }
 
+        // floor
+        function createPlaneGeom(x,y,z, w,h,d)
+        {
+            let planeGeom = new THREE.PlaneGeometry(w, d);
+            planeGeom.rotateX(-Math.PI/2);
+            planeGeom.translate(x + w/2, y + h/2, z + d/2);
+            return planeGeom;
+        }
+
+        function createHorizWallPlaneGeom(x,y,z, w,h)
+        {
+            let planeGeom = new THREE.PlaneGeometry(w, h);
+            planeGeom.translate(x + w/2, y + h/2, z);
+            return planeGeom;
+        }
+
+        function createVertWallPlaneGeom(x,y,z, w,h)
+        {
+            let planeGeom = new THREE.PlaneGeometry(w, h);
+            planeGeom.rotateY(-Math.PI/2);
+            planeGeom.translate(x, y + h/2, z + w/2);
+            return planeGeom;
+        }
+
         // walls
 
         let wallGeomArray = [];
@@ -52,30 +76,40 @@ AFRAME.registerComponent("rainbow-quest", {
         for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert+1; j++)
                 if (this.rainbowQuest.horizWallArray[i][j].visible)
-                    wallGeomArray.push( createBoxGeom(i, 0, j, 1, wallHeight, wallThick) );
+                {
+                    console.log()
+                    wallGeomArray.push( createHorizWallPlaneGeom(i, 0, j, 1, wallHeight) );
+                }
+                    // wallGeomArray.push( createBoxGeom(i, 0, j, 1, wallHeight, wallThick) );
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz+1; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
                 if (this.rainbowQuest.vertWallArray[i][j].visible)
+                {
+                    console.log()
+                    wallGeomArray.push( createVertWallPlaneGeom(i, 0, j, 1, wallHeight) );
+                }
+                /*
                 {
                     if (i < this.rainbowQuest.numCellHoriz && this.rainbowQuest.horizWallArray[i][j].visible)
                         wallGeomArray.push( createBoxGeom(i, 0, j + wallThick, wallThick, wallHeight, 1 - wallThick) );
                     else
                         wallGeomArray.push( createBoxGeom(i, 0, j, wallThick, wallHeight, 1) );
                 }
+                */
 
         let wallGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomArray );
 
         let loader = new THREE.TextureLoader();
         let wallDiffuse = loader.load("images/stone-wall-diffuse-256.jpg");
-        wallDiffuse.repeat.set(2,2);
+        wallDiffuse.repeat.set(2,3);
         wallDiffuse.wrapS = THREE.RepeatWrapping;
         wallDiffuse.wrapT = THREE.RepeatWrapping;
         let wallNormal = loader.load("images/stone-wall-normal-256.jpg");
-        wallNormal.repeat.set(2,2);
+        wallNormal.repeat.set(2,3);
         wallNormal.wrapS = THREE.RepeatWrapping;
         wallNormal.wrapT = THREE.RepeatWrapping;
-        let wallMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:wallDiffuse, normalMap:wallNormal});
+        let wallMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:wallDiffuse, normalMap:wallNormal, side:THREE.DoubleSide});
 
         let wall = new THREE.Mesh(wallGeometry, wallMaterial);
         let wallElement = document.getElementById("wallEntity");
@@ -84,7 +118,7 @@ AFRAME.registerComponent("rainbow-quest", {
         // path and solid region tiles
 
         let pathGeomArray = [];
-        let solidGeomArray = [];
+        // let solidGeomArray = [];
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
@@ -96,11 +130,14 @@ AFRAME.registerComponent("rainbow-quest", {
                     continue;
 
                 // create a "tile" at the bottom of this location
-                if (cell.type == Cell.PATH)
-                    pathGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
+                if (cell.type == Cell.PATH) 
+                    pathGeomArray.push( createPlaneGeom(i, 0, j, 1, 0, 1) );
+                    // pathGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
 
+                /*
                 if (cell.type == Cell.SOLID)
                     solidGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
+                */
             }
 
         if (pathGeomArray.length == 0)
@@ -116,11 +153,14 @@ AFRAME.registerComponent("rainbow-quest", {
         let pathElement = document.getElementById("pathEntity");
         pathElement.setObject3D( "mesh", path );
 
+        /*
+        // Let's save some triangles and not include these...
         let solidGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( solidGeomArray );
         let solidMaterial = new THREE.MeshLambertMaterial({color: "#000000"});
         let solid = new THREE.Mesh(solidGeometry, solidMaterial);
         let solidElement = document.getElementById("solidEntity");
         solidElement.setObject3D( "mesh", solid );
+        */
 
         // start
         // orb 1 2 3 4 5 6
@@ -167,9 +207,13 @@ AFRAME.registerComponent("rainbow-quest", {
         this.minimapPlane = document.getElementById("minimapPlane");
 
         this.rainbowQuest.drawMap(this.minimapContext);
+
         let material = this.minimapPlane.getObject3D('mesh').material;
         material.map.needsUpdate = true;
-        //this.minimapPlane.object3D.children[0].material.map.needsUpdate = true;
+
+        this.minimapMarker = document.getElementById("minimapMarker");
+        this.minimapMarker.object3D.position.set(1,0,0);
+        this.player = document.getElementById("player");
 
         /*
         // TODO: minimap graphics
@@ -178,18 +222,34 @@ AFRAME.registerComponent("rainbow-quest", {
             "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
         */
 
-        this.el.setAttribute("position", "0 0.5 0");
+        this.el.setAttribute("position", "40 0 30");
         this.el.setAttribute("rotation", "0 180 0");
         // mini model for inspection
         // this.el.setAttribute("scale", "0.1 0.1 0.1");
         // life size
         this.el.setAttribute("scale", "2 2 2");
         
-        this.controllerData = document.querySelector("#controller-data").components["controller-listener"];        
+        this.controllerData = document.querySelector("#controller-data").components["controller-listener"];
+
+        // try to reduce attribute calls to reduce context lost?
+        this.euler = new THREE.Euler(0,0,0, "XYZ");
+
+        this.cameraDirection = new THREE.Vector3();
+        this.cameraAngle = 0;
+
     },
 
     tick: function()
     {
+        // calculate direction based on camera look direction, not just player rotation
+        this.el.sceneEl.camera.getWorldDirection(this.cameraDirection);
+        this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
+        this.euler.z = -this.cameraAngle + Math.PI;
+        this.minimapMarker.object3D.children[0].setRotationFromEuler(this.euler);
+
+        // less accurate...
+        // let rot = this.player.getAttribute("rotation").y;
+        // this.minimapMarker.setAttribute("rotation", {x: 0, y: 0, z: rot});
 
     }
 });
@@ -197,24 +257,27 @@ AFRAME.registerComponent("rainbow-quest", {
 
 </script>
 
-<a-scene stats environment="preset: default;">
+<a-scene stats xenvironment="preset: default;" background="color: black;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
-        <canvas id="minimapCanvas" width="600" height="600"></canvas>
+        <canvas id="minimapCanvas" width="512" height="512"></canvas>
+        <img id="minimapArrow" src="images/circle-A.png" />
     </a-assets>
 
+    <!--
     <a-sky 
-        color = "#000337">
+        color = "#8888FF">
     </a-sky>
+    -->
 
     <a-entity 
         id="player" 
-        position="0 0 0" 
+        position="0 1.6 40" 
         player-move="controllerListenerId: #controller-data;
                      navigationMeshClass: navMesh;">
         
-        <a-camera></a-camera>
+        <a-camera position="0 0 0"></a-camera>
     
         <a-entity 
             id="controller-data" 
@@ -226,7 +289,23 @@ AFRAME.registerComponent("rainbow-quest", {
             id="left-controller"
             oculus-touch-controls="hand: left">
 
-            <a-plane id="minimapPlane" width="0.5" height="0.5" material="src: #minimapCanvas" position="0 -0.1 0.2" rotation="-30 0 0"></a-plane>
+            <a-plane id="minimapPlane" 
+                     scale = "0.2 0.2 0.2"
+                     material="shader: flat; src: #minimapCanvas;" 
+                     position="0.0 -0.0 0.15" 
+                     rotation="-30 0 0">
+                <a-plane id="minimapBacking"
+                         scale="1.01 1.01 1"
+                         position="0 0 -0.001"
+                         material="shader: flat; color: #8800FF; side: double;">
+                </a-plane>
+                <a-plane id="minimapMarker"
+                         scale="0.025 0.025 0.025"
+                         position="0 0 0.005"
+                         rotation="0 0 90"
+                         material="src: #minimapArrow;">
+                </a-plane>
+            </a-plane>
 
         </a-entity>
 
