@@ -185,13 +185,23 @@ AFRAME.registerComponent('conway-game-of-life', {
        // reset the timer
        this.timer = 0;
 
+       // temporarily disable XR to prevent screen flickering
+       // thanks to Synn, Marquizzo, and Mugen87
+       // https://github.com/mrdoob/three.js/issues/18746#issuecomment-591441598
+       const renderer = this.el.sceneEl.renderer;
+       const currentRenderTarget = renderer.getRenderTarget();
+       const currentXrEnabled = renderer.xr.enabled;
+       const currentShadowAutoUpdate = renderer.shadowMap.autoUpdate;
+
+       renderer.xr.enabled = false;
+       renderer.shadowMap.autoUpdate = false;
+
        // take a snapshot of scene0, copy it into renderTarget0. 
        //  the texture from renderTarget0 is used in material1,
        //  so this updates material1 in the main scene. 
-       this.el.sceneEl.renderer.setRenderTarget(this.renderTarget0);
-       this.el.sceneEl.renderer.render(this.rtScene0, this.rtCamera);
-       // this.el.sceneEl.renderer.setRenderTarget(null);
-
+       renderer.setRenderTarget(this.renderTarget0);
+       renderer.render(this.rtScene0, this.rtCamera);
+       
        // connect up the loop: after material1 has copied initial data,
        //  set material0 state to copy pixel data from renderTarget1 
        // (this has no effect after first update)
@@ -200,9 +210,15 @@ AFRAME.registerComponent('conway-game-of-life', {
        // take a snapshot of scene1, copy it into renderTarget1. 
        //  the texture from renderTarget1 is used in material0,
        //  so this updates material0 in the main scene. 
-       this.el.sceneEl.renderer.setRenderTarget(this.renderTarget1);
-       this.el.sceneEl.renderer.render(this.rtScene1, this.rtCamera);
-       this.el.sceneEl.renderer.setRenderTarget(null);
+       renderer.setRenderTarget(this.renderTarget1);
+       renderer.render(this.rtScene1, this.rtCamera);
+       renderer.setRenderTarget(null);
+
+       // enable XR
+       renderer.xr.enabled = currentXrEnabled;
+       renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
+       renderer.setRenderTarget(currentRenderTarget);
+
     }
 
   },
