@@ -19,6 +19,21 @@
 AFRAME.registerComponent("rainbow-quest", {
     init: function () 
     {
+
+        // TODO: random WebGL context lost. Need to continue from this point...
+
+        // test with: document.querySelector("a-scene").renderer.forceContextLoss();
+        const renderer = this.el.sceneEl.renderer;
+        renderer.getContext().canvas.addEventListener("webglcontextlost", function(event) {
+            event.preventDefault();
+            console.log("goodbye context");
+            renderer.forceContextRestore();
+        }, false);
+
+        renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
+            console.log("welcome back context");
+        }, false);
+
         this.rainbowQuest = new RainbowQuest();        
         this.rainbowQuest.generateDungeon();
 
@@ -32,16 +47,12 @@ AFRAME.registerComponent("rainbow-quest", {
         }
 
 
-        // merge geometries to reduce number of draw calls and save FPS
-        // (x,y,z): min corner of the box
-        function createBoxGeom(x,y,z, w,h,d)
-        {
-            let boxGeom = new THREE.BoxGeometry(w, h, d);
-            boxGeom.translate(x + w/2, y + h/2, z + d/2);
-            return boxGeom;
-        }
 
-        // floor
+
+        // merge geometries to reduce number of draw calls and save FPS
+        // (x,y,z): min corner of the object
+       
+        // floor tiles
         function createPlaneGeom(x,y,z, w,h,d)
         {
             let planeGeom = new THREE.PlaneGeometry(w, d);
@@ -68,37 +79,26 @@ AFRAME.registerComponent("rainbow-quest", {
         // walls
 
         let wallGeomArray = [];
-        let wallHeight = 2;
+        let wallHeight = 1;
         let wallThick = 0.02;
-
-        // change wall sizes to prevent overlap, and also prevent gaps between walls
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert+1; j++)
                 if (this.rainbowQuest.horizWallArray[i][j].visible)
-                {
-                    console.log()
                     wallGeomArray.push( createHorizWallPlaneGeom(i, 0, j, 1, wallHeight) );
-                }
-                    // wallGeomArray.push( createBoxGeom(i, 0, j, 1, wallHeight, wallThick) );
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz+1; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
                 if (this.rainbowQuest.vertWallArray[i][j].visible)
-                {
-                    console.log()
                     wallGeomArray.push( createVertWallPlaneGeom(i, 0, j, 1, wallHeight) );
-                }
-                /*
-                {
-                    if (i < this.rainbowQuest.numCellHoriz && this.rainbowQuest.horizWallArray[i][j].visible)
-                        wallGeomArray.push( createBoxGeom(i, 0, j + wallThick, wallThick, wallHeight, 1 - wallThick) );
-                    else
-                        wallGeomArray.push( createBoxGeom(i, 0, j, wallThick, wallHeight, 1) );
-                }
-                */
 
         let wallGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomArray );
+
+        // trying to clear up memory
+        for (let n = 0; n < wallGeomArray.length; n++)
+            wallGeomArray[n].dispose();
+        
+        wallGeomArray = [];
 
         let loader = new THREE.TextureLoader();
         let wallDiffuse = loader.load("images/stone-wall-diffuse-256.jpg");
@@ -115,56 +115,56 @@ AFRAME.registerComponent("rainbow-quest", {
         let wallElement = document.getElementById("wallEntity");
         wallElement.setObject3D( "mesh", wall );
 
-        // path and solid region tiles
+        // path region tiles
 
         let pathGeomArray = [];
-        // let solidGeomArray = [];
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
             {
                 let cell = this.rainbowQuest.cellArray[i][j];
                 
-                // color rooms separately later
-                if (cell.type == Cell.ROOM)
-                    continue;
-
                 // create a "tile" at the bottom of this location
                 if (cell.type == Cell.PATH) 
                     pathGeomArray.push( createPlaneGeom(i, 0, j, 1, 0, 1) );
-                    // pathGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
-
-                /*
-                if (cell.type == Cell.SOLID)
-                    solidGeomArray.push( createBoxGeom(i, 0, j, 1, 0.02, 1) );
-                */
             }
 
         if (pathGeomArray.length == 0)
-            console.log("ERROR, NEED TO REDO generateDungeon because there are NO PATHS")
+            console.log("error: can't merge an array with length 0")
 
         let pathGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( pathGeomArray );
 
-        let pathDiffuse = loader.load("images/floor-diffuse-256.jpg");
-        let pathNormal = loader.load("images/floor-normal-256.jpg");
-        let pathMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:pathDiffuse, normalMap:pathNormal});
+        // trying to clear up memory
+        for (let n = 0; n < pathGeomArray.length; n++)
+            pathGeomArray[n].dispose();
 
+        pathGeomArray = [];
+
+        let pathDiffuse = loader.load("images/floor-diffuse-256.jpg");
+        let pathMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:pathDiffuse});
         let path = new THREE.Mesh(pathGeometry, pathMaterial);
         let pathElement = document.getElementById("pathEntity");
         pathElement.setObject3D( "mesh", path );
 
-        /*
-        // Let's save some triangles and not include these...
-        let solidGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( solidGeomArray );
-        let solidMaterial = new THREE.MeshLambertMaterial({color: "#000000"});
-        let solid = new THREE.Mesh(solidGeometry, solidMaterial);
-        let solidElement = document.getElementById("solidEntity");
-        solidElement.setObject3D( "mesh", solid );
-        */
+        // ceiling
+
+        let ceilingGeo = new THREE.PlaneGeometry(40, 30);
+        ceilingGeo.rotateX(Math.PI/2);
+        ceilingGeo.translate(20, 1, 15);
+        let ceilingTex = loader.load("images/floor-diffuse-256.jpg");
+        ceilingTex.repeat.set(160,120);
+        ceilingTex.wrapS = THREE.RepeatWrapping;
+        ceilingTex.wrapT = THREE.RepeatWrapping;
+        let ceilingMat = new THREE.MeshStandardMaterial({color: "#AAAAAA", map:ceilingTex});
+        let ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+        let ceilingElement = document.getElementById("ceilingEntity");
+        ceilingElement.setObject3D( "mesh", ceiling );
+
+        // rooms
 
         // start
         // orb 1 2 3 4 5 6
-        // fire fire ice ice goal goal goal
+        // fire fire ice ice nega nega nega
         let roomColorArray = [
           "#CCCCCC", 
           "#FFCCCC", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#DDAAFF",
@@ -185,23 +185,18 @@ AFRAME.registerComponent("rainbow-quest", {
 
             let roomFloor = document.createElement("a-entity");
             roomFloor.setAttribute("geometry", 
-              { primitive: "box", width: room.w, height: 0.04, depth: room.h } );
+              { primitive: "plane", width: room.w, height: room.h } );
+            roomFloor.setAttribute("rotation", "-90 0 0");
             roomFloor.setAttribute("material", "color", baseColor);
             roomFloor.classList.add("navMesh"); // enable teleporting here
             roomFloor.setAttribute("raycaster-target", "glowOnHover", "false");
             roomEntity.appendChild(roomFloor);
 
-            // special code for each room type...
+            // TODO: add special code for each room type...
         }
-
-
-
-
 
         // minimap ------------------------------------------
 
-        // will also need to store visited data and update only on cell entry, to minimize texture re-upload to GPU
-        // NOT lots of little planes, the drawcalls would be AWFUL and LAAAAAAAAG
         this.canvas = document.getElementById("minimapCanvas");
         this.minimapContext = this.canvas.getContext("2d");
         this.minimapPlane = document.getElementById("minimapPlane");
@@ -222,21 +217,24 @@ AFRAME.registerComponent("rainbow-quest", {
             "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
         */
 
-        this.el.setAttribute("position", "40 0 30");
+        this.el.setAttribute("position", "80 0.05 60");
         this.el.setAttribute("rotation", "0 180 0");
         // mini model for inspection
         // this.el.setAttribute("scale", "0.1 0.1 0.1");
         // life size
-        this.el.setAttribute("scale", "2 2 2");
+        this.el.setAttribute("scale", "4 4 4");
         
         this.controllerData = document.querySelector("#controller-data").components["controller-listener"];
 
         // try to reduce attribute calls to reduce context lost?
+        this.pos = new THREE.Vector3();
         this.euler = new THREE.Euler(0,0,0, "XYZ");
 
         this.cameraDirection = new THREE.Vector3();
         this.cameraAngle = 0;
 
+        this.clock = new THREE.Clock();
+        this.markerScale = 1;
     },
 
     tick: function()
@@ -246,10 +244,17 @@ AFRAME.registerComponent("rainbow-quest", {
         this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
         this.euler.z = -this.cameraAngle + Math.PI;
         this.minimapMarker.object3D.children[0].setRotationFromEuler(this.euler);
-
         // less accurate...
         // let rot = this.player.getAttribute("rotation").y;
         // this.minimapMarker.setAttribute("rotation", {x: 0, y: 0, z: rot});
+
+        this.pos.copy( this.player.object3D.position );
+        this.minimapMarker.object3D.position.set(this.pos.x / 160, -this.pos.z / 160 - 0.5/4, 0.005);
+        // TODO: marker invisible if out of bounds
+
+        this.clock.getDelta();
+        this.markerScale = 0.025 * (1 + 0.2 * Math.sin(8 * this.clock.elapsedTime));
+        this.minimapMarker.object3D.scale.set(this.markerScale, this.markerScale, 1);
 
     }
 });
@@ -257,28 +262,33 @@ AFRAME.registerComponent("rainbow-quest", {
 
 </script>
 
-<a-scene stats xenvironment="preset: default;" background="color: black;">
+<a-scene xstats 
+ environment="preset: starry; fog: 0;  flatShading: false; ground: flat; groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
+ background="color: black;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
         <canvas id="minimapCanvas" width="512" height="512"></canvas>
-        <img id="minimapArrow" src="images/circle-A.png" />
+        <img id="minimapArrow" src="images/minimapMarker.png" />
     </a-assets>
 
-    <!--
-    <a-sky 
-        color = "#8888FF">
-    </a-sky>
-    -->
-
+    <!-- Default lights: one directional light from top left, one small ambient light.
+         Adding a light manually removes the default lighting setup.  -->
+        <a-entity 
+            light="type: ambient; color: #222222;">
+        </a-entity>
+        
     <a-entity 
         id="player" 
-        position="0 1.6 40" 
+        position="0 0 80" 
         player-move="controllerListenerId: #controller-data;
                      navigationMeshClass: navMesh;">
         
-        <a-camera position="0 0 0"></a-camera>
-    
+        <a-camera position="0 1.6 0">
+             <a-entity light="type: point; color: #FFFFFF; distance: 20;"></a-entity>
+        </a-camera>
+        
+
         <a-entity 
             id="controller-data" 
             controller-listener="leftControllerId:  #left-controller; 
@@ -294,17 +304,20 @@ AFRAME.registerComponent("rainbow-quest", {
                      material="shader: flat; src: #minimapCanvas;" 
                      position="0.0 -0.0 0.15" 
                      rotation="-30 0 0">
+
                 <a-plane id="minimapBacking"
-                         scale="1.01 1.01 1"
+                         scale="1.1 1.1 1"
                          position="0 0 -0.001"
-                         material="shader: flat; color: #8800FF; side: double;">
+                         material="shader: flat; color: gray; side: double;">
                 </a-plane>
+                
                 <a-plane id="minimapMarker"
                          scale="0.025 0.025 0.025"
                          position="0 0 0.005"
                          rotation="0 0 90"
-                         material="src: #minimapArrow;">
+                         material="src: #minimapArrow; transparent: true; color: yellow;">
                 </a-plane>
+            
             </a-plane>
 
         </a-entity>
@@ -312,7 +325,7 @@ AFRAME.registerComponent("rainbow-quest", {
         <a-entity
             id="right-controller"
             oculus-touch-controls="hand: right"
-            raycaster="objects: .raycaster-target, .environmentGround, .test;"
+            raycaster="objects: .raycaster-target, .environmentGround;"
             raycaster-extras="controllerListenerId: #controller-data; 
                               beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
@@ -320,10 +333,13 @@ AFRAME.registerComponent("rainbow-quest", {
     </a-entity>
 
     <a-entity rainbow-quest>
+
         <a-entity id="pathEntity" raycaster-target="glowOnHover: false;" class="navMesh"></a-entity>
         <a-entity id="wallEntity" raycaster-target="glowOnHover: false;" ></a-entity>
+        <a-entity id="ceilingEntity"></a-entity>
+                
         <a-entity id="roomEntity"></a-entity>
-        <a-entity id="solidEntity"></a-entity>
+    
     </a-entity>    
 
 

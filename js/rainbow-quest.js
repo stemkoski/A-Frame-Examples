@@ -618,8 +618,10 @@ class RainbowQuest
 	  // increase chance of forcing player
 	  //   to pass through these rooms;
 	  // too many may cause an unsolvable maze
-	  this.addHorizBarrier( this.roomArray[7].y );
-	  this.addHorizBarrier( this.roomArray[9].y );
+
+	  // temporarily disabled
+	  // this.addHorizBarrier( this.roomArray[7].y );
+	  // this.addHorizBarrier( this.roomArray[9].y );
 
 	  this.removeMazeDoorWalls();
 
@@ -674,9 +676,9 @@ class RainbowQuest
 			  let cell = this.cellArray[i][j];
 
 			  if (cell.type == Cell.PATH)
-			    color = "#DDDDDD";
+			    color = "#AAAAAA";
 			  else if (cell.type == Cell.SOLID)
-			    color = "#444444";
+			    color = "#000000";
 			  else if (cell.type == Cell.ROOM)
 			    color = roomColorArray[ cell.roomId ];
 
