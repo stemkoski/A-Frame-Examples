@@ -35,7 +35,7 @@ AFRAME.registerComponent("player-move", {
         this.turnTime = 0;
 
         // navTarget objects to indicate teleport destination on navMesh
-        let geoProps = { primitive: "torus", radius: 0.2, radiusTubular: 0.01 };
+        let geoProps = { primitive: "torus", radius: 0.2, radiusTubular: 0.01, segmentsTubular: 8,  segmentsRadial: 6 };
         let matProps = { color: "#444444", emissive: "#008800", transparent: true, opacity: 1.0 };
 
         this.scene = document.querySelector("a-scene");
@@ -59,9 +59,9 @@ AFRAME.registerComponent("player-move", {
         // create sphere around camera for fade effect
         this.camera = document.querySelector("a-camera");
         this.fadeSphere = document.createElement("a-entity");
-        this.fadeSphere.setAttribute("geometry", { primitive: "sphere", radius: 0.1 } );
+        this.fadeSphere.setAttribute("geometry", { primitive: "sphere", radius: 0.1, segmentsHeight: 4, segmentsWidth: 4 } );
         this.fadeSphere.setAttribute("material",
-         { color: this.fadeColor, transparent: true, opacity: 0.5, side: "back"} );
+         { shader: "flat", color: this.fadeColor, transparent: true, opacity: 0.5, side: "back"} );
         this.fadeSphere.setAttribute("visible", false);
         this.camera.appendChild(this.fadeSphere);
 
@@ -96,22 +96,22 @@ AFRAME.registerComponent("player-move", {
 
             let t = this.clock.elapsedTime/3 % 1;
             let alpha = Math.min(2*t, 0.5);
-            this.navTarget1.setAttribute("position", {x:point.x, y:point.y, z:point.z} );
-            this.navTarget1.setAttribute("visible", true);
-            this.navTarget1.setAttribute("scale", {x: 1-t, y: 1-t, z: 1});
-            this.navTarget1.setAttribute("material", "opacity", alpha);
+            this.navTarget1.object3D.position.set(point.x, point.y, point.z);
+            this.navTarget1.object3D.visible = true;
+            this.navTarget1.object3D.scale.set( 1-t, 1-t, 1 );
+            this.navTarget1.object3D.children[0].material.opacity = alpha;
 
             t = (this.clock.elapsedTime/3 + 0.5) % 1;
             alpha = Math.min(2*t, 0.5);
-            this.navTarget2.setAttribute("position", {x:point.x, y:point.y, z:point.z} );
-            this.navTarget2.setAttribute("visible", true);
-            this.navTarget2.setAttribute("scale", {x: 1-t, y: 1-t, z: 1});
-            this.navTarget2.setAttribute("material", "opacity", alpha);
+            this.navTarget2.object3D.position.set(point.x, point.y, point.z);
+            this.navTarget2.object3D.visible = true;
+            this.navTarget2.object3D.scale.set( 1-t, 1-t, 1 );
+            this.navTarget2.object3D.children[0].material.opacity = alpha;
 
             if (this.controllerData.rightTrigger.pressed && !this.fadeInProgress)
             {
                 // fade out, then set position, then fade back in
-                this.fadeSphere.setAttribute("visible", true);
+                this.fadeSphere.object3D.visible = true;
                 this.fadeInProgress = true;
                 this.fadeTime = 0;
                 this.point = {x:point.x, y:point.y, z:point.z};
@@ -120,8 +120,8 @@ AFRAME.registerComponent("player-move", {
         else
         {
             // hide marker if raycaster not hovering over navigation mesh
-            this.navTarget1.setAttribute("visible", false);
-            this.navTarget2.setAttribute("visible", false);
+            this.navTarget1.object3D.visible = false;
+            this.navTarget2.object3D.visible = false;
         }
 
         // currently teleporting
@@ -135,12 +135,12 @@ AFRAME.registerComponent("player-move", {
 
             if (this.fadeTime >= this.fadeDuration)
             {
-                this.el.setAttribute("position", this.point)
+                this.el.object3D.position.set(this.point.x, this.point.y, this.point.z);
             }
             if (this.fadeTime >= 2 * this.fadeDuration)
             {
                 this.fadeInProgress = false;
-                this.fadeSphere.setAttribute("visible", false);
+                this.fadeSphere.object3D.visible = false;
             }
         }
 
@@ -175,11 +175,9 @@ AFRAME.registerComponent("player-move", {
             // scale by magnitude of joystick press (smaller press moves player slower)
             let moveRight   = -leftJoystickLength * Math.sin(moveAngle) * moveDistance;
             let moveForward =  leftJoystickLength * Math.cos(moveAngle) * moveDistance;
-                          
-            let playerPos = this.el.getAttribute("position");
-            playerPos.z += moveForward;
-            playerPos.x += moveRight;
-            this.el.setAttribute("position", playerPos);
+            
+            this.el.object3D.position.x = this.el.object3D.position.x + moveRight;
+            this.el.object3D.position.z = this.el.object3D.position.z + moveForward;
         }
 
         // =====================================================================
@@ -242,9 +240,7 @@ AFRAME.registerComponent("player-move", {
             // move faster if pressing trigger at same time
             moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
 
-            let playerPos = this.el.getAttribute("position");
-            playerPos.y += moveDistance;
-            this.el.setAttribute("position", playerPos);
+            this.el.object3D.position.y = this.el.object3D.position.y + moveDistance;
         }
     }
 });
