@@ -4,12 +4,16 @@
 <head>
     <title>Rainbow Quest (work in progress)</title>
     <meta name="description" content="Rainbow Quest (work in progress)">
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script> -->
+    <script src="js/aframe-master-v1.3.0.js"></script>
+    
     <script src="js/aframe-environment-component.js"></script>
     <script src="js/controller-listener.js"></script>
     <script src="js/player-move.js"></script>
     <script src="js/raycaster-extras.js"></script>
     <script src="js/rainbow-quest.js"></script>
+
+    <script src="js/aframe-sprite-particles-component.js"></script>
 </head>
 
 <body>
@@ -17,21 +21,36 @@
 <script>
 // if raycaster is pointing at this object, press trigger to change color
 AFRAME.registerComponent("rainbow-quest", {
+
     init: function () 
     {
 
         // TODO: random WebGL context lost. Need to continue from this point...
 
+        let self = this;
         // test with: document.querySelector("a-scene").renderer.forceContextLoss();
-        const renderer = this.el.sceneEl.renderer;
-        renderer.getContext().canvas.addEventListener("webglcontextlost", function(event) {
-            event.preventDefault();
-            console.log("goodbye context");
-            renderer.forceContextRestore();
+        let canvas = document.querySelector(".a-canvas");
+
+        canvas.addEventListener("webglcontextlost", async function(event) {
+
+            console.log("lost context");
+            // event.preventDefault();
+            
+            /*
+            // easy to recover from flat screen mode, but not from vr mode
+            const session = renderer.xr.getSession();
+            if ( session !== null )
+            {
+                await session.end();
+            }
+                
+            setTimeout( renderer.forceContextRestore, 1000 );
+            */
+
         }, false);
 
-        renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
-            console.log("welcome back context");
+        canvas.addEventListener("webglcontextrestored", function(event) {
+            console.log("restored context");
         }, false);
 
         this.rainbowQuest = new RainbowQuest();        
@@ -45,9 +64,6 @@ AFRAME.registerComponent("rainbow-quest", {
             this.rainbowQuest.generateDungeon();
             test = this.rainbowQuest.getCellWithType();
         }
-
-
-
 
         // merge geometries to reduce number of draw calls and save FPS
         // (x,y,z): min corner of the object
@@ -151,7 +167,7 @@ AFRAME.registerComponent("rainbow-quest", {
         let ceilingGeo = new THREE.PlaneGeometry(40, 30);
         ceilingGeo.rotateX(Math.PI/2);
         ceilingGeo.translate(20, 1, 15);
-        let ceilingTex = loader.load("images/floor-diffuse-256.jpg");
+        let ceilingTex = loader.load("images/floor-diffuse.jpg");
         ceilingTex.repeat.set(160,120);
         ceilingTex.wrapS = THREE.RepeatWrapping;
         ceilingTex.wrapT = THREE.RepeatWrapping;
@@ -217,7 +233,7 @@ AFRAME.registerComponent("rainbow-quest", {
             "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
         */
 
-        this.el.setAttribute("position", "80 0.05 60");
+        this.el.setAttribute("position", "80 0.1 60");
         this.el.setAttribute("rotation", "0 180 0");
         // mini model for inspection
         // this.el.setAttribute("scale", "0.1 0.1 0.1");
@@ -235,6 +251,49 @@ AFRAME.registerComponent("rainbow-quest", {
 
         this.clock = new THREE.Clock();
         this.markerScale = 1;
+
+        // place orbs
+
+        let room;
+        let orb;
+
+        room = this.rainbowQuest.roomArray[1];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #heartModel; color: red; minimapX: -0.5;");
+        this.el.sceneEl.appendChild(orb);
+
+        room = this.rainbowQuest.roomArray[2];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #flameModel; color: orange; minimapX: -0.3;");
+        this.el.sceneEl.appendChild(orb);
+
+        room = this.rainbowQuest.roomArray[3];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #sunModel; color: yellow; minimapX: -0.1;");
+        this.el.sceneEl.appendChild(orb);
+
+        room = this.rainbowQuest.roomArray[4];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #cloverModel; color: green; minimapX: 0.1;");
+        this.el.sceneEl.appendChild(orb);
+
+        room = this.rainbowQuest.roomArray[5];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #waterModel; color: blue; minimapX: 0.3;");
+        this.el.sceneEl.appendChild(orb);
+
+        room = this.rainbowQuest.roomArray[6];
+        orb = document.createElement("a-entity");
+        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
+        orb.setAttribute("orb", "modelSrc: #moonModel; color: purple; minimapX: 0.5;");
+        this.el.sceneEl.appendChild(orb);
+
+
     },
 
     tick: function()
@@ -259,17 +318,192 @@ AFRAME.registerComponent("rainbow-quest", {
     }
 });
 
+// TODO: transparent, opacity, blending
+AFRAME.registerComponent("gltf-modify", {
+
+    schema: {
+        color: {type: 'color', default: "red"},
+    },
+
+    init: function () 
+    {
+        let self = this;
+        this.el.addEventListener("model-loaded", function(eventData) {
+          let model = eventData.detail.model;
+          model.traverse((obj) => {
+            if (obj.isMesh) 
+            {
+                // blending: THREE.AdditiveBlending (boolean?) // emissive
+              // obj.material.color = new THREE.Color(self.data.color); // = new THREE.MeshStandardMaterial({color: self.data.color});
+              obj.material = new THREE.MeshStandardMaterial({color: self.data.color});
+            }
+          });
+
+        });
+        // Material replacement complete
+
+    }
+});
+
+// "orbSetup"
+// make clickable
+// move to map?
+AFRAME.registerComponent("orb", {
+
+    schema: {
+        modelSrc: {type: 'string', default: "#model"},
+        color:    {type: 'color',  default: "white"},
+        minimapX: {type: 'float',  default: 0.5},
+
+        controllerListenerId:  {type: 'string',  default: "#controller-data"},
+
+    },
+
+    init: function()
+    {
+        this.sphere = document.createElement("a-entity");
+        this.sphere.setAttribute("geometry",
+            {primitive: "sphere", radius: 0.5, segmentsHeight: 4, segmentsWidth: 8} );
+        this.sphere.setAttribute("material",
+            {color: this.data.color, transparent: true, opacity: 0.33} );
+        this.sphere.setAttribute("raycaster-target", "");
+        this.el.appendChild(this.sphere);
+
+        this.model = document.createElement("a-entity");
+        this.model.setAttribute("gltf-model", this.data.modelSrc);
+        this.model.setAttribute("scale", "0.0025 0.0025 0.0025");
+        this.model.setAttribute("rotation", "90 0 0");
+        this.model.setAttribute("gltf-modify", "color", this.data.color);
+        this.sphere.appendChild( this.model );
+
+        this.particles = document.createElement("a-entity");
+        this.particles.setAttribute("position", "0 -2 0");
+        this.particles.setAttribute("sprite-particles",
+            `
+            enable: true;
+            texture: #blob; 
+            color: ${this.data.color};
+            scale: 0.25;
+            emitterTime: 5; 
+            lifeTime: 5;
+            spawnRate: 30;
+            velocity: 0 0.2 0 .. 0 0.3 0; 
+            acceleration: 0 0.05 0; 
+            radialType: circleXZ;   
+            radialVelocity: -0.10 .. -0.15; 
+            angularVelocity: 0 -90 0 .. 0 90 0; 
+            opacity: 0,1,1,0;
+            `
+        );
+        this.el.appendChild(this.particles);
+
+        // for animating to minimap top
+        this.clock = new THREE.Clock();
+        this.deltaTime = 0;
+        this.animationDuration = 1; // seconds 
+        this.percentComplete = 0;
+        this.animationInProgress = false;
+        this.startPosition = {x: 0, y: 0, z: 0};
+        this.endPosition   = {x: this.data.minimapX, y: 0.7, z: 0};
+
+        this.startScale = {x: 1.0, y: 1.0, z: 1.0};
+        this.endScale   = {x: 0.2, y: 0.2, z: 0.2};
+
+        this.controllerData = null;
+    },
+
+    setParticlesEnabled(state)
+    {
+        this.particles.setAttribute("sprite-particles", "enable", state);
+    },
+
+    lerp(startValue, endValue, percent)
+    {
+        return startValue + (endValue - startValue) * percent;
+    },
+
+    attachToMinimap() // need to specify postion via constructor
+    {
+        this.setParticlesEnabled(false);
+
+        let minimapPlane = document.getElementById("minimapPlane");
+        minimapPlane.object3D.attach( this.sphere.object3D );
+        let pos = this.sphere.object3D.position;
+        this.startPosition = {x: pos.x, y: pos.y, z: pos.z};
+        let scale = this.sphere.object3D.scale;
+        this.startScale = {x: scale.x, y: scale.y, z: scale.z};
+        this.animationInProgress = true;
+
+
+        // reattach to minimap space -- attach object3D, then calculate point.
+
+    },
+
+    // attachToMinimap // animate movement // then camera opacity flash
+    tick: function()
+    {
+        this.sphere.object3D.rotateY(0.01);
+        this.model.object3D.rotateZ(0.03);
+
+        if (this.controllerData == null)
+            this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
+
+
+        if (this.controllerData.rightTrigger.pressed &&
+            this.sphere.components["raycaster-target"].hasFocus )
+        {
+            this.attachToMinimap();
+            // also remove raycaster-target
+        }
+
+        this.deltaTime = this.clock.getDelta();
+        if (this.animationInProgress)
+        {   
+            this.percentComplete += this.deltaTime / this.animationDuration;
+
+            if (this.percentComplete >= 1)
+            {
+                this.percentComplete = 1;
+                this.animationInProgress = false;
+            }
+
+            // update position of sphere via lerp
+            this.sphere.object3D.position.set(
+                this.lerp(this.startPosition.x, this.endPosition.x, this.percentComplete),
+                this.lerp(this.startPosition.y, this.endPosition.y, this.percentComplete),
+                this.lerp(this.startPosition.z, this.endPosition.z, this.percentComplete)
+            );
+
+            //console.log(this.lerp(this.startScale.x, this.endScale.x, this.percentComplete))
+
+            this.sphere.object3D.scale.set(
+                this.lerp(this.startScale.x, this.endScale.x, this.percentComplete),
+                this.lerp(this.startScale.y, this.endScale.y, this.percentComplete),
+                this.lerp(this.startScale.z, this.endScale.z, this.percentComplete)
+            );
+
+        }
+
+    },
+});
 
 </script>
 
-<a-scene xstats 
- environment="preset: starry; fog: 0;  flatShading: false; ground: flat; groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
+<a-scene stats 
+ environment="preset: starry; fog: 0; dressing: none; flatShading: false; ground: flat; groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
  background="color: black;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
+        <img id="blob" src="images/blob.png" />
         <canvas id="minimapCanvas" width="512" height="512"></canvas>
         <img id="minimapArrow" src="images/minimapMarker.png" />
+        <a-asset-item id="heartModel"  src="models/heart.glb">  </a-asset-item>
+        <a-asset-item id="flameModel"  src="models/flame.glb">  </a-asset-item>
+        <a-asset-item id="sunModel"    src="models/sun.glb">    </a-asset-item>
+        <a-asset-item id="cloverModel" src="models/clover.glb"> </a-asset-item>
+        <a-asset-item id="waterModel"  src="models/water.glb">  </a-asset-item>
+        <a-asset-item id="moonModel"   src="models/moon.glb">   </a-asset-item>
     </a-assets>
 
     <!-- Default lights: one directional light from top left, one small ambient light.
@@ -277,7 +511,15 @@ AFRAME.registerComponent("rainbow-quest", {
         <a-entity 
             light="type: ambient; color: #222222;">
         </a-entity>
-        
+
+
+
+    <!--
+
+    <a-entity id="cloverOrb" position="0 2 79" orb="modelSrc: #cloverModel; color: green; minimapX: 0.1;"></a-entity>
+
+    -->
+
     <a-entity 
         id="player" 
         position="0 0 80" 
@@ -299,10 +541,11 @@ AFRAME.registerComponent("rainbow-quest", {
             id="left-controller"
             oculus-touch-controls="hand: left">
 
+            <!-- position of minimapPlane: 0 0 0.15; desktop test at 0.0 1.0 0.15 -->
             <a-plane id="minimapPlane" 
                      scale = "0.2 0.2 0.2"
                      material="shader: flat; src: #minimapCanvas;" 
-                     position="0.0 -0.0 0.15" 
+                     position="0.0 0.0 0.15" 
                      rotation="-30 0 0">
 
                 <a-plane id="minimapBacking"
@@ -325,7 +568,7 @@ AFRAME.registerComponent("rainbow-quest", {
         <a-entity
             id="right-controller"
             oculus-touch-controls="hand: right"
-            raycaster="objects: .raycaster-target, .environmentGround;"
+            raycaster="objects: .raycaster-target;"
             raycaster-extras="controllerListenerId: #controller-data; 
                               beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
