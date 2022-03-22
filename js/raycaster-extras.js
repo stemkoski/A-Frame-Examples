@@ -41,6 +41,8 @@ AFRAME.registerComponent('raycaster-extras', {
         this.beamEntity.setAttribute("material", "src", this.data.beamImageSrc);
         this.beamEntity.setAttribute("material", "color", this.data.beamColor);
         this.beamEntity.setAttribute("material", "opacity", this.data.beamOpacity);
+        this.beamColorDefault = new THREE.Color(this.data.beamColor);
+        this.beamColorActive  = new THREE.Color("cyan");
         this.el.appendChild(this.beamEntity);
 
 
@@ -77,50 +79,52 @@ AFRAME.registerComponent('raycaster-extras', {
         this.clock = new THREE.Clock();
         this.moveSpeed = 1;
 
+        this.raycasterConfig = null;
+
     },
 
     tick: function () 
     {
-        let deltaTime = this.clock.getDelta();
+        this.deltaTime = this.clock.getDelta();
 
         // change color of beam when interacting with trigger or grip button ==================================
 
         if ( this.controllerData.rightTrigger.pressing || this.controllerData.rightGrip.pressing )
-            this.beamEntity.setAttribute("material", "color", "cyan");
+            this.beamEntity.object3D.children[0].material.color = this.beamColorActive; // setAttribute("material", "color", "cyan");
         else
-            this.beamEntity.setAttribute("material", "color", this.data.beamColor);
+            this.beamEntity.object3D.children[0].material.color = this.beamColorDefault; // setAttribute("material", "color", this.data.beamColor);
 
         // calculate position and rotation of beam ============================================================
 
         // based on model-specific values that customize raycaster line;
         // note: this data may change when switching from browser to VR mode, so need to keep checking in tick()
-        let raycasterConfig     = this.el.getAttribute("raycaster");
-        let currentRayDirection = raycasterConfig.direction;
-        let currentRayOrigin    = raycasterConfig.origin;
+        if (this.raycasterConfig == null)
+            this.raycasterConfig = this.el.getAttribute("raycaster");
+
+        this.currentRayDirection = this.raycasterConfig.direction;
+        this.currentRayOrigin    = this.raycasterConfig.origin;
 
         if ( this.currentBeamDirection == null || this.currentBeamOrigin == null ||
-            !this.vectorsEqual(this.currentBeamOrigin, currentRayOrigin) ||
-            !this.vectorsEqual(this.currentBeamDirection, currentRayDirection) )
+            !this.vectorsEqual(this.currentBeamOrigin, this.currentRayOrigin) ||
+            !this.vectorsEqual(this.currentBeamDirection, this.currentRayDirection) )
         {
 
             // align beam rotation with ray direction angle
             //  (beam is always only rotated around x-axis)
-            let beamAngleX = 180 + Math.atan2(currentRayDirection.z, currentRayDirection.y) * 180/Math.PI;
-            let rot = {x: beamAngleX, y: 0, z: 0};
-            this.beamEntity.setAttribute("rotation", rot);
-            this.currentBeamDirection = currentRayDirection;
+            this.beamAngleX = 180 + Math.atan2(this.currentRayDirection.z, this.currentRayDirection.y) * 180/Math.PI;
+            this.rot = {x: this.beamAngleX, y: 0, z: 0};
+            this.beamEntity.setAttribute("rotation", this.rot);
+            this.currentBeamDirection = this.currentRayDirection;
             
-            this.beamAngleX = beamAngleX;
-
             // align beam position with ray origin point
             //  and shift so beam cylinder end is at origin
-            let angleRad = beamAngleX * Math.PI/180;
-            let cylinderShift = this.data.beamLength / 2.05;
-            let pos = { x: currentRayOrigin.x, 
-                        y: currentRayOrigin.y - Math.cos(angleRad) * cylinderShift,
-                        z: currentRayOrigin.z - Math.sin(angleRad) * cylinderShift };
-            this.beamEntity.setAttribute("position", pos);
-            this.currentBeamOrigin = currentRayOrigin;
+            this.angleRad = this.beamAngleX * Math.PI/180;
+            this.cylinderShift = this.data.beamLength / 2.05;
+            this.pos = { x: this.currentRayOrigin.x, 
+                         y: this.currentRayOrigin.y - Math.cos(this.angleRad) * this.cylinderShift,
+                         z: this.currentRayOrigin.z - Math.sin(this.angleRad) * this.cylinderShift };
+            this.beamEntity.setAttribute("position", this.pos);
+            this.currentBeamOrigin = this.currentRayOrigin;
         }
 
         // update which element has focus ===================================================================
@@ -152,21 +156,23 @@ AFRAME.registerComponent('raycaster-extras', {
 
         if ( this.focusedElement != null )
         {
-            this.cursorEntity.setAttribute("visible", true)
+            this.cursorEntity.object3D.visible = true;
 
-            this.cursorEntity.setAttribute("position", 
-                { x: this.intersectionPoint.x, 
-                  y: this.intersectionPoint.y, 
-                  z: this.intersectionPoint.z } );
+            this.cursorEntity.object3D.position.set(
+                this.intersectionPoint.x, 
+                this.intersectionPoint.y, 
+                this.intersectionPoint.z );
 
             // shorten raycaster
             let dist = this.raycaster.intersectionDetail.intersections[0].distance;
-            this.el.setAttribute("raycaster", "far", dist + 0.1);
+            this.raycaster.raycaster.far = dist + 0.1;
+            // equivalent to: this.el.setAttribute("raycaster", "far", dist + 0.1);
         }
         else
         {
-            this.cursorEntity.setAttribute("visible", false)
-            this.el.setAttribute("raycaster", "far", 12);
+            this.cursorEntity.object3D.visible = false;
+            this.raycaster.raycaster.far = 12;
+            // equivalent to: this.el.setAttribute("raycaster", "far", 12);
         }
 
         // grab element =====================================================================================
@@ -187,8 +193,8 @@ AFRAME.registerComponent('raycaster-extras', {
                 // raycaster-graphics keeps setting cursorEntity visible true,
                 //  so force cursor hidden by making setting children visibility to false
                 //  why? easier to focus on object without cursor in the way.
-                this.cursorCenter.setAttribute("visible", false);
-                this.cursorBorder.setAttribute("visible", false);
+                this.cursorCenter.object3D.visible = false;
+                this.cursorBorder.object3D.visible = false;
 
                 // turn off emission (set by raycaster-hover-glow)
                 this.focusedElement.setAttribute("material", "emissive", "#000000");
@@ -222,11 +228,11 @@ AFRAME.registerComponent('raycaster-extras', {
                 // if not pulling entity that is too close, then okay to move it
                 if ( !(this.controllerData.rightAxisY > 0 && distance < 0.05) )
                 {
-                    let moveDistance = 2 * this.moveSpeed * deltaTime * this.controllerData.rightAxisY;
+                    this.moveDistance = 2 * this.moveSpeed * this.deltaTime * this.controllerData.rightAxisY;
                     // move faster if pressing trigger at same time
-                    moveDistance *= (1 + 1 * this.controllerData.rightTrigger.value);
+                    this.moveDistance *= (1 + 1 * this.controllerData.rightTrigger.value);
 
-                    this.tempVector.setLength(moveDistance);
+                    this.tempVector.setLength(this.moveDistance);
 
 
                     // temporarily attach element back to root scene
@@ -241,7 +247,7 @@ AFRAME.registerComponent('raycaster-extras', {
                     let material = this.beamEntity.getAttribute("material");
                     material.repeat.x = 2;
                     material.repeat.y = 30;
-                    material.offset.y -= 10 * moveDistance;
+                    material.offset.y -= 10 * this.moveDistance;
                     this.beamEntity.setAttribute("material", material);
                     
                 }
@@ -268,8 +274,8 @@ AFRAME.registerComponent('raycaster-extras', {
                 material.offset.y = 0.001;
                 this.beamEntity.setAttribute("material", material);
 
-                this.cursorCenter.setAttribute("visible", true);
-                this.cursorBorder.setAttribute("visible", true);
+                this.cursorCenter.object3D.visible = true;
+                this.cursorBorder.object3D.visible = true;
 
                 this.grabbedElement.components["raycaster-target"].isGrabbed = false;
                 

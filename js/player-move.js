@@ -25,6 +25,9 @@ AFRAME.registerComponent("player-move", {
 
         this.moveSpeed = 1; // units per second
 
+        // create a vector to store camera direction
+        this.cameraDirection = new THREE.Vector3();
+
         // quick turns
         this.turnReady = true;
         this.startAngle = 0;
@@ -77,7 +80,7 @@ AFRAME.registerComponent("player-move", {
     tick: function()
     {
         // always update deltaTime!
-        let deltaTime = this.clock.getDelta();
+        this.deltaTime = this.clock.getDelta();
 
         if ( !this.enabled )
             return;
@@ -92,21 +95,21 @@ AFRAME.registerComponent("player-move", {
             this.raycaster.intersectionDetail.els[0].classList.contains(this.data.navigationMeshClass) )
         {
             // show marker to indicate teleport zone
-            let point = this.raycaster.intersectionDetail.intersections[0].point;
+            this.point = this.raycaster.intersectionDetail.intersections[0].point;
 
-            let t = this.clock.elapsedTime/3 % 1;
-            let alpha = Math.min(2*t, 0.5);
-            this.navTarget1.object3D.position.set(point.x, point.y, point.z);
+            this.t = this.clock.elapsedTime/3 % 1;
+            this.alpha = Math.min(2*this.t, 0.5);
+            this.navTarget1.object3D.position.set(this.point.x, this.point.y, this.point.z);
             this.navTarget1.object3D.visible = true;
-            this.navTarget1.object3D.scale.set( 1-t, 1-t, 1 );
-            this.navTarget1.object3D.children[0].material.opacity = alpha;
+            this.navTarget1.object3D.scale.set( 1-this.t, 1-this.t, 1 );
+            this.navTarget1.object3D.children[0].material.opacity = this.alpha;
 
-            t = (this.clock.elapsedTime/3 + 0.5) % 1;
-            alpha = Math.min(2*t, 0.5);
-            this.navTarget2.object3D.position.set(point.x, point.y, point.z);
+            this.t = (this.clock.elapsedTime/3 + 0.5) % 1;
+            this.alpha = Math.min(2*this.t, 0.5);
+            this.navTarget2.object3D.position.set(this.point.x, this.point.y, this.point.z);
             this.navTarget2.object3D.visible = true;
-            this.navTarget2.object3D.scale.set( 1-t, 1-t, 1 );
-            this.navTarget2.object3D.children[0].material.opacity = alpha;
+            this.navTarget2.object3D.scale.set( 1-this.t, 1-this.t, 1 );
+            this.navTarget2.object3D.children[0].material.opacity = this.alpha;
 
             if (this.controllerData.rightTrigger.pressed && !this.fadeInProgress)
             {
@@ -114,7 +117,7 @@ AFRAME.registerComponent("player-move", {
                 this.fadeSphere.object3D.visible = true;
                 this.fadeInProgress = true;
                 this.fadeTime = 0;
-                this.point = {x:point.x, y:point.y, z:point.z};
+                this.teleportPoint = {x:this.point.x, y:this.point.y, z:this.point.z};
             }
         }
         else
@@ -127,15 +130,15 @@ AFRAME.registerComponent("player-move", {
         // currently teleporting
         if (this.fadeInProgress)
         {
-            this.fadeTime += deltaTime;
+            this.fadeTime += this.deltaTime;
 
             // fade to dark and then to light
-            let alpha = -Math.abs(this.fadeTime - this.fadeDuration)/this.fadeDuration + 1;
-            this.fadeSphere.setAttribute("material", "opacity", alpha);
+            this.alpha = -Math.abs(this.fadeTime - this.fadeDuration)/this.fadeDuration + 1;
+            this.fadeSphere.setAttribute("material", "opacity", this.alpha);
 
             if (this.fadeTime >= this.fadeDuration)
             {
-                this.el.object3D.position.set(this.point.x, this.point.y, this.point.z);
+                this.el.object3D.position.set(this.teleportPoint.x, this.teleportPoint.y, this.teleportPoint.z);
             }
             if (this.fadeTime >= 2 * this.fadeDuration)
             {
@@ -150,34 +153,33 @@ AFRAME.registerComponent("player-move", {
 
         // move with left joystick (while not pressing left grip);
         //   move faster when pressing trigger
-        let leftJoystickLength = Math.sqrt(this.controllerData.leftAxisX * this.controllerData.leftAxisX + 
+        this.leftJoystickLength = Math.sqrt(this.controllerData.leftAxisX * this.controllerData.leftAxisX + 
                                            this.controllerData.leftAxisY * this.controllerData.leftAxisY );
 
         if ( this.data.motionEnabled &&
-             leftJoystickLength > 0.001 && 
+             this.leftJoystickLength > 0.001 && 
              !this.controllerData.leftGrip.pressing )
         {
-            // create a vector to store camera direction
-            let cameraDirection = new THREE.Vector3();
-            this.el.sceneEl.camera.getWorldDirection(cameraDirection);
-            let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x);
+            // this.cameraDirection: a vector to store camera direction
+            this.el.sceneEl.camera.getWorldDirection(this.cameraDirection);
+            this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
 
-            let leftJoystickAngle = Math.atan2(this.controllerData.leftAxisY, this.controllerData.leftAxisX);
+            this.leftJoystickAngle = Math.atan2(this.controllerData.leftAxisY, this.controllerData.leftAxisX);
             
-            let moveAngle = cameraAngle + leftJoystickAngle;
+            this.moveAngle = this.cameraAngle + this.leftJoystickAngle;
 
-            let moveDistance = this.moveSpeed * deltaTime;
+            this.moveDistance = this.moveSpeed * this.deltaTime;
 
             // move faster if pressing trigger at same time
-            moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
+            this.moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
 
             // convert move distance and angle to right and forward amounts
             // scale by magnitude of joystick press (smaller press moves player slower)
-            let moveRight   = -leftJoystickLength * Math.sin(moveAngle) * moveDistance;
-            let moveForward =  leftJoystickLength * Math.cos(moveAngle) * moveDistance;
+            this.moveRight   = -this.leftJoystickLength * Math.sin(this.moveAngle) * this.moveDistance;
+            this.moveForward =  this.leftJoystickLength * Math.cos(this.moveAngle) * this.moveDistance;
             
-            this.el.object3D.position.x = this.el.object3D.position.x + moveRight;
-            this.el.object3D.position.z = this.el.object3D.position.z + moveForward;
+            this.el.object3D.position.x = this.el.object3D.position.x + this.moveRight;
+            this.el.object3D.position.z = this.el.object3D.position.z + this.moveForward;
         }
 
         // =====================================================================
@@ -187,23 +189,23 @@ AFRAME.registerComponent("player-move", {
         // while pressing left grip, press left joystick left/right to turn left/right by N degrees;
         // -or- just press right joystick left/right to turn left/right by N degrees.
         //  joystick must return to rest/center position before turning again
-        let leftX  = this.controllerData.leftAxisX;
-        let rightX = this.controllerData.rightAxisX;
+        this.leftX  = this.controllerData.leftAxisX;
+        this.rightX = this.controllerData.rightAxisX;
         
-        if ( Math.abs(leftX) < 0.10 && Math.abs(rightX) < 0.10 )
+        if ( Math.abs(this.leftX) < 0.10 && Math.abs(this.rightX) < 0.10 )
         {           
             this.turnReady = true;
         }
 
         if ( this.data.motionEnabled && this.turnReady &&
-             ((this.controllerData.leftGrip.pressing && Math.abs(leftX) > 0.90) || Math.abs(rightX) > 0.90)
+             ((this.controllerData.leftGrip.pressing && Math.abs(this.leftX) > 0.90) || Math.abs(this.rightX) > 0.90)
            )
         {
             this.startAngle = this.el.getAttribute("rotation").y;
 
-            if ( leftX > 0.90 || rightX > 0.90 )
+            if ( this.leftX > 0.90 || this.rightX > 0.90 )
                 this.endAngle = this.startAngle - this.turnAngle;
-            if ( leftX < -0.90 || rightX < -0.90 )
+            if ( this.leftX < -0.90 || this.rightX < -0.90 )
                 this.endAngle = this.startAngle + this.turnAngle;
 
             this.turnInProgress = true;
@@ -213,10 +215,10 @@ AFRAME.registerComponent("player-move", {
 
         if (this.turnInProgress)
         {
-            this.turnTime += deltaTime;
-            let rot = this.el.getAttribute("rotation");
-            rot.y = this.lerp(this.startAngle, this.endAngle, this.turnTime/this.turnDuration);
-            this.el.setAttribute("rotation", rot);
+            this.turnTime += this.deltaTime;
+            this.rot = this.el.getAttribute("rotation");
+            this.rot.y = this.lerp(this.startAngle, this.endAngle, this.turnTime/this.turnDuration);
+            this.el.setAttribute("rotation", this.rot);
             
             if (this.turnTime >= this.turnDuration)
                 this.turnInProgress = false;
@@ -234,13 +236,13 @@ AFRAME.registerComponent("player-move", {
              this.controllerData.leftGrip.pressing && 
              Math.abs(this.controllerData.leftAxisY) > 0.25 )
         {
-            let y = this.controllerData.leftAxisY;
-            y = Math.sign(y) * (Math.abs(y) - 1/4);
-            let moveDistance = -this.moveSpeed * y * deltaTime;
+            this.y = this.controllerData.leftAxisY;
+            this.y = Math.sign(this.y) * (Math.abs(this.y) - 1/4);
+            this.moveDistance = -this.moveSpeed * this.y * this.deltaTime;
             // move faster if pressing trigger at same time
-            moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
+            this.moveDistance *= (1 + 9 * this.controllerData.leftTrigger.value);
 
-            this.el.object3D.position.y = this.el.object3D.position.y + moveDistance;
+            this.el.object3D.position.y = this.el.object3D.position.y + this.moveDistance;
         }
     }
 });

@@ -53,11 +53,21 @@ AFRAME.registerComponent("raycaster-color-change", {
         color = "#000337">
     </a-sky>
 
+    <!-- using .environmentGround in raycasting makes performance lag badly; use a simple mesh instead -->
+    <a-plane
+        width="100" height="100"
+        rotation="-90 0 0"
+        position="0 0.1 0"
+        visible="false"
+        class="groundPlane"
+        raycaster-target>
+    </a-plane>
+
     <a-entity 
         id="player" 
         position="0 0 0" 
         player-move="controllerListenerId: #controller-data;
-                     navigationMeshClass: environmentGround;">
+                     navigationMeshClass: groundPlane;">
         
         <a-camera></a-camera>
     
@@ -72,10 +82,11 @@ AFRAME.registerComponent("raycaster-color-change", {
             oculus-touch-controls="hand: left">
         </a-entity>
 
+        <!-- experiment with raycasting interval; slight performance improvement but jittery appearance in world -->
         <a-entity
             id="right-controller"
             oculus-touch-controls="hand: right"
-            raycaster="objects: .raycaster-target, .environmentGround;"
+            raycaster="objects: .raycaster-target; interval: 0;"
             raycaster-extras="controllerListenerId: #controller-data; 
                               beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
