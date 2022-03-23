@@ -276,7 +276,7 @@ class RainbowQuest
 	constructor()
 	{
 		this.numCellHoriz = 40;
-		this.numCellVert  = 30;
+		this.numCellVert  = 40;
 		this.horizWallArray = [];
 		this.vertWallArray  = [];
 		this.cellArray      = [];
@@ -327,17 +327,24 @@ class RainbowQuest
 	  let failAttempts = 0;
 	  
 	  // start with entrance room
-	  this.roomArray = [ new Room(this.numCellHoriz/2 - 2, 0, 5, 3) ]
+	  
+	  // North room
+	  // this.roomArray = [ new Room(this.numCellHoriz/2 - 2, 0, 5, 5) ]
+    // South room
+	  this.roomArray = [ new Room(this.numCellHoriz/2 - 2, 35, 5, 5) ]
 
 	  while (this.roomArray.length < roomCountTarget)
 	  {
 	     // generate a random room
 
-	     let w = 3, h = 3; 
+
+	     let w = 5, h = 5; 
+	     /*
 	     if (Math.random() < 0.5)
-	      h = 5;
+	      h = 3;
 	     else
-	      w = 5;
+	      w = 3;
+			 */
 
 	     let x = Math.randomInt(1, this.numCellHoriz - w);
 	     let y = Math.randomInt(1, this.numCellVert - h);
@@ -565,7 +572,10 @@ class RainbowQuest
 	removeMazeDoorWalls()
 	{
 	  // North
-	  this.cellArray[this.numCellHoriz/2][0].getWall("N").visible = false;
+	  // this.cellArray[this.numCellHoriz/2][0].getWall("N").visible = false;
+
+	  // South
+	  this.cellArray[this.numCellHoriz/2][39].getWall("S").visible = false;
 	}
 
 	// purely aesthetic and optional, preventing big open (3x3) areas
@@ -678,13 +688,13 @@ class RainbowQuest
 			  if (cell.type == Cell.PATH)
 			    color = "#AAAAAA";
 			  else if (cell.type == Cell.SOLID)
-			    color = "#000000";
+			    color = "#444444";
 			  else if (cell.type == Cell.ROOM)
 			    color = roomColorArray[ cell.roomId ];
 
 			  context.fillStyle = color;
-			  let canvasX = canvasSize - i * cellSize    - cellSize;
-			  let canvasY = canvasSize - j * cellSize    - cellSize;
+			  let canvasX = i * cellSize;
+			  let canvasY = j * cellSize;
 			  context.fillRect(Math.floor(canvasX),Math.floor(canvasY), Math.ceil(cellSize),Math.ceil(cellSize));
 			}
 		}
@@ -698,8 +708,8 @@ class RainbowQuest
 			  if ( !this.horizWallArray[i][j].visible )
 			    continue;
 
-			  let canvasX = canvasSize - i * cellSize - cellSize;
-			  let canvasY = canvasSize - j * cellSize;
+			  let canvasX = i * cellSize;
+			  let canvasY = j * cellSize;
 
 			  drawLine(canvasX, canvasY,
 			           canvasX + cellSize, canvasY);
@@ -714,8 +724,8 @@ class RainbowQuest
 			  if ( !this.vertWallArray[i][j].visible )
 			    continue;
 
-			  let canvasX = canvasSize - i * cellSize;
-			  let canvasY = canvasSize - j * cellSize - cellSize;
+			  let canvasX = i * cellSize;
+			  let canvasY = j * cellSize;
 
 			  drawLine(canvasX, canvasY,
 			           canvasX, canvasY + cellSize);

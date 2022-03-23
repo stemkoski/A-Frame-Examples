@@ -92,7 +92,7 @@ AFRAME.registerComponent("rainbow-quest", {
             return planeGeom;
         }
 
-        // walls
+        // walls --------------------------------------------------------------
 
         let wallGeomArray = [];
         let wallHeight = 1;
@@ -116,22 +116,12 @@ AFRAME.registerComponent("rainbow-quest", {
         
         wallGeomArray = [];
 
-        let loader = new THREE.TextureLoader();
-        let wallDiffuse = loader.load("images/stone-wall-diffuse-256.jpg");
-        wallDiffuse.repeat.set(2,3);
-        wallDiffuse.wrapS = THREE.RepeatWrapping;
-        wallDiffuse.wrapT = THREE.RepeatWrapping;
-        let wallNormal = loader.load("images/stone-wall-normal-256.jpg");
-        wallNormal.repeat.set(2,3);
-        wallNormal.wrapS = THREE.RepeatWrapping;
-        wallNormal.wrapT = THREE.RepeatWrapping;
-        let wallMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:wallDiffuse, normalMap:wallNormal, side:THREE.DoubleSide});
-
+        let wallMaterial = new THREE.MeshStandardMaterial();
         let wall = new THREE.Mesh(wallGeometry, wallMaterial);
         let wallElement = document.getElementById("wallEntity");
         wallElement.setObject3D( "mesh", wall );
 
-        // path region tiles
+        // path region tiles ----------------------------------------------------------
 
         let pathGeomArray = [];
 
@@ -156,27 +146,22 @@ AFRAME.registerComponent("rainbow-quest", {
 
         pathGeomArray = [];
 
-        let pathDiffuse = loader.load("images/floor-diffuse-256.jpg");
-        let pathMaterial = new THREE.MeshStandardMaterial({color: "#FFFFFF", map:pathDiffuse});
+        let pathMaterial = new THREE.MeshStandardMaterial();
         let path = new THREE.Mesh(pathGeometry, pathMaterial);
         let pathElement = document.getElementById("pathEntity");
         pathElement.setObject3D( "mesh", path );
 
-        // ceiling
+        // ceiling -----------------------------------------------------
 
-        let ceilingGeo = new THREE.PlaneGeometry(40, 30);
+        let ceilingGeo = new THREE.PlaneGeometry(40, 40);
         ceilingGeo.rotateX(Math.PI/2);
-        ceilingGeo.translate(20, 1, 15);
-        let ceilingTex = loader.load("images/floor-diffuse.jpg");
-        ceilingTex.repeat.set(160,120);
-        ceilingTex.wrapS = THREE.RepeatWrapping;
-        ceilingTex.wrapT = THREE.RepeatWrapping;
-        let ceilingMat = new THREE.MeshStandardMaterial({color: "#AAAAAA", map:ceilingTex});
+        ceilingGeo.translate(20, 1, 20);
+        let ceilingMat = new THREE.MeshStandardMaterial();
         let ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
         let ceilingElement = document.getElementById("ceilingEntity");
         ceilingElement.setObject3D( "mesh", ceiling );
 
-        // rooms
+        // rooms -------------------------------------------------------
 
         // start
         // orb 1 2 3 4 5 6
@@ -185,7 +170,7 @@ AFRAME.registerComponent("rainbow-quest", {
           "#CCCCCC", 
           "#FFCCCC", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#DDAAFF",
           "#880000", "#880000", "#000088", "#000088",
-          "#444444", "#444444", "#444444" ];
+          "#222222", "#222222", "#222222" ];
 
 
         let roomElement = document.getElementById("roomEntity");
@@ -204,6 +189,13 @@ AFRAME.registerComponent("rainbow-quest", {
               { primitive: "plane", width: room.w, height: room.h } );
             roomFloor.setAttribute("rotation", "-90 0 0");
             roomFloor.setAttribute("material", "color", baseColor);
+
+            if (1 <= i && i <= 6)
+            {
+                roomFloor.setAttribute("material", "src", "#tiles");
+                roomFloor.setAttribute("material", "repeat", "5 5");
+            }
+            
             roomFloor.classList.add("navMesh"); // enable teleporting here
             roomFloor.setAttribute("raycaster-target", "glowOnHover", "false");
             roomEntity.appendChild(roomFloor);
@@ -233,10 +225,9 @@ AFRAME.registerComponent("rainbow-quest", {
             "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
         */
 
-        this.el.setAttribute("position", "80 0.1 60");
-        this.el.setAttribute("rotation", "0 180 0");
+        // MOVE TO TAGS
         // mini model for inspection
-        // this.el.setAttribute("scale", "0.1 0.1 0.1");
+        this.el.setAttribute("scale", "0.1 0.1 0.1");
         // life size
         this.el.setAttribute("scale", "4 4 4");
         
@@ -252,52 +243,45 @@ AFRAME.registerComponent("rainbow-quest", {
         this.clock = new THREE.Clock();
         this.markerScale = 1;
 
-        // place orbs
+        // place orbs ----------------------------------------------
 
         let room;
         let orb;
 
-        room = this.rainbowQuest.roomArray[1];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #heartModel; color: red; minimapX: -0.5;");
-        this.el.sceneEl.appendChild(orb);
+        let orbColors = ["red", "orange", "yellow", "green", "blue", "purple"];
+        let orbModels = ["#heartModel", "#flameModel", "#sunModel", "#cloverModel", "#waterModel", "#moonModel"];
 
-        room = this.rainbowQuest.roomArray[2];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #flameModel; color: orange; minimapX: -0.3;");
-        this.el.sceneEl.appendChild(orb);
+        for (let i = 0; i < 6; i++)
+        {
+            room = this.rainbowQuest.roomArray[i+1];
+            orb = document.createElement("a-entity");
+            orb.setAttribute("position", {x: room.centerX + 0.5, y: 0.5, z: room.centerY + 0.5});
+            orb.setAttribute("orb", `modelSrc: ${orbModels[i]}; color: ${orbColors[i]}; minimapX: ${-0.5 + 0.2*i};`);
+            this.el.appendChild(orb);
+        }
 
-        room = this.rainbowQuest.roomArray[3];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #sunModel; color: yellow; minimapX: -0.1;");
-        this.el.sceneEl.appendChild(orb);
+        // could throttle tick?
 
-        room = this.rainbowQuest.roomArray[4];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #cloverModel; color: green; minimapX: 0.1;");
-        this.el.sceneEl.appendChild(orb);
-
-        room = this.rainbowQuest.roomArray[5];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #waterModel; color: blue; minimapX: 0.3;");
-        this.el.sceneEl.appendChild(orb);
-
-        room = this.rainbowQuest.roomArray[6];
-        orb = document.createElement("a-entity");
-        orb.setAttribute("position", {x: -4 * room.centerX + 80 - 2, y: 2, z: -4 * room.centerY + 60 - 2});
-        orb.setAttribute("orb", "modelSrc: #moonModel; color: purple; minimapX: 0.5;");
-        this.el.sceneEl.appendChild(orb);
-
-
+        this.materialsFinished = false;
     },
 
     tick: function()
     {
+        if ( !this.materialsFinished )
+        {
+            document.getElementById("pathEntity").setAttribute("material", "src", "#pathDiffuse");
+
+            document.getElementById("ceilingEntity").setAttribute("material", "src", "#pathDiffuse");
+            document.getElementById("ceilingEntity").setAttribute("material", "color", "#444488");
+            document.getElementById("ceilingEntity").setAttribute("material", "repeat", "160 160");
+
+            document.getElementById("wallEntity").setAttribute("material", "src", "#wallDiffuse");
+            document.getElementById("wallEntity").setAttribute("material", "normalMap", "#wallNormal");
+            document.getElementById("wallEntity").setAttribute("material", "repeat", "2 3");
+            document.getElementById("wallEntity").setAttribute("material", "side", "double");
+
+            this.materialsFinished = true;
+        }
         // calculate direction based on camera look direction, not just player rotation
         this.el.sceneEl.camera.getWorldDirection(this.cameraDirection);
         this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
@@ -308,11 +292,11 @@ AFRAME.registerComponent("rainbow-quest", {
         // this.minimapMarker.setAttribute("rotation", {x: 0, y: 0, z: rot});
 
         this.pos.copy( this.player.object3D.position );
-        this.minimapMarker.object3D.position.set(this.pos.x / 160, -this.pos.z / 160 - 0.5/4, 0.005);
+        this.minimapMarker.object3D.position.set(this.pos.x / 160 - 0.5, -this.pos.z / 160 + 0.5, 0.005);
         // TODO: marker invisible if out of bounds
 
         this.clock.getDelta();
-        this.markerScale = 0.025 * (1 + 0.2 * Math.sin(8 * this.clock.elapsedTime));
+        this.markerScale = 0.035 * (1 + 0.2 * Math.sin(8 * this.clock.elapsedTime));
         this.minimapMarker.object3D.scale.set(this.markerScale, this.markerScale, 1);
 
     }
@@ -363,21 +347,23 @@ AFRAME.registerComponent("orb", {
     {
         this.sphere = document.createElement("a-entity");
         this.sphere.setAttribute("geometry",
-            {primitive: "sphere", radius: 0.5, segmentsHeight: 4, segmentsWidth: 8} );
+            {primitive: "sphere", radius: 1, segmentsHeight: 4, segmentsWidth: 8} );
         this.sphere.setAttribute("material",
             {color: this.data.color, transparent: true, opacity: 0.33} );
+        this.sphere.setAttribute("scale", "0.25 0.25 0.25");
         this.sphere.setAttribute("raycaster-target", "");
         this.el.appendChild(this.sphere);
 
         this.model = document.createElement("a-entity");
         this.model.setAttribute("gltf-model", this.data.modelSrc);
-        this.model.setAttribute("scale", "0.0025 0.0025 0.0025");
+        this.model.setAttribute("scale", "0.005 0.005 0.005");
         this.model.setAttribute("rotation", "90 0 0");
         this.model.setAttribute("gltf-modify", "color", this.data.color);
         this.sphere.appendChild( this.model );
 
         this.particles = document.createElement("a-entity");
-        this.particles.setAttribute("position", "0 -2 0");
+        this.particles.setAttribute("position", "0 -2 0"); // -2
+        /*
         this.particles.setAttribute("sprite-particles",
             `
             enable: true;
@@ -395,7 +381,8 @@ AFRAME.registerComponent("orb", {
             opacity: 0,1,1,0;
             `
         );
-        this.el.appendChild(this.particles);
+        */
+        this.sphere.appendChild(this.particles);
 
         // for animating to minimap top
         this.clock = new THREE.Clock();
@@ -407,7 +394,7 @@ AFRAME.registerComponent("orb", {
         this.endPosition   = {x: this.data.minimapX, y: 0.7, z: 0};
 
         this.startScale = {x: 1.0, y: 1.0, z: 1.0};
-        this.endScale   = {x: 0.2, y: 0.2, z: 0.2};
+        this.endScale   = {x: 0.1, y: 0.1, z: 0.1};
 
         this.controllerData = null;
     },
@@ -465,6 +452,7 @@ AFRAME.registerComponent("orb", {
             {
                 this.percentComplete = 1;
                 this.animationInProgress = false;
+                this.sphere.object3D.rotation.set(0,0,0);
             }
 
             // update position of sphere via lerp
@@ -489,15 +477,24 @@ AFRAME.registerComponent("orb", {
 
 </script>
 
-<a-scene stats 
- environment="preset: starry; fog: 0; dressing: none; flatShading: false; ground: flat; groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
+<a-scene 
+ stats 
+ xenvironment="preset: starry; fog: 0; dressing: none; flatShading: false; ground: flat; 
+    groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
  background="color: black;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
         <img id="blob" src="images/blob.png" />
+
+        <img id="tiles" src="images/tiles-256.jpg" />
+        <img id="pathDiffuse" src="images/floor-diffuse-256.jpg" />
+        <img id="wallDiffuse" src="images/stone-wall-diffuse-256.jpg" />
+        <img id="wallNormal"  src="images/stone-wall-normal-256.jpg" />
+
         <canvas id="minimapCanvas" width="512" height="512"></canvas>
         <img id="minimapArrow" src="images/minimapMarker.png" />
+
         <a-asset-item id="heartModel"  src="models/heart.glb">  </a-asset-item>
         <a-asset-item id="flameModel"  src="models/flame.glb">  </a-asset-item>
         <a-asset-item id="sunModel"    src="models/sun.glb">    </a-asset-item>
@@ -512,17 +509,9 @@ AFRAME.registerComponent("orb", {
             light="type: ambient; color: #222222;">
         </a-entity>
 
-
-
-    <!--
-
-    <a-entity id="cloverOrb" position="0 2 79" orb="modelSrc: #cloverModel; color: green; minimapX: 0.1;"></a-entity>
-
-    -->
-
     <a-entity 
         id="player" 
-        position="0 0 80" 
+        position="80 0 170" 
         player-move="controllerListenerId: #controller-data;
                      navigationMeshClass: navMesh;">
         
@@ -541,7 +530,7 @@ AFRAME.registerComponent("orb", {
             id="left-controller"
             oculus-touch-controls="hand: left">
 
-            <!-- position of minimapPlane: 0 0 0.15; desktop test at 0.0 1.0 0.15 -->
+            <!-- position of minimapPlane: 0 0 0.15; rot: -30 0 0 -- desktop test at 0.0 1.0 0.15 -->
             <a-plane id="minimapPlane" 
                      scale = "0.2 0.2 0.2"
                      material="shader: flat; src: #minimapCanvas;" 
@@ -580,7 +569,6 @@ AFRAME.registerComponent("orb", {
         <a-entity id="pathEntity" raycaster-target="glowOnHover: false;" class="navMesh"></a-entity>
         <a-entity id="wallEntity" raycaster-target="glowOnHover: false;" ></a-entity>
         <a-entity id="ceilingEntity"></a-entity>
-                
         <a-entity id="roomEntity"></a-entity>
     
     </a-entity>    
