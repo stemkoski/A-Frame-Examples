@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - ambient occulusion</title>
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+
+</head>
+
+<body>
+<script>
+AFRAME.registerComponent("ambient-occulusion", {
+
+  schema: {
+
+  },
+
+  init: function()
+  {
+    let geometry = this.el.object3D.children[0].geometry;
+
+    // used by ambient occlusion texture
+	  let uv2 = new Float32Array( [0,1, 1,1, 0,0, 1,0] );
+
+	  // itemSize = 2 because there are 3 values (components) per vertex
+	  geometry.setAttribute( 'uv2', new THREE.BufferAttribute( uv2, 2 ) );
+  },
+
+  play: function()
+  {
+  	// setting "ambientOcclusionTextureRepeat" seems to have no effect,
+  	//  and can not run the code in init (too early?)
+  	this.el.object3D.children[0].material.aoMap.repeat.set(1,1);
+  }
+
+
+});
+
+
+</script>
+<a-scene>
+	
+	<a-assets>
+		<img id="wallDiffuse" src="images/stone-wall-diffuse-256.jpg" />
+		<img id="wallNormal" src="images/stone-wall-normal-256.jpg" />
+		<img id="wallAO" src="images/ao-map.png" />
+	</a-assets>
+		
+	<a-sky 
+		color = "#001337">
+	</a-sky>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+		color="#666666">
+	</a-plane>
+
+	<a-plane
+		id="wall"
+		position="0 1.5 -2"
+		material="src: #wallDiffuse; normalMap: #wallNormal; repeat: 2 3; 
+		          ambientOcclusionMap: #wallAO; ambientOcclusionTextureRepeat: 1 1;"
+		ambient-occulusion>
+	</a-plane>
+
+
+</a-scene>
+
+</body>
+</html>
