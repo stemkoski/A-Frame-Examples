@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>A-Frame Examples</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+
+    <script src="js/aframe-v1.3.0.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent("camera-fun", {
+    init: function () 
+    {
+    	let rtWidth = 1024;
+    	let rtHeight = 1024;
+
+    	// render the scene to this texture (which goes on to an object in a different scene; avoid "WebGL feedback loop error")
+	    this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+	    this.renderTarget0.texture.magFilter = THREE.NearestFilter;
+	    this.renderTarget0.texture.minFilter = THREE.NearestFilter;
+	    this.renderTarget0.texture.generateMipmaps = false;
+
+	    this.renderTarget1 = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+	    this.renderTarget1.texture.magFilter = THREE.NearestFilter;
+	    this.renderTarget1.texture.minFilter = THREE.NearestFilter;
+	    this.renderTarget1.texture.generateMipmaps = false;
+	    
+	    // separate scene #1 for texture processing
+	    const quad = new THREE.Mesh(
+	    	new THREE.PlaneGeometry(2, 2), 
+	    	new THREE.MeshBasicMaterial( {map: this.renderTarget0.texture} ) );
+
+	    this.rtScene = new THREE.Scene();
+	    this.rtScene.add(quad);
+	    this.rtCamera = new THREE.OrthographicCamera();
+	    this.rtCamera.position.z = 0.1;
+
+		// aspect ratio corrections
+	    let renderer = this.el.sceneEl.renderer;
+	    let size = new THREE.Vector2();
+	    renderer.getSize(size);
+
+    	let box = document.getElementById("box");
+	    box.setAttribute("material", "src", this.renderTarget1.texture);
+	    box.setAttribute("width", size.x / size.y);
+	    box.setAttribute("depth", size.x / size.y);
+
+        this.el.sceneEl.renderer.xr.addEventListener( 'sessionstart', function() {
+        	console.log("session started");
+        	renderer.getSize(size);
+		    box.setAttribute("width", size.x / size.y);
+		    box.setAttribute("depth", size.x / size.y);
+        });
+
+        this.el.sceneEl.renderer.xr.addEventListener( 'sessionend', function() {
+        	console.log("session ended");
+        	renderer.getSize(size);
+			box.setAttribute("width", size.x / size.y);
+	    	box.setAttribute("depth", size.x / size.y);
+        });
+
+
+    },
+
+    tick: function(t, dt)
+    {
+       // temporarily disable XR to prevent screen flickering
+       const scene = this.el.sceneEl.object3D;
+       const camera = this.el.sceneEl.camera;
+       const renderer = this.el.sceneEl.renderer;
+       const currentRenderTarget = renderer.getRenderTarget();
+       const currentXrEnabled = renderer.xr.enabled;
+       const currentShadowAutoUpdate = renderer.shadowMap.autoUpdate;
+
+       renderer.xr.enabled = false;
+       renderer.shadowMap.autoUpdate = false;
+
+       // do extra rendering
+
+       // make a copy of the main scene in target 0
+       renderer.setRenderTarget(this.renderTarget0);
+       renderer.render(scene, camera);
+
+       // make a copy for rt1 which is used by an object in the main scene
+       renderer.setRenderTarget(this.renderTarget1);
+       renderer.render(this.rtScene, this.rtCamera);
+
+       // enable XR
+       renderer.xr.enabled = currentXrEnabled;
+       renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
+       renderer.setRenderTarget(currentRenderTarget);
+    }
+});
+
+
+</script>
+
+<a-scene environment="preset: default;">
+        
+    <a-assets>
+        <img id="gradient" src="images/gradient-fade.png" />
+    </a-assets>
+  
+    <!-- use a simple mesh for raycasting/navigation -->
+    <a-plane
+        width="100" height="100"
+        rotation="-90 0 0"
+        position="0 0.01 0"
+        visible="false"
+        class="navMesh"
+        raycaster-target>
+    </a-plane>
+
+    <a-entity 
+        id="player" 
+        position="0 0 1" 
+        player-move="controllerListenerId: #controller-data;
+                     navigationMeshClass: navMesh;">
+        
+        <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
+
+        <a-entity 
+            id="left-controller"
+            oculus-touch-controls="hand: left">
+        </a-entity>
+
+        <a-entity
+            id="right-controller"
+            oculus-touch-controls="hand: right"
+            raycaster="objects: .raycaster-target, .navMesh;"
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
+        </a-entity>
+
+    </a-entity>
+
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333"
+        raycaster-target>
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1.1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800"
+        raycaster-target>
+    </a-box>
+
+    <a-sphere
+    	id="sphere"
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00"
+        raycaster-target>
+    </a-sphere>
+    
+    <a-box 
+    	camera-fun
+    	id="box"
+        position = " 1 0.75 -3"
+        material = "shader: flat;"
+        raycaster-target="glowOnHover: false;">
+    </a-box>
+
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC"
+        raycaster-target>
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF"
+        raycaster-target>
+    </a-torus>
+
+   
+
+</a-scene>
+
+</body>
+</html>
