@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>A-Frame Examples</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+    <script src="js/aframe-v1.3.0.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+</head>
+
+<body>
+
+<script>
+AFRAME.registerComponent("color-shift", {
+    init: function () 
+    {
+    	let rtWidth = 1024;
+    	let rtHeight = 1024;
+
+    	// render the scene to this texture
+	    this.renderTarget0 = new THREE.WebGLRenderTarget(rtWidth, rtHeight, {});
+	    this.renderTarget0.texture.magFilter = THREE.NearestFilter;
+	    this.renderTarget0.texture.minFilter = THREE.NearestFilter;
+	    this.renderTarget0.texture.generateMipmaps = false;
+
+		let texture = this.renderTarget0.texture;
+
+		let postMaterial = new THREE.ShaderMaterial( {
+
+          uniforms: {
+            tex: {type: "t", value: texture},
+          },
+
+          vertexShader: `
+          varying vec2 vUv;
+          void main() 
+          {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+          }
+          `,
+
+          fragmentShader: `
+          varying vec2 vUv;
+          uniform sampler2D tex;
+          void main() 
+          {
+          	  vec4 color = texture2D(tex, vUv);
+              gl_FragColor = vec4(color.g, color.b, color.r, 1);
+          }
+          `
+         });
+
+	    // separate scene #1 for texture post processing
+	    const quad = new THREE.Mesh(
+	    	new THREE.PlaneGeometry(2, 2), postMaterial );
+
+	    this.rtScene = new THREE.Scene();
+	    this.rtScene.add(quad);
+	    this.rtCamera = new THREE.OrthographicCamera();
+	    this.rtCamera.position.z = 0.5;
+    },
+
+    tick: function(t, dt)
+    {
+       // store XR settings
+       const renderer = this.el.sceneEl.renderer;
+       const currentRenderTarget = renderer.getRenderTarget();
+       const currentXrEnabled = renderer.xr.enabled;
+       const currentShadowAutoUpdate = renderer.shadowMap.autoUpdate;
+
+       // temporarily disable XR
+       renderer.xr.enabled = false;
+       renderer.shadowMap.autoUpdate = false;
+
+       // apply post-processing effects to previously rendered target texture,
+       //   displayed on a quad, rendered to screen
+       renderer.setRenderTarget(null);
+       renderer.render(this.rtScene, this.rtCamera);
+
+       // re-enable XR
+       renderer.xr.enabled = currentXrEnabled;
+       renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
+       
+       // render scene onto a texture
+       renderer.setRenderTarget(this.renderTarget0); 
+    }
+});
+
+</script>
+
+<a-scene environment="preset: default;" color-shift>
+
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333">
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1.1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800">
+    </a-box>
+
+    <a-sphere
+    	id="sphere"
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00">
+    </a-sphere>
+    
+    <a-cylinder
+        radius = "0.5" height = "1.5"
+        position = " 1 0.75 -3"
+        color = "#008800">
+    </a-cylinder>
+
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC">
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF">
+    </a-torus>
+
+</a-scene>
+
+</body>
+</html>
