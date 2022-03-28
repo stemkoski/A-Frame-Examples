@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - using shader chunk</title>
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+</head>
+
+<body>
+<script>
+
+var customMaterial = new THREE.ShaderMaterial({
+   uniforms: THREE.UniformsUtils.merge([
+      THREE.UniformsLib[ "common" ],     // defines uniforms and sets defaults: vec3 diffuse, float opacity, mat3 uvTransform, sampler2D map 
+      THREE.UniformsLib[ "lights" ],     // values automatically sent by three.js
+      THREE.UniformsLib[ "normalmap" ],  // defines uniforms and sets defaults: sampler2D normalMap, vec2 normalScale
+ 			THREE.UniformsLib[ "fog" ],        // values automatically sent by three.js
+    	{
+     		time:      { value: 0 },
+        shininess: { value: 10 },
+        specular:  { value: new THREE.Color("#111111") },
+        emissive:  { value: new THREE.Color("#000000") },
+     	}
+   ]),
+
+   lights: true,
+
+   fog: true,
+
+
+    vertexShader: 
+    `
+    #define PHONG
+    varying vec3 vViewPosition;
+    ${THREE.ShaderChunk["common"]}
+    #define USE_UV
+    ${THREE.ShaderChunk["uv_pars_vertex"]}
+    ${THREE.ShaderChunk["color_pars_vertex"]}
+    ${THREE.ShaderChunk["fog_pars_vertex"]}
+    ${THREE.ShaderChunk["normal_pars_vertex"]}
+    ${THREE.ShaderChunk["shadowmap_pars_vertex"]}
+   
+	  void main() 
+	  {
+	    ${THREE.ShaderChunk["uv_vertex"]}
+      ${THREE.ShaderChunk["color_vertex"]}
+      ${THREE.ShaderChunk["beginnormal_vertex"]}
+      ${THREE.ShaderChunk["defaultnormal_vertex"]}
+      ${THREE.ShaderChunk["normal_vertex"]}
+      ${THREE.ShaderChunk["begin_vertex"]}
+      ${THREE.ShaderChunk["project_vertex"]}
+      vViewPosition = - mvPosition.xyz;
+      ${THREE.ShaderChunk["shadowmap_vertex"]}
+      ${THREE.ShaderChunk["fog_vertex"]}
+	  }
+  `,
+
+  fragmentShader: `
+
+  #define PHONG
+  uniform vec3 diffuse;
+  uniform vec3 emissive;
+  uniform vec3 specular;
+  uniform float shininess;
+  uniform float opacity;
+  
+  ${THREE.ShaderChunk["common"]}
+  ${THREE.ShaderChunk["packing"]}
+  ${THREE.ShaderChunk["color_pars_fragment"]}
+  #define USE_UV
+  ${THREE.ShaderChunk["uv_pars_fragment"]}
+  #define USE_MAP
+  ${THREE.ShaderChunk["map_pars_fragment"]}
+  ${THREE.ShaderChunk["emissivemap_pars_fragment"]}
+  ${THREE.ShaderChunk["fog_pars_fragment"]}
+  ${THREE.ShaderChunk["bsdfs"]}
+  ${THREE.ShaderChunk["lights_pars_begin"]}
+  ${THREE.ShaderChunk["normal_pars_fragment"]}
+  ${THREE.ShaderChunk["lights_phong_pars_fragment"]}
+  #define USE_NORMALMAP
+  #define TANGENTSPACE_NORMALMAP
+  ${THREE.ShaderChunk["normalmap_pars_fragment"]}
+  ${THREE.ShaderChunk["specularmap_pars_fragment"]}
+ 
+  void main() 
+  {
+    ${THREE.ShaderChunk["clipping_planes_fragment"]}
+    vec4 diffuseColor = vec4( diffuse, opacity );
+    ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+    vec3 totalEmissiveRadiance = emissive;  
+    ${THREE.ShaderChunk["logdepthbuf_fragment"]}
+    ${THREE.ShaderChunk["map_fragment"]}
+    ${THREE.ShaderChunk["color_fragment"]}
+    ${THREE.ShaderChunk["specularmap_fragment"]}
+    ${THREE.ShaderChunk["normal_fragment_begin"]}
+    ${THREE.ShaderChunk["normal_fragment_maps"]}
+    ${THREE.ShaderChunk["emissivemap_fragment"]}
+    // accumulation
+    ${THREE.ShaderChunk["lights_phong_fragment"]}
+    ${THREE.ShaderChunk["lights_fragment_begin"]}
+    ${THREE.ShaderChunk["lights_fragment_maps"]}
+    ${THREE.ShaderChunk["lights_fragment_end"]}
+    vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+    ${THREE.ShaderChunk["output_fragment"]}
+    ${THREE.ShaderChunk["fog_fragment"]}
+
+  }
+  ` 
+});
+
+
+
+AFRAME.registerComponent("load-data", {
+
+  schema: {
+
+  },
+
+  init: function()
+  {
+
+
+  },
+
+  play: function()
+  {
+    let loader = new THREE.TextureLoader();
+    let map = loader.load("images/stone-wall-diffuse-256.jpg");
+    let normalMap = loader.load("images/stone-wall-normal-256.jpg");
+
+    // TODO: get this from a-assets instead of a three.loader
+    customMaterial.uniforms.map.value = map;
+    customMaterial.uniforms.normalMap.value = normalMap;
+
+  	this.el.object3D.children[0].material = customMaterial;
+  },
+
+  tick: function()
+  {
+      this.el.object3D.rotateX(0.010);
+      this.el.object3D.rotateY(0.007);
+  }
+
+
+});
+
+
+</script>
+
+<a-scene fog="type: linear; color: #000011; near: 1; far: 10;">
+	
+	<a-assets>
+    <img id="grid" src="images/color-grid.png" />
+	</a-assets>
+
+	<a-sky 
+		color = "#000337">
+	</a-sky>
+
+  <!-- testing point light, attached to camera -->
+
+  <a-camera>
+    <a-entity 
+        light="type: point;">
+    </a-entity>
+  </a-camera>
+  
+
+  <!-- testing other lights -->
+  
+  <!--
+  <a-entity 
+      light="type: ambient; color: #666666;">
+  </a-entity>
+  
+  <a-entity 
+      light="type: directional; color: #FFFFFF;" 
+      position="-1 4 0">
+  </a-entity>
+  -->
+
+  <a-plane
+    id="floor"
+    width="100" height="100"
+    material="src: #grid; repeat: 20 20;"
+    rotation="-90 0 0">
+  </a-plane>
+
+	<a-box
+		id="test"
+		position="0 1.5 -2"		
+		load-data>
+	</a-box>
+
+
+</a-scene>
+
+</body>
+</html>

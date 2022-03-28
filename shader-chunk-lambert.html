@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - using shader chunk</title>
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+
+</head>
+
+<body>
+<script>
+
+
+var customMaterial = new THREE.ShaderMaterial({
+   uniforms: THREE.UniformsUtils.merge([
+      THREE.UniformsLib[ "common" ],  // defines uniforms and sets defaults: vec3 diffuse, float opacity, mat3 uvTransform, sampler2D map 
+      THREE.UniformsLib[ "lights" ],  // values automatically sent by three.js
+      
+ 			THREE.UniformsLib[ "fog" ],     // values automatically sent by three.js
+    	{
+     		time:      { value: 0 },
+        // color:     { value: new THREE.Color("#FFFFFF") },
+        // diffuseMap: { type: 't' }
+     	}
+   ]),
+
+   lights: true,
+
+   fog: true,
+
+
+   vertexShader: 
+   `
+    // defines constants and functions
+  	${THREE.ShaderChunk["common"]}
+
+    #define USE_UV
+    // defines vec2 vUv, mat3 uvTransform
+    ${THREE.ShaderChunk["uv_pars_vertex"]}
+    
+    // defines light-related things
+    ${THREE.ShaderChunk["lights_pars_begin"]}
+
+    // defines varying float vFogDepth; 
+  	${THREE.ShaderChunk["fog_pars_vertex"]}
+
+    // values to pass along to fragment shader
+    varying vec3 vLightFront;
+    varying vec3 vIndirectFront;
+
+	  void main() 
+	  {
+	    // TODO: include vertexColors
+
+      // transforms uv coordinates and assigns to vUv
+      ${THREE.ShaderChunk["uv_vertex"]}
+
+      // defines vec3 objectNormal
+      ${THREE.ShaderChunk["beginnormal_vertex"]}
+
+      // defines vec3 transformedNormal
+      ${THREE.ShaderChunk["defaultnormal_vertex"]}
+
+      // defines vec3 transformed = vec3(position)
+      ${THREE.ShaderChunk["begin_vertex"]}
+
+      // defines vec3 mvPosition = vec3(position) // used by fog_vertex
+      // sets gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      ${THREE.ShaderChunk["project_vertex"]}
+
+      // do light-related calculations
+      ${THREE.ShaderChunk["lights_lambert_vertex"]}
+
+	    // need this for the fog_vertex code -- ???
+	    ${THREE.ShaderChunk["fog_vertex"]}
+	  }
+  `,
+
+
+
+  fragmentShader: `
+
+  ${THREE.ShaderChunk["common"]}
+
+  #define USE_UV
+  // defines vec2 vUv
+  ${THREE.ShaderChunk["uv_pars_fragment"]}
+
+  #define USE_MAP
+  // defines sampler2D map
+  ${THREE.ShaderChunk["map_pars_fragment"]}
+
+  // defines light-related things
+  ${THREE.ShaderChunk["lights_pars_begin"]}
+
+  // defines some light functions??
+  ${THREE.ShaderChunk["bsdfs"]}
+
+
+  // defines uniform vec3 fogColor; varying float vFogDepth; uniform float fogDensity; uniform float fogNear; uniform float fogFar;
+  ${THREE.ShaderChunk["fog_pars_fragment"]}
+
+  // values received from vertex shader
+  varying vec3 vLightFront;
+  varying vec3 vIndirectFront;
+
+  uniform vec3 diffuse;
+  uniform float opacity;
+
+  void main() 
+  {
+    // starting point for Lambert-based shaders
+    vec4 diffuseColor = vec4( diffuse, opacity );
+
+    // apply (multiply) sampled texture to diffuseColor
+    ${THREE.ShaderChunk["map_fragment"]}
+
+    // example of injecting custom code
+    // diffuseColor *= vec4(vUv.x, vUv.y, 0.0, 1.0);
+
+    // ShaderChunk["output_fragment"]: assigns gl_FragColor, requires outgoingLight
+
+    // doing it manually instead; simplifying light calculations
+    gl_FragColor = vec4(diffuseColor.rgb * (vLightFront * 1.0 + vIndirectFront / 2.0) / 3.14, diffuseColor.a);
+
+
+    // apply fog calculation to gl_FragColor
+    ${THREE.ShaderChunk["fog_fragment"]}
+
+  }
+  ` 
+});
+
+
+
+
+AFRAME.registerComponent("ao-data", {
+
+  schema: {
+
+  },
+
+  init: function()
+  {
+
+
+  },
+
+  play: function()
+  {
+    let loader = new THREE.TextureLoader();
+    let tex = loader.load("images/color-grid.png");
+
+    // TODO: get this from a-assets instead of a three.loader
+    customMaterial.uniforms.map.value = tex;
+
+  	this.el.object3D.children[0].material = customMaterial;
+
+  },
+
+  tick: function()
+  {
+      this.el.object3D.rotateX(0.010);
+      this.el.object3D.rotateY(0.007);
+  }
+
+
+});
+
+
+</script>
+
+<a-scene fog="type: linear; color: #000011; near: 1; far: 10;">
+	
+	<a-assets>
+		<img id="wallDiffuse" src="images/stone-wall-diffuse-256.jpg" />
+		<img id="wallNormal" src="images/stone-wall-normal-256.jpg" />
+		<img id="wallAO" src="images/ao-map.png" />
+    <img id="grid" src="images/color-grid.png" />
+	</a-assets>
+
+	<a-sky 
+		color = "#000337">
+	</a-sky>
+
+  <!-- testing point light, attached to camera -->
+
+  <!--
+  <a-camera>
+    <a-entity 
+        light="type: point;">
+    </a-entity>
+  </a-camera>
+  -->
+
+  <!-- testing other lights -->
+  
+  <!--
+  <a-entity 
+      light="type: ambient; color: #666666;">
+  </a-entity>
+  
+  <a-entity 
+      light="type: directional; color: #FFFFFF;" 
+      position="-1 4 0">
+  </a-entity>
+  -->
+
+  <a-plane
+    id="floor"
+    width="100" height="100"
+    material="src: #grid; repeat: 20 20;"
+    rotation="-90 0 0">
+  </a-plane>
+
+	<a-box
+		id="test"
+		position="0 1.5 -2"		
+		ao-data>
+	</a-box>
+
+
+</a-scene>
+
+</body>
+</html>
