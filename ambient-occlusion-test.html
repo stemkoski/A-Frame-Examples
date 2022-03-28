@@ -22,7 +22,7 @@ AFRAME.registerComponent("ambient-occulusion", {
     // used by ambient occlusion texture
 	  let uv2 = new Float32Array( [0,1, 1,1, 0,0, 1,0] );
 
-	  // itemSize = 2 because there are 3 values (components) per vertex
+	  // itemSize = 2 because there are 2 values (components) per vertex
 	  geometry.setAttribute( 'uv2', new THREE.BufferAttribute( uv2, 2 ) );
   },
 
