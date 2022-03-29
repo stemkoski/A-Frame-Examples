@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>A-Frame - ambient occulusion</title>
+	<script src="js/aframe-master-v1.3.0.min.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+
+</head>
+
+<body>
+<script>
+
+AFRAME.registerComponent('ao-custom-material', {
+  schema: 
+  {
+    diffuseMap: {type: "string"},
+    normalMap:  {type: "string"},
+  },
+
+  init: function () 
+  {
+
+    this.material = new THREE.ShaderMaterial({
+    
+      uniforms: THREE.UniformsUtils.merge([
+            THREE.UniformsLib[ "common" ],     // defines uniforms and sets defaults: vec3 diffuse, float opacity, mat3 uvTransform, sampler2D map 
+            THREE.UniformsLib[ "lights" ],     // values automatically sent by three.js
+            THREE.UniformsLib[ "normalmap" ],  // defines uniforms and sets defaults: sampler2D normalMap, vec2 normalScale
+            THREE.UniformsLib[ "fog" ],        // values automatically sent by three.js
+            {
+              time:      { value: 0 },
+              shininess: { value: 10 },
+              specular:  { value: new THREE.Color("#111111") },
+              emissive:  { value: new THREE.Color("#000000") },
+              thickness: { value: 0.15 }, // TODO: add shadow color too. * color
+            }
+         ]),
+
+      lights: true,
+
+      fog: true,
+
+      vertexShader: 
+      `
+      varying vec3 vViewPosition;
+      ${THREE.ShaderChunk["common"]}
+      #define USE_UV
+      ${THREE.ShaderChunk["uv_pars_vertex"]}
+
+      attribute vec3 color;
+
+      #define USE_COLOR
+      ${THREE.ShaderChunk["color_pars_vertex"]}
+      ${THREE.ShaderChunk["fog_pars_vertex"]}
+      ${THREE.ShaderChunk["normal_pars_vertex"]}
+
+      // wallData: [N,E,S,W]. 0=absent, 1=present.
+      attribute vec4 wallData;
+      varying vec4 vWallData;
+      // cornerData: [NE, SE, SW, NW]. 0=absent, 1=present.
+      attribute vec4 cornerData;
+      varying vec4 vCornerData;
+     
+      void main() 
+      {
+        ${THREE.ShaderChunk["uv_vertex"]}
+        ${THREE.ShaderChunk["color_vertex"]}
+        ${THREE.ShaderChunk["beginnormal_vertex"]}
+        ${THREE.ShaderChunk["defaultnormal_vertex"]}
+        ${THREE.ShaderChunk["normal_vertex"]}
+        ${THREE.ShaderChunk["begin_vertex"]}
+        ${THREE.ShaderChunk["project_vertex"]}
+        vViewPosition = - mvPosition.xyz;
+        ${THREE.ShaderChunk["fog_vertex"]}
+
+        vWallData = wallData;
+        vCornerData = cornerData;
+      }
+      `,
+
+      fragmentShader: `
+
+      uniform vec3 diffuse;
+      uniform vec3 emissive;
+      uniform vec3 specular;
+      uniform float shininess;
+      uniform float opacity;
+
+      // wallData: [N,E,S,W]. 0=absent, 1=present.
+      varying vec4 vWallData;
+      // cornerData: [NE, SE, SW, NW]. 0=absent, 1=present.
+      varying vec4 vCornerData;
+
+      uniform float thickness;
+
+      ${THREE.ShaderChunk["common"]}
+      ${THREE.ShaderChunk["packing"]}
+      #define USE_COLOR
+      ${THREE.ShaderChunk["color_pars_fragment"]}
+      #define USE_UV
+      ${THREE.ShaderChunk["uv_pars_fragment"]}
+      #define USE_MAP
+      ${THREE.ShaderChunk["map_pars_fragment"]}
+      ${THREE.ShaderChunk["emissivemap_pars_fragment"]}
+      ${THREE.ShaderChunk["fog_pars_fragment"]}
+      ${THREE.ShaderChunk["bsdfs"]}
+      ${THREE.ShaderChunk["lights_pars_begin"]}
+      ${THREE.ShaderChunk["normal_pars_fragment"]}
+      ${THREE.ShaderChunk["lights_phong_pars_fragment"]}
+      #define USE_NORMALMAP
+      #define TANGENTSPACE_NORMALMAP
+      ${THREE.ShaderChunk["normalmap_pars_fragment"]}
+      ${THREE.ShaderChunk["specularmap_pars_fragment"]}
+     
+      void main() 
+      {
+        vec4 diffuseColor = vec4( diffuse, opacity );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        vec3 totalEmissiveRadiance = emissive;  
+        ${THREE.ShaderChunk["map_fragment"]}
+        ${THREE.ShaderChunk["color_fragment"]}
+
+
+        ${THREE.ShaderChunk["specularmap_fragment"]}
+        ${THREE.ShaderChunk["normal_fragment_begin"]}
+        ${THREE.ShaderChunk["normal_fragment_maps"]}
+        ${THREE.ShaderChunk["emissivemap_fragment"]}
+        // accumulation
+        ${THREE.ShaderChunk["lights_phong_fragment"]}
+        ${THREE.ShaderChunk["lights_fragment_begin"]}
+        ${THREE.ShaderChunk["lights_fragment_maps"]}
+        ${THREE.ShaderChunk["lights_fragment_end"]}
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+        ${THREE.ShaderChunk["output_fragment"]}
+
+        // north wall
+        if (vWallData.x > 0.5 && vUv.y > 1.0 - thickness)
+            gl_FragColor.rgb *= ((1.0 - vUv.y) / thickness);
+
+        // east wall
+        if (vWallData.y > 0.5 && vUv.x > 1.0 - thickness)
+            gl_FragColor.rgb *= ((1.0 - vUv.x) / thickness);
+
+        // south wall
+        if (vWallData.z > 0.5 && vUv.y < thickness)
+            gl_FragColor.rgb *= (vUv.y / thickness);
+
+        // west wall
+        if (vWallData.w > 0.5 && vUv.x < thickness)
+            gl_FragColor.rgb *= (vUv.x / thickness);
+
+        // NE corner
+        if (vCornerData.x > 0.5 && vUv.x > 1.0 - thickness && vUv.y > 1.0 - thickness)
+            gl_FragColor.rgb *= min( distance(vUv, vec2(1,1))/thickness, 1.0);
+
+        // SE corner
+        if (vCornerData.y > 0.5 && vUv.x > 1.0 - thickness && vUv.y < thickness)
+            gl_FragColor.rgb *= min( distance(vUv, vec2(1,0))/thickness, 1.0);
+
+        // SW corner
+        if (vCornerData.z > 0.5 && vUv.x < thickness && vUv.y < thickness)
+            gl_FragColor.rgb *= min( distance(vUv, vec2(0,0))/thickness, 1.0);
+
+        // NW corner
+        if (vCornerData.w > 0.5 && vUv.x < thickness && vUv.y > 1.0 - thickness)
+            gl_FragColor.rgb *= min( distance(vUv, vec2(0,1))/thickness, 1.0);
+
+        ${THREE.ShaderChunk["fog_fragment"]}
+      }
+      ` 
+    }); // end of ShaderMaterial
+
+    let mapTexture = new THREE.Texture();
+    mapTexture.image = document.querySelector(this.data.diffuseMap);
+    mapTexture.needsUpdate = true;
+    this.material.uniforms.map.value = mapTexture;
+
+    let normalTexture = new THREE.Texture();
+    normalTexture.image = document.querySelector(this.data.normalMap);
+    normalTexture.needsUpdate = true;
+    this.material.uniforms.normalMap.value = normalTexture;
+
+    let self = this;
+    
+    this.el.addEventListener("loaded", function(event) {
+      self.el.getObject3D('mesh').material = self.material;
+    });
+
+  },
+
+});
+
+
+AFRAME.registerComponent("ao-vertex-data", {
+
+  schema: {
+
+  },
+
+  init: function()
+  {
+    let geometry = this.el.object3D.children[0].geometry;
+
+    // vertex colors
+	  let colorBuffer = new Float32Array( [1,0.5,0.5, 1,1,0.5, 0.5,1,0.5, 0.5,0.5,1] );
+	  geometry.setAttribute( 'color', new THREE.BufferAttribute( colorBuffer, 3 ) );
+
+    // N E S W
+	  // make four copies of wall data - all 4 vertices in quad need this data
+	  let wallDataBuffer = new Float32Array( new Array(4).fill([0,0,1,1]).flat() );
+		geometry.setAttribute( 'wallData', new THREE.BufferAttribute( wallDataBuffer, 4 ) );
+
+    // NE SE SW NW
+    // make four copies of corner data - all 4 vertices in quad need this data
+    let cornerDataBuffer = new Float32Array( new Array(4).fill([1,0,0,0]).flat() );
+    geometry.setAttribute( 'cornerData', new THREE.BufferAttribute( cornerDataBuffer, 4 ) );
+
+  },
+
+});
+
+
+</script>
+<a-scene xenvironment fog="type: linear; color: #222; near: 5; far: 20;">
+	
+	<a-assets>
+		<img id="wallDiffuse" src="images/stone-wall-diffuse-256.jpg" />
+		<img id="wallNormal" src="images/stone-wall-normal-256.jpg" />
+		<img id="wallAO" src="images/ao-map.png" />
+    <img id="grid" src="images/color-grid.png" />
+	</a-assets>
+	
+  <a-camera>
+    <a-entity 
+        light="type: point;">
+    </a-entity>
+  </a-camera>
+
+  <!-- NOTE: must define lights for custom material to work -->
+  <!--
+  <a-entity 
+      light="type: ambient; color: #666666;">
+  </a-entity>
+  
+  <a-entity 
+      light="type: directional; color: #FFFFFF;" 
+      position="-1 4 0">
+  </a-entity>
+  -->
+
+	<a-sky 
+		color = "#000337">
+	</a-sky>
+
+	<a-plane
+		width="100" height="100"
+		position=" 0.00 0.00 0.00" 
+		rotation="-90 0 0" 
+    material="src: #grid; repeat: 20 20; color: #CCCCCC;">
+	</a-plane>
+
+	<a-plane
+		id="wall"
+		position="0 1.5 -2"
+    ao-vertex-data
+		ao-custom-material="diffuseMap: #wallDiffuse; normalMap: #wallNormal;">
+	</a-plane>
+
+
+</a-scene>
+
+</body>
+</html>
