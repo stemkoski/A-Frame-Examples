@@ -49,7 +49,6 @@ AFRAME.registerComponent('custom-material', {
       ${THREE.ShaderChunk["color_pars_vertex"]}
       ${THREE.ShaderChunk["fog_pars_vertex"]}
       ${THREE.ShaderChunk["normal_pars_vertex"]}
-      ${THREE.ShaderChunk["shadowmap_pars_vertex"]}
      
       void main() 
       {
@@ -61,7 +60,6 @@ AFRAME.registerComponent('custom-material', {
         ${THREE.ShaderChunk["begin_vertex"]}
         ${THREE.ShaderChunk["project_vertex"]}
         vViewPosition = - mvPosition.xyz;
-        ${THREE.ShaderChunk["shadowmap_vertex"]}
         ${THREE.ShaderChunk["fog_vertex"]}
       }
       `,
@@ -95,7 +93,6 @@ AFRAME.registerComponent('custom-material', {
      
       void main() 
       {
-        ${THREE.ShaderChunk["clipping_planes_fragment"]}
         vec4 diffuseColor = vec4( diffuse, opacity );
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         vec3 totalEmissiveRadiance = emissive;  
@@ -163,6 +160,8 @@ AFRAME.registerComponent("spinner", {
 	<a-sky 
 		color = "#000337">
 	</a-sky>
+
+  <!-- NOTE: you must define lights, otherwise shader does not compile?! -->
 
   <!-- testing point light, attached to camera -->
 
