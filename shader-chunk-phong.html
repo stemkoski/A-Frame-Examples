@@ -41,8 +41,8 @@ AFRAME.registerComponent('custom-material', {
 
       vertexShader: 
       `
-      #define PHONG
       varying vec3 vViewPosition;
+      
       ${THREE.ShaderChunk["common"]}
       #define USE_UV
       ${THREE.ShaderChunk["uv_pars_vertex"]}
@@ -66,7 +66,6 @@ AFRAME.registerComponent('custom-material', {
 
       fragmentShader: `
 
-      #define PHONG
       uniform vec3 diffuse;
       uniform vec3 emissive;
       uniform vec3 specular;
@@ -96,7 +95,6 @@ AFRAME.registerComponent('custom-material', {
         vec4 diffuseColor = vec4( diffuse, opacity );
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         vec3 totalEmissiveRadiance = emissive;  
-        ${THREE.ShaderChunk["logdepthbuf_fragment"]}
         ${THREE.ShaderChunk["map_fragment"]}
         ${THREE.ShaderChunk["color_fragment"]}
         ${THREE.ShaderChunk["specularmap_fragment"]}
