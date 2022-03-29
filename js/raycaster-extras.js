@@ -32,6 +32,9 @@ AFRAME.registerComponent('raycaster-extras', {
         this.beamEntity = document.createElement("a-cylinder");
         this.beamEntity.setAttribute("radius", this.data.beamRadius);
         this.beamEntity.setAttribute("height", this.data.beamLength);
+        this.beamEntity.setAttribute("segments-height", 1);
+        this.beamEntity.setAttribute("segments-radial", 6);
+        
         // these are used to set beam position/rotation in tick function
         this.currentBeamDirection = null;
         this.currentBeamOrigin    = null;
