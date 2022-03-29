@@ -57,12 +57,16 @@ AFRAME.registerComponent('raycaster-extras', {
 
         this.cursorBorder = document.createElement('a-sphere');
         this.cursorBorder.setAttribute("radius", this.data.cursorRadius);
+        this.cursorBorder.setAttribute("segments-height", 4); // default: 18
+        this.cursorBorder.setAttribute("segments-width", 8);  // default: 36
         this.cursorBorder.setAttribute("material", "shader: flat; color: black; side: back;");
         this.cursorBorder.setAttribute("overlay", "");
         this.cursorEntity.appendChild(this.cursorBorder);
 
         this.cursorCenter = document.createElement('a-sphere');
         this.cursorCenter.setAttribute("radius", this.data.cursorRadius * 0.80);
+        this.cursorCenter.setAttribute("segments-height", 4); // default: 18
+        this.cursorCenter.setAttribute("segments-width", 8);  // default: 36
         this.cursorCenter.setAttribute("material", "shader: flat; side: front;");
         this.cursorCenter.setAttribute("material", "color", this.data.cursorColor);
         this.cursorCenter.setAttribute("overlay", "");
