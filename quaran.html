@@ -30,6 +30,10 @@
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
         <img id="border"   src="images/border.png" />
+    
+            <a-asset-item id="mecca" src="./assets/Mecaa_Scene.glb"></a-asset-item>
+       
+      
     </a-assets>
 
     <a-sky color = "#000337"></a-sky>
@@ -61,6 +65,7 @@
                               beamImageSrc: #gradient; beamLength: 0.5;">
         </a-entity>
 
+
     </a-entity>
 
     <!-- 
@@ -68,7 +73,8 @@
          assets/wonderland.pdf has pageWidth 646  and pageHeight 958
          assets/test10.pdf     has pageWidth 1224 and pageHeight 1584 
      -->
-
+  
+          <a-entity gltf-model="#mecca"></a-entity>
     <a-entity
         id="interactive-book"
         position="-0.8 1 -1.5" 
