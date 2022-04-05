@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>A-Frame: Quest PDF Book Reader</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="js/aframe-environment-component.js"></script>
+    <script src="js/controller-listener.js"></script>
+    <script src="js/player-move.js"></script>
+    <script src="js/raycaster-extras.js"></script>
+
+    <script src="js/pdf.js"></script>
+    <script src="js/interactive-book.js"></script>
+
+</head>
+
+<body>
+
+<script></script>
+
+<a-scene environment="preset: default;" renderer="antialias: true;">
+        
+    <a-assets>
+        <img id="gradient" src="images/gradient-fade.png" />
+        <img id="border"   src="images/border.png" />
+    </a-assets>
+
+    <a-sky color = "#000337"></a-sky>
+
+    <a-entity 
+        id="player" 
+        position="0 0 0" 
+        player-move="controllerListenerId: #controller-data;
+                     navigationMeshClass: environmentGround;">
+        
+        <a-camera></a-camera>
+    
+        <a-entity 
+            id="controller-data" 
+            controller-listener="leftControllerId:  #left-controller; 
+                                 rightControllerId: #right-controller;">
+        </a-entity>
+
+        <a-entity 
+            id="left-controller"
+            oculus-touch-controls="hand: left">
+        </a-entity>
+
+        <a-entity
+            id="right-controller"
+            oculus-touch-controls="hand: right"
+            raycaster="objects: .raycaster-target, .environmentGround;"
+            raycaster-extras="controllerListenerId: #controller-data; 
+                              beamImageSrc: #gradient; beamLength: 0.5;">
+        </a-entity>
+
+    </a-entity>
+
+    <!-- 
+         example file data:
+         assets/wonderland.pdf has pageWidth 646  and pageHeight 958
+         assets/test10.pdf     has pageWidth 1224 and pageHeight 1584 
+     -->
+
+    <a-entity
+        id="interactive-book"
+        position="-0.8 1 -1.5" 
+        interactive-book="fileName: assets/test10.pdf;
+                          pageWidth: 1224; pageHeight: 1584;
+                          coverText: Test Document;
+                          controllerListenerId: #controller-data;">
+    </a-entity>
+        
+    <a-entity
+        id="interactive-book"
+        position="0.8 1 -1.5" 
+        interactive-book="fileName: assets/wonderland.pdf;
+                          pageWidth: 646; pageHeight: 958;
+                          coverText: Alice's Adventures in Wonderland;
+                          coverColor: #440088;
+                          coverTextColor: #FFFFFF;
+                          controllerListenerId: #controller-data;">
+    </a-entity>
+
+    <a-torus-knot 
+        p="2" q="3" radius="0.5" radius-tubular="0.1"
+        position = "-2.5 1.5 -4"
+        color="#CC3333"
+        raycaster-target>
+    </a-torus-knot>
+    
+    <a-box
+        width = "2" height = "1" depth = "1"
+        position = "-1 0.5 -3"
+        rotation = "0 45 0"  
+        color = "#FF8800"
+        raycaster-target>
+    </a-box>
+
+    <a-sphere
+        radius = "1.25"
+        position = "0 1.25 -5"
+        color = "#DDBB00"
+        raycaster-target>
+    </a-sphere>
+    
+    <a-cylinder
+        radius = "0.5" height = "1.5"
+        position = " 1 0.75 -3"
+        color = "#008800" 
+        raycaster-target>
+    </a-cylinder>
+
+    <a-cone
+        radius-bottom = "1" radius-top = "0" height = "2"
+        position = "3 1 -4"
+        color = "#4444CC"
+        raycaster-target>
+    </a-cone>
+    
+    <a-torus 
+        radius="0.5" radius-tubular="0.1"
+        position = "2 3 -4"
+        rotation = "30 -20 0"
+        color="#8800FF"
+        raycaster-target>
+    </a-torus>
+
+</a-scene>
+
+</body>
+</html>
