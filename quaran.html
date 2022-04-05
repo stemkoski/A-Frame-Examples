@@ -18,7 +18,7 @@
 
 <script></script>
 
-<a-scene environment="preset: default;" renderer="antialias: true;">
+<a-scene environment="preset: egypt;" renderer="antialias: true;">
         
     <a-assets>
         <img id="gradient" src="images/gradient-fade.png" />
@@ -76,55 +76,13 @@
         position="0.8 1 -1.5" 
         interactive-book="fileName: assets/Quaran.pdf;
                           pageWidth: 646; pageHeight: 958;
-                          coverText: Alice's Adventures in Wonderland;
+                          coverText: Quaran;
                           coverColor: #440088;
                           coverTextColor: #FFFFFF;
                           controllerListenerId: #controller-data;">
     </a-entity>
 
-    <a-torus-knot 
-        p="2" q="3" radius="0.5" radius-tubular="0.1"
-        position = "-2.5 1.5 -4"
-        color="#CC3333"
-        raycaster-target>
-    </a-torus-knot>
-    
-    <a-box
-        width = "2" height = "1" depth = "1"
-        position = "-1 0.5 -3"
-        rotation = "0 45 0"  
-        color = "#FF8800"
-        raycaster-target>
-    </a-box>
-
-    <a-sphere
-        radius = "1.25"
-        position = "0 1.25 -5"
-        color = "#DDBB00"
-        raycaster-target>
-    </a-sphere>
-    
-    <a-cylinder
-        radius = "0.5" height = "1.5"
-        position = " 1 0.75 -3"
-        color = "#008800" 
-        raycaster-target>
-    </a-cylinder>
-
-    <a-cone
-        radius-bottom = "1" radius-top = "0" height = "2"
-        position = "3 1 -4"
-        color = "#4444CC"
-        raycaster-target>
-    </a-cone>
-    
-    <a-torus 
-        radius="0.5" radius-tubular="0.1"
-        position = "2 3 -4"
-        rotation = "30 -20 0"
-        color="#8800FF"
-        raycaster-target>
-    </a-torus>
+   
 
 </a-scene>
 
