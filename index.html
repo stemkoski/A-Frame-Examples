@@ -2,7 +2,14 @@
 <head>
 <title>ohgod</title>
 <link rel=stylesheet href="css/index.css"/>
-
+<script>
+	// WebXR requires https: to work so ensure redirected if needed.
+	if (
+		location.hostname !== "localhost" &&
+		window.location.protocol === "http:"
+	)
+		window.location.protocol = "https:";
+</script>
 </head>
 <body>
 

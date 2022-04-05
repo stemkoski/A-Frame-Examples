@@ -11,7 +11,14 @@
 
     <script src="js/pdf.js"></script>
     <script src="js/interactive-book.js"></script>
-
+    <script>
+        // WebXR requires https: to work so ensure redirected if needed.
+        if (
+            location.hostname !== "localhost" &&
+            window.location.protocol === "http:"
+        )
+            window.location.protocol = "https:";
+    </script>
 </head>
 
 <body>
