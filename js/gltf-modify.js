@@ -1,7 +1,7 @@
 AFRAME.registerComponent("gltf-modify", {
 
     schema: {
-        shading:     {type: 'boolean', default: "normal"},
+        shading:     {type: 'string', default: "normal"},
         color:       {type: 'color',   default: "red"},
         transparent: {type: 'boolean', default: false},
         opacity:     {type: 'float',   default: 1.0},
