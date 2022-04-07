@@ -94,8 +94,8 @@ class Cell
     this.y = y;
     this.type = Cell.PATH;
 
-    // used when cell is room-type, null otherwise
-    this.roomId = null;
+    // used when cell type is Cell.ROOM
+    this.roomId = 0;
 
     // used by maze algorithm;
     //  indicates this cell is connected to the main path
@@ -575,7 +575,7 @@ class RainbowQuest
 	  // this.cellArray[this.numCellHoriz/2][0].getWall("N").visible = false;
 
 	  // South
-	  this.cellArray[this.numCellHoriz/2][39].getWall("S").visible = false;
+	  // this.cellArray[this.numCellHoriz/2][39].getWall("S").visible = false;
 	}
 
 	// purely aesthetic and optional, preventing big open (3x3) areas
@@ -623,7 +623,7 @@ class RainbowQuest
 
 	  this.initCells();
 
-	  this.initRooms(14);
+	  this.initRooms(13);
 
 	  // increase chance of forcing player
 	  //   to pass through these rooms;
@@ -671,11 +671,11 @@ class RainbowQuest
 		let canvasSize = 512;
 		let cellSize = canvasSize / this.numCellHoriz;
 
+		let dark = "#222222"
 		let roomColorArray = [
           "#CCCCCC", 
-          "#FFCCCC", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#DDAAFF",
-          "#880000", "#880000", "#000088", "#000088",
-          "#888888", "#888888", "#888888" ];
+          "#FF8888", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#CC99FF",
+          dark, dark, dark, dark, dark, dark ];
 
 		// draw cells
 		for (let i = 0; i < this.numCellHoriz; i++)
@@ -733,5 +733,39 @@ class RainbowQuest
 		}
 
 	} // end of map drawing
+
+
+	updateMapRoom(context, roomId, color, clear=false)
+	{
+		let canvasSize = 512;
+		let cellSize = canvasSize / this.numCellHoriz;
+
+		// draw cells
+		for (let i = 0; i < this.numCellHoriz; i++)
+		{
+			for (let j = 0; j < this.numCellVert; j++)
+			{
+			  let cell = this.cellArray[i][j];
+
+			  if (cell.roomId == roomId)
+			  {
+					  let canvasX = i * cellSize;
+					  let canvasY = j * cellSize;
+
+					  if (clear)
+					  {
+					  		context.clearRect(Math.floor(canvasX),Math.floor(canvasY), Math.ceil(cellSize),Math.ceil(cellSize));
+					  }
+					  else
+					  {
+								context.fillStyle = color;
+							  context.fillRect(Math.floor(canvasX),Math.floor(canvasY), Math.ceil(cellSize),Math.ceil(cellSize));
+						}
+				}
+			}
+		}
+
+	} // end of map drawing
+
 
 }

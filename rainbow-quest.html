@@ -4,126 +4,494 @@
 <head>
     <title>Rainbow Quest (work in progress)</title>
     <meta name="description" content="Rainbow Quest (work in progress)">
-    <!-- <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script> -->
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
     <script src="js/aframe-master-v1.3.0.js"></script>
-    
-    <script src="js/aframe-environment-component.js"></script>
-    <script src="js/controller-listener.js"></script>
-    <script src="js/player-move.js"></script>
-    <script src="js/raycaster-extras.js"></script>
     <script src="js/rainbow-quest.js"></script>
-
-    <script src="js/aframe-sprite-particles-component.js"></script>
+    <script src="js/gltf-modify.js"></script>
+    <script src="js/howler.js"></script>
 </head>
 
 <body>
 
 <script>
-// if raycaster is pointing at this object, press trigger to change color
+
+let rainbowMaterial = new THREE.ShaderMaterial({
+
+    uniforms:
+    {
+        time: { value: 0 },
+    },
+
+    fragmentShader: 
+    `
+    
+    uniform float time;
+
+    // convert HSV color data to RGB color data
+    vec3 hsv2rgb(vec3 c)
+    {
+        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+    void main() 
+    {
+        float hue = mod(time / 20.0, 1.0);
+        vec3 color = hsv2rgb( vec3(hue, 0.5, 1.0) );
+        gl_FragColor = vec4( color, 1.0 );
+    }
+    `
+         
+
+})
+
+function makeUberMaterial(diffuseMap, normalMap, thickness=0.05)
+{
+    let material = new THREE.ShaderMaterial({
+    
+      uniforms: THREE.UniformsUtils.merge([
+            THREE.UniformsLib[ "common" ],     // defines uniforms and sets defaults: vec3 diffuse, float opacity, mat3 uvTransform, sampler2D map 
+            THREE.UniformsLib[ "lights" ],     // values automatically sent by three.js
+            THREE.UniformsLib[ "normalmap" ],  // defines uniforms and sets defaults: sampler2D normalMap, vec2 normalScale
+            THREE.UniformsLib[ "fog" ],        // values automatically sent by three.js
+            {
+              time:        { value: 0 },
+              shininess:   { value: 10 },
+              specular:    { value: new THREE.Color("#111111") },
+              emissive:    { value: new THREE.Color("#000000") },
+              thickness:   { value: thickness },
+              roomEffect:  { value: [0, 0,0,0,0,0,0, -1,-1,-1,-1,-1,-1] },
+            }
+         ]),
+
+      lights: true,
+
+      fog: true,
+
+      vertexShader: 
+      `
+      ${THREE.ShaderChunk["common"]}
+      #define USE_UV
+      ${THREE.ShaderChunk["uv_pars_vertex"]}
+
+      attribute vec3 color;
+
+      #define USE_COLOR
+      ${THREE.ShaderChunk["color_pars_vertex"]}
+
+      varying vec3 vViewPosition;
+      ${THREE.ShaderChunk["normal_pars_vertex"]}
+
+      ${THREE.ShaderChunk["fog_pars_vertex"]}
+
+      // wallData: [N,E,S,W]. 0=absent, 1=present.
+      attribute vec4 wallData;
+      varying vec4 vWallData;
+
+      // cornerData: [NE, SE, SW, NW]. 0=absent, 1=present.
+      attribute vec4 cornerData;
+      varying vec4 vCornerData;
+
+      attribute float textureRepeat;
+      varying float vTextureRepeat;
+
+      // determine which of the room visual effects (-1, 0, 1) to apply to this area
+      attribute int roomId;
+      uniform float roomEffect[13];
+      varying float vEffectId;
+     
+      void main() 
+      {
+        ${THREE.ShaderChunk["uv_vertex"]}
+        ${THREE.ShaderChunk["color_vertex"]}
+
+        ${THREE.ShaderChunk["begin_vertex"]}
+        ${THREE.ShaderChunk["project_vertex"]}
+
+        ${THREE.ShaderChunk["beginnormal_vertex"]}
+        ${THREE.ShaderChunk["defaultnormal_vertex"]}
+        ${THREE.ShaderChunk["normal_vertex"]}
+        vViewPosition = - mvPosition.xyz;
+
+        ${THREE.ShaderChunk["fog_vertex"]}
+
+        vTextureRepeat = textureRepeat;
+        vWallData      = wallData;
+        vCornerData    = cornerData;
+        vEffectId      = roomEffect[roomId];
+      }
+      `,
+
+      fragmentShader: `
+
+      uniform vec3 diffuse;
+      uniform vec3 emissive;
+      uniform vec3 specular;
+      uniform float shininess;
+      uniform float opacity;
+
+      varying vec4 vWallData;
+      varying vec4 vCornerData;
+
+      uniform float thickness;
+      
+      varying float vTextureRepeat;
+
+      varying float vEffectId;
+
+      uniform float time;
+
+      ${THREE.ShaderChunk["common"]}
+      ${THREE.ShaderChunk["packing"]}
+
+      #define USE_COLOR
+      ${THREE.ShaderChunk["color_pars_fragment"]}
+      #define USE_UV
+      ${THREE.ShaderChunk["uv_pars_fragment"]}
+      #define USE_MAP
+      ${THREE.ShaderChunk["map_pars_fragment"]}
+
+      ${THREE.ShaderChunk["emissivemap_pars_fragment"]}
+      ${THREE.ShaderChunk["bsdfs"]}
+      ${THREE.ShaderChunk["lights_pars_begin"]}
+      ${THREE.ShaderChunk["normal_pars_fragment"]}
+      ${THREE.ShaderChunk["lights_phong_pars_fragment"]}
+      #define USE_NORMALMAP
+      #define TANGENTSPACE_NORMALMAP
+      ${THREE.ShaderChunk["normalmap_pars_fragment"]}
+      ${THREE.ShaderChunk["specularmap_pars_fragment"]}
+
+
+      ${THREE.ShaderChunk["fog_pars_fragment"]}
+     
+        // convert HSV color data to RGB color data
+        vec3 hsv2rgb(vec3 c)
+        {
+            vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+            vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+            return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+        }
+
+
+        // Perlin noise shader.
+        // Copyright (c) 2011 Stefan Gustavson. All rights reserved.
+        // Distributed under the MIT license. See LICENSE file.
+        // https://github.com/stegu/webgl-noise
+
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+
+        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+
+        vec4 permute(vec4 x) { return mod289(((x*34.0)+10.0)*x); }
+
+        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+        vec3 fade(vec3 t) { return t*t*t*(t*(t*6.0-15.0)+10.0); }
+
+        // Classic Perlin noise
+        float cnoise(vec3 P)
+        {
+          vec3 Pi0 = floor(P); // Integer part for indexing
+          vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1
+          Pi0 = mod289(Pi0);
+          Pi1 = mod289(Pi1);
+          vec3 Pf0 = fract(P); // Fractional part for interpolation
+          vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0
+          vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
+          vec4 iy = vec4(Pi0.yy, Pi1.yy);
+          vec4 iz0 = Pi0.zzzz;
+          vec4 iz1 = Pi1.zzzz;
+
+          vec4 ixy = permute(permute(ix) + iy);
+          vec4 ixy0 = permute(ixy + iz0);
+          vec4 ixy1 = permute(ixy + iz1);
+
+          vec4 gx0 = ixy0 * (1.0 / 7.0);
+          vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
+          gx0 = fract(gx0);
+          vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
+          vec4 sz0 = step(gz0, vec4(0.0));
+          gx0 -= sz0 * (step(0.0, gx0) - 0.5);
+          gy0 -= sz0 * (step(0.0, gy0) - 0.5);
+
+          vec4 gx1 = ixy1 * (1.0 / 7.0);
+          vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
+          gx1 = fract(gx1);
+          vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
+          vec4 sz1 = step(gz1, vec4(0.0));
+          gx1 -= sz1 * (step(0.0, gx1) - 0.5);
+          gy1 -= sz1 * (step(0.0, gy1) - 0.5);
+
+          vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);
+          vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);
+          vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);
+          vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);
+          vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);
+          vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);
+          vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);
+          vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);
+
+          vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+          g000 *= norm0.x;
+          g010 *= norm0.y;
+          g100 *= norm0.z;
+          g110 *= norm0.w;
+          vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+          g001 *= norm1.x;
+          g011 *= norm1.y;
+          g101 *= norm1.z;
+          g111 *= norm1.w;
+
+          float n000 = dot(g000, Pf0);
+          float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
+          float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
+          float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
+          float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
+          float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
+          float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
+          float n111 = dot(g111, Pf1);
+
+          vec3 fade_xyz = fade(Pf0);
+          vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
+          vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+          float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+          return 2.2 * n_xyz;
+        }
+
+        
+
+      void main() 
+      {
+        vec4 diffuseColor = vec4( diffuse, opacity );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        vec3 totalEmissiveRadiance = emissive;  
+
+        // for standard fragment shader, would normally use:
+        // ShaderChunk["map_fragment"]
+        // ShaderChunk["color_fragment"] 
+
+        // custom color effects
+
+        // option 0: use vColor & diffuse texture
+
+        // option +1: hue shift  & diffuse texture
+        vec3 hueShiftColor = hsv2rgb( vec3(mod(time / 20.0, 1.0), 0.5, 1.0) );
+
+        // option -1: perlin noise (no diffuse texture BUT still apply normal texture)
+        float n = (cnoise( 20.0 * vec3(vUv.x * vTextureRepeat, vUv.y * vTextureRepeat, time/100.0)) + 1.0) / 2.1;
+        vec3 perlinNoiseColor = 0.90 * vec3( n,n,n );
+        // vec3 perlinNoiseColor = vec3(0.20);
+
+        // simple variation when WebGL context keeps getting lost...
+        diffuseColor.rgb *= texture2D(map, vUv * vTextureRepeat).rgb;
+
+        // select option based on vEffectId:
+        
+        diffuseColor.rgb *= (vEffectId < -0.5) ? perlinNoiseColor :
+          ( (vEffectId < 0.5) ? vColor : hueShiftColor );
+        
+        ${THREE.ShaderChunk["specularmap_fragment"]}
+        ${THREE.ShaderChunk["normal_fragment_begin"]}
+
+        // from ShaderChunk["normal_fragment_maps"] & adding repeatUV
+        vec3 mapN = texture2D( normalMap, vUv * vTextureRepeat ).xyz * 2.0 - 1.0;
+        mapN.xy *= normalScale;
+        normal = perturbNormal2Arb( -vViewPosition, normal, mapN, faceDirection );    
+        
+        ${THREE.ShaderChunk["emissivemap_fragment"]}
+        
+        // accumulation
+        ${THREE.ShaderChunk["lights_phong_fragment"]}
+        ${THREE.ShaderChunk["lights_fragment_begin"]}
+        ${THREE.ShaderChunk["lights_fragment_maps"]}
+        ${THREE.ShaderChunk["lights_fragment_end"]}
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+
+        // assign gl_FragColor
+        ${THREE.ShaderChunk["output_fragment"]}
+        
+        // using ternary rather than if statements, hopefully for increased WebGL stability
+        
+        // north wall
+        gl_FragColor.rgb *= (vWallData.x > 0.5 && vUv.y > 1.0 - thickness) ? 
+            mix(0.25, 1.0, (1.0 - vUv.y) / thickness) : 1.0;
+
+        // east wall
+        gl_FragColor.rgb *= (vWallData.y > 0.5 && vUv.x > 1.0 - thickness) ? 
+            mix(0.25, 1.0, (1.0 - vUv.x) / thickness) : 1.0;
+
+        // south wall
+        gl_FragColor.rgb *= (vWallData.z > 0.5 && vUv.y < thickness) ? 
+            mix(0.25, 1.0, vUv.y / thickness) : 1.0;
+
+        // west wall
+        gl_FragColor.rgb *= (vWallData.w > 0.5 && vUv.x < thickness) ? 
+            mix(0.25, 1.0, vUv.x / thickness) : 1.0;
+
+        // NE corner
+        gl_FragColor.rgb *= (vCornerData.x > 0.5 && vUv.x > 1.0 - thickness && vUv.y > 1.0 - thickness) ? 
+            mix(0.25, 1.0, min( distance(vUv, vec2(1,1))/thickness, 1.0) ) : 1.0;
+
+        // SE corner
+        gl_FragColor.rgb *= (vCornerData.y > 0.5 && vUv.x > 1.0 - thickness && vUv.y < thickness) ?
+            mix(0.25, 1.0, min( distance(vUv, vec2(1,0))/thickness, 1.0) ) : 1.0;
+
+        // SW corner
+        gl_FragColor.rgb *= (vCornerData.z > 0.5 && vUv.x < thickness && vUv.y < thickness) ?
+            mix(0.25, 1.0, min( distance(vUv, vec2(0,0))/thickness, 1.0) ) : 1.0;
+
+        // NW corner
+        gl_FragColor.rgb *= (vCornerData.w > 0.5 && vUv.x < thickness && vUv.y > 1.0 - thickness) ?
+            mix(0.25, 1.0, min( distance(vUv, vec2(0,1))/thickness, 1.0) ) : 1.0;
+        
+
+        ${THREE.ShaderChunk["fog_fragment"]}
+      }
+      ` 
+    }); // end of ShaderMaterial
+
+    // create textures from images
+    let mapTexture = new THREE.Texture();
+    mapTexture.image = document.querySelector(diffuseMap);
+    mapTexture.wrapS = THREE.RepeatWrapping;
+    mapTexture.wrapT = THREE.RepeatWrapping;
+    mapTexture.needsUpdate = true;
+    material.uniforms.map.value = mapTexture;
+
+    let normalTexture = new THREE.Texture();
+    normalTexture.image = document.querySelector(normalMap);
+    normalTexture.wrapS = THREE.RepeatWrapping;
+    normalTexture.wrapT = THREE.RepeatWrapping;
+    normalTexture.needsUpdate = true;
+    material.uniforms.normalMap.value = normalTexture;
+
+    return material;
+};
+
+
+// game code ------------------------------------------------------------------------------------------------------------
+
 AFRAME.registerComponent("rainbow-quest", {
 
     init: function () 
     {
-
-        // TODO: random WebGL context lost. Need to continue from this point...
-
         let self = this;
-        // test with: document.querySelector("a-scene").renderer.forceContextLoss();
-        let canvas = document.querySelector(".a-canvas");
 
-        canvas.addEventListener("webglcontextlost", async function(event) {
-
-            console.log("lost context");
-            // event.preventDefault();
-            
-            /*
-            // easy to recover from flat screen mode, but not from vr mode
-            const session = renderer.xr.getSession();
-            if ( session !== null )
-            {
-                await session.end();
-            }
-                
-            setTimeout( renderer.forceContextRestore, 1000 );
-            */
-
-        }, false);
-
-        canvas.addEventListener("webglcontextrestored", function(event) {
-            console.log("restored context");
-        }, false);
+        // TODO: resume game if WebGL context is lost?
+        
+        // generate dungeon data ------------------------------------------------------------
 
         this.rainbowQuest = new RainbowQuest();        
         this.rainbowQuest.generateDungeon();
 
-        let test = this.rainbowQuest.getCellWithType();
-        while (test == null)
+        while (this.rainbowQuest.getCellWithType(Cell.PATH) == null)
         {
             console.log("Unsolvable dungeon created, restarting...");
             this.rainbowQuest.reset();
             this.rainbowQuest.generateDungeon();
-            test = this.rainbowQuest.getCellWithType();
         }
+
+        // build 3D model of dungeon ---------------------------------------------------------
 
         // merge geometries to reduce number of draw calls and save FPS
         // (x,y,z): min corner of the object
        
-        // floor tiles
-        function createPlaneGeom(x,y,z, w,h,d)
+        // floor tiles; used for Cell.PATH and Cell.ROOM
+        function createFloorPlaneGeom(x,y,z, w,h)
         {
-            let planeGeom = new THREE.PlaneGeometry(w, d);
+            let planeGeom = new THREE.PlaneGeometry(w, h);
             planeGeom.rotateX(-Math.PI/2);
-            planeGeom.translate(x + w/2, y + h/2, z + d/2);
+            planeGeom.translate(x + w/2, y, z + h/2);
             return planeGeom;
         }
 
-        function createHorizWallPlaneGeom(x,y,z, w,h)
+        function createWallPlaneGeom(centerX, centerY, centerZ, width, height, roomSide)
         {
-            let planeGeom = new THREE.PlaneGeometry(w, h);
-            planeGeom.translate(x + w/2, y + h/2, z);
+            let planeGeom = new THREE.PlaneGeometry(width, height);   
+
+            if (roomSide == "N")
+            {
+                // planeGeom.rotateY(0);
+                planeGeom.translate(centerX + width/2, centerY + height/2, centerZ);
+            }
+            else if (roomSide == "E")
+            {
+                planeGeom.rotateY(-Math.PI/2);
+                planeGeom.translate(centerX + width, centerY + height/2, centerZ + width/2);
+            }
+            else if (roomSide == "S")
+            {
+                planeGeom.rotateY(Math.PI);
+                planeGeom.translate(centerX + width/2, centerY + height/2, centerZ + width);
+            }
+            else if (roomSide == "W")
+            {
+                planeGeom.rotateY(Math.PI/2);
+                planeGeom.translate(centerX, centerY + height/2, centerZ + width/2);
+            }
+
             return planeGeom;
         }
 
-        function createVertWallPlaneGeom(x,y,z, w,h)
-        {
-            let planeGeom = new THREE.PlaneGeometry(w, h);
-            planeGeom.rotateY(-Math.PI/2);
-            planeGeom.translate(x, y + h/2, z + w/2);
-            return planeGeom;
-        }
+        // color data buffers-------------------------------------------------------
 
-        // walls --------------------------------------------------------------
+        let white   = [1, 1, 1],      gray     = [0.5, 0.5, 0.5],   darkGray = [0.15, 0.15, 0.15],
+            red     = [1, 0.5, 0.5],  orange   = [1, 0.75, 0.5],    yellow   = [1, 1, 0.5],
+            green   = [0.5, 1, 0.5],  blue     = [0.5, 0.75, 1],    purple   = [0.75, 0.5, 1];
 
-        let wallGeomArray = [];
-        let wallHeight = 1;
-        let wallThick = 0.02;
+        let roomColorData = [
+            gray, red, orange, yellow, green, blue, purple,
+            gray, gray, gray, gray, gray, gray ];
 
-        for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
-            for (let j = 0; j < this.rainbowQuest.numCellVert+1; j++)
-                if (this.rainbowQuest.horizWallArray[i][j].visible)
-                    wallGeomArray.push( createHorizWallPlaneGeom(i, 0, j, 1, wallHeight) );
+        let roomColorBufferArray = [];
+        for (let i = 0; i < roomColorData.length; i++)
+            roomColorBufferArray.push( new THREE.BufferAttribute( 
+                new Float32Array( new Array(4).fill(roomColorData[i]).flat() ), 3 ) );
 
-        for (let i = 0; i < this.rainbowQuest.numCellHoriz+1; i++)
-            for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
-                if (this.rainbowQuest.vertWallArray[i][j].visible)
-                    wallGeomArray.push( createVertWallPlaneGeom(i, 0, j, 1, wallHeight) );
+        // shadow data buffers ---------------------------------------------------------
 
-        let wallGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomArray );
+        let shadowData = [
+            [0,0,0,0], [1,0,0,0], [0,1,0,0], [1,1,0,0],
+            [0,0,1,0], [1,0,1,0], [0,1,1,0], [1,1,1,0],
+            [0,0,0,1], [1,0,0,1], [0,1,0,1], [1,1,0,1],
+            [0,0,1,1], [1,0,1,1], [0,1,1,1], [1,1,1,1]
+        ];
 
-        // trying to clear up memory
-        for (let n = 0; n < wallGeomArray.length; n++)
-            wallGeomArray[n].dispose();
+        let shadowBufferArray = [];
+        let shadowBufferIndex = 0;
+        for (let i = 0; i < shadowData.length; i++)
+            shadowBufferArray.push( new THREE.BufferAttribute( 
+                new Float32Array( new Array(4).fill(shadowData[i]).flat() ), 4 ) );
+
+        // roomId data buffers ---------------------------------------------------------
         
-        wallGeomArray = [];
+        let roomIdBufferArray = []
+        for (let i = 0; i < roomColorData.length; i++)
+            roomIdBufferArray.push( new THREE.BufferAttribute( 
+                new Int32Array( new Array(4).fill(i).flat() ), 1 ) );
 
-        let wallMaterial = new THREE.MeshStandardMaterial();
-        let wall = new THREE.Mesh(wallGeometry, wallMaterial);
-        let wallElement = document.getElementById("wallEntity");
-        wallElement.setObject3D( "mesh", wall );
+        // textureRepeat buffers -------------------------------------------------------
 
-        // path region tiles ----------------------------------------------------------
+        // path floor
+        let textureRepeat1Buffer = new THREE.BufferAttribute( 
+            new Float32Array( new Array(4).fill(1).flat() ), 1 );
 
-        let pathGeomArray = [];
+        // walls
+        let textureRepeat2Buffer = new THREE.BufferAttribute( 
+            new Float32Array( new Array(4).fill(2).flat() ), 1 );
+
+        // room floor
+        let textureRepeat5Buffer = new THREE.BufferAttribute( 
+            new Float32Array( new Array(4).fill(5).flat() ), 1 );
+
+        // combine path and room data into a single "floor geometry" --------------
+
+        let floorGeomChunks = {};
+
+        let floorGeomArray = [];
+
+        // path geometry ----------------------------------------------------------
 
         for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
             for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
@@ -132,263 +500,758 @@ AFRAME.registerComponent("rainbow-quest", {
                 
                 // create a "tile" at the bottom of this location
                 if (cell.type == Cell.PATH) 
-                    pathGeomArray.push( createPlaneGeom(i, 0, j, 1, 0, 1) );
+                {
+                    let geo = createFloorPlaneGeom(i, 0, j, 1, 1);
+
+                    // calculate floor ambient occlusion data based on wall presence
+
+                    let wallData = [0,0,0,0];
+                    if (cell.getWall("N") != null && cell.getWall("N").visible) 
+                        wallData[0] = 1;
+                    if (cell.getWall("E") != null && cell.getWall("E").visible) 
+                        wallData[1] = 1;
+                    if (cell.getWall("S") != null && cell.getWall("S").visible) 
+                        wallData[2] = 1;
+                    if (cell.getWall("W") != null && cell.getWall("W").visible) 
+                        wallData[3] = 1;
+
+                    let cornerData = [0,0,0,0];
+                    let cellNE = this.rainbowQuest.cellArray.get2D(i+1, j-1);
+                    if (cellNE != null && wallData[0] == 0 && wallData[1] == 0 &&
+                        ((cellNE.getWall("W") != null && cellNE.getWall("W").visible) ||
+                         (cellNE.getWall("S") != null && cellNE.getWall("S").visible))   )
+                        cornerData[0] = 1;
+
+                    let cellSE = this.rainbowQuest.cellArray.get2D(i+1, j+1);
+                    if (cellSE != null && wallData[2] == 0 && wallData[1] == 0 &&
+                        ((cellSE.getWall("W") != null && cellSE.getWall("W").visible) ||
+                         (cellSE.getWall("N") != null && cellSE.getWall("N").visible))   )
+                        cornerData[1] = 1;
+
+                    let cellSW = this.rainbowQuest.cellArray.get2D(i-1, j+1);
+                    if (cellSW != null && wallData[2] == 0 && wallData[3] == 0 &&
+                        ((cellSW.getWall("E") != null && cellSW.getWall("E").visible) ||
+                         (cellSW.getWall("N") != null && cellSW.getWall("N").visible))   )
+                        cornerData[2] = 1;
+
+                    let cellNW = this.rainbowQuest.cellArray.get2D(i-1, j-1);
+                    if (cellNW != null && wallData[0] == 0 && wallData[3] == 0 &&
+                        ((cellNW.getWall("E") != null && cellNW.getWall("E").visible) ||
+                         (cellNW.getWall("S") != null && cellNW.getWall("S").visible))   )
+                        cornerData[3] = 1;
+
+                    shadowBufferIndex = wallData[0] * 1 + wallData[1] * 2 + wallData[2] * 4 + wallData[3] * 8;
+                    geo.setAttribute( 'wallData', shadowBufferArray[shadowBufferIndex] );
+
+                    shadowBufferIndex = cornerData[0] * 1 + cornerData[1] * 2 + cornerData[2] * 4 + cornerData[3] * 8;
+                    geo.setAttribute( 'cornerData', shadowBufferArray[shadowBufferIndex] );
+
+                    // vertex colors & room Id
+                    geo.setAttribute( 'color', roomColorBufferArray[0] );
+                    geo.setAttribute( 'roomId', roomIdBufferArray[0] );
+                    geo.setAttribute( 'textureRepeat', textureRepeat1Buffer );
+
+                    // add to a chunk
+                    let key = Math.floor(i/5) + ":" + Math.floor(j/5);
+                    if ( floorGeomChunks[key] == null )
+                        floorGeomChunks[key] = [];
+                    floorGeomChunks[key].push( geo );
+                }
             }
 
-        if (pathGeomArray.length == 0)
-            console.log("error: can't merge an array with length 0")
+        
+        this.floorMaterial = makeUberMaterial("#pathDiffuse", "#pathNormal");
+        let roomElement = document.getElementById("roomEntity");
 
-        let pathGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( pathGeomArray );
+        // set up mesh for each chunk
+        for (let key in floorGeomChunks)
+        {
+
+            let floorGeometry0 = THREE.BufferGeometryUtils.mergeBufferGeometries( floorGeomChunks[key] );
+
+            // trying to clear up memory
+            for (let n = 0; n < floorGeomChunks[key].length; n++)
+                floorGeomChunks[key][n].dispose();
+
+            floorGeomChunks[key] = [];
+
+            let floor = new THREE.Mesh(floorGeometry0, this.floorMaterial);
+            roomElement.object3D.add(floor);
+        }
+
+
+        // room geometry --------------------------------------------------------------
+
+        // each room is 5x5
+
+        for (let i = 0; i < 13; i++)
+        {
+            let room = this.rainbowQuest.roomArray[i];
+            let geo = createFloorPlaneGeom(room.x, 0, room.y, room.w, room.h);
+
+            geo.setAttribute( 'wallData', shadowBufferArray[15] );
+            geo.setAttribute( 'cornerData', shadowBufferArray[0] );
+            
+            // vertex colors & room Id
+            geo.setAttribute( 'color', roomColorBufferArray[i] );
+            geo.setAttribute( 'roomId', roomIdBufferArray[i] );
+            geo.setAttribute( 'textureRepeat', textureRepeat5Buffer );
+            
+            floorGeomArray.push( geo );
+        }
+
+        // floor (path + room) mesh --------------------------------------------------------
+
+        let floorGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries( floorGeomArray );
 
         // trying to clear up memory
-        for (let n = 0; n < pathGeomArray.length; n++)
-            pathGeomArray[n].dispose();
+        for (let n = 0; n < floorGeomArray.length; n++)
+            floorGeomArray[n].dispose();
 
-        pathGeomArray = [];
+        floorGeomArray = [];
 
-        let pathMaterial = new THREE.MeshStandardMaterial();
-        let path = new THREE.Mesh(pathGeometry, pathMaterial);
-        let pathElement = document.getElementById("pathEntity");
-        pathElement.setObject3D( "mesh", path );
+        let floor = new THREE.Mesh(floorGeometry, this.floorMaterial);
+        // TODO: change to floorEntity
+        
+        roomElement.object3D.add(floor);
 
-        // ceiling -----------------------------------------------------
+        // walls --------------------------------------------------------------
+
+        let wallGeomChunks = {};
+
+        let wallGeomArray = [];
+        let wallWidth = 1;
+        let wallHeight = 1;
+
+        // reusable buffer
+        let cornerDataBufferAttribute = new THREE.BufferAttribute( 
+            new Float32Array( new Array(4).fill([0,0,0,0]).flat() ), 4 );
+
+        for (let i = 0; i < this.rainbowQuest.numCellHoriz; i++)
+            for (let j = 0; j < this.rainbowQuest.numCellVert; j++)
+            {
+                let cell = this.rainbowQuest.cellArray[i][j];
+
+                let key = Math.floor(i/5) + ":" + Math.floor(j/5);
+                if ( wallGeomChunks[key] == null )
+                    wallGeomChunks[key] = [];
+
+                // create the "wall tiles" (up to 4) for this cell
+
+                if (cell.type == Cell.PATH || cell.type == Cell.ROOM) 
+                {
+                    if (cell.getWall("N") != null && cell.getWall("N").visible) 
+                    {
+                        let geo = createWallPlaneGeom(i, 0, j, wallWidth, wallHeight, "N");
+                        let wallData = [1,0,1,0];
+                        // if in a corner, add extra shading
+                        if (cell.getWall("E") != null && cell.getWall("E").visible)
+                            wallData[1] = 1;
+                        if (cell.getWall("W") != null && cell.getWall("W").visible)
+                            wallData[3] = 1;
+
+                        shadowBufferIndex = wallData[0] * 1 + wallData[1] * 2 + wallData[2] * 4 + wallData[3] * 8;
+                        geo.setAttribute( 'wallData', shadowBufferArray[shadowBufferIndex] );
+                        geo.setAttribute( 'cornerData', shadowBufferArray[0] );
+
+                        // vertex colors & room Id
+                        geo.setAttribute( 'color', roomColorBufferArray[cell.roomId] );
+                        geo.setAttribute( 'roomId', roomIdBufferArray[cell.roomId] );
+                        geo.setAttribute( 'textureRepeat', textureRepeat2Buffer );
+
+                        // wallGeomArray.push( geo );
+                        wallGeomChunks[key].push( geo );
+
+                    }
+                    
+                    if (cell.getWall("E") != null && cell.getWall("E").visible) 
+                    {
+                        let geo = createWallPlaneGeom(i, 0, j, wallWidth, wallHeight, "E");
+                        let wallData = [1,0,1,0];
+                        // if in a corner, add extra shading
+                        if (cell.getWall("N") != null && cell.getWall("N").visible)
+                            wallData[3] = 1;
+                        if (cell.getWall("S") != null && cell.getWall("S").visible)
+                            wallData[1] = 1;
+
+                        shadowBufferIndex = wallData[0] * 1 + wallData[1] * 2 + wallData[2] * 4 + wallData[3] * 8;
+                        geo.setAttribute( 'wallData', shadowBufferArray[shadowBufferIndex] );
+                        geo.setAttribute( 'cornerData', shadowBufferArray[0] );
+
+                        // vertex colors & room Id
+                        geo.setAttribute( 'color', roomColorBufferArray[cell.roomId] );
+                        geo.setAttribute( 'roomId', roomIdBufferArray[cell.roomId] );
+                        geo.setAttribute( 'textureRepeat', textureRepeat2Buffer );
+
+                        // wallGeomArray.push( geo );
+                        wallGeomChunks[key].push( geo );
+                    }
+                    
+                    if (cell.getWall("S") != null && cell.getWall("S").visible) 
+                    {
+                        let geo = createWallPlaneGeom(i, 0, j, wallWidth, wallHeight, "S");
+                        let wallData = [1,0,1,0];
+                        // if in a corner, add extra shading
+                        if (cell.getWall("E") != null && cell.getWall("E").visible)
+                            wallData[3] = 1;
+                        if (cell.getWall("W") != null && cell.getWall("W").visible)
+                            wallData[1] = 1;
+
+                        shadowBufferIndex = wallData[0] * 1 + wallData[1] * 2 + wallData[2] * 4 + wallData[3] * 8;
+                        geo.setAttribute( 'wallData', shadowBufferArray[shadowBufferIndex] );
+                        geo.setAttribute( 'cornerData', shadowBufferArray[0] );
+
+                        // vertex colors & room Id
+                        geo.setAttribute( 'color', roomColorBufferArray[cell.roomId] );
+                        geo.setAttribute( 'roomId', roomIdBufferArray[cell.roomId] );
+                        geo.setAttribute( 'textureRepeat', textureRepeat2Buffer );
+
+                        // wallGeomArray.push( geo );
+                        wallGeomChunks[key].push( geo );
+                    }
+                    
+                    if (cell.getWall("W") != null && cell.getWall("W").visible) 
+                    {
+                        let geo = createWallPlaneGeom(i, 0, j, wallWidth, wallHeight, "W");
+                        let wallData = [1,0,1,0];
+                        // if in a corner, add extra shading
+                        if (cell.getWall("N") != null && cell.getWall("N").visible)
+                            wallData[1] = 1;
+                        if (cell.getWall("S") != null && cell.getWall("S").visible)
+                            wallData[3] = 1;
+
+                        shadowBufferIndex = wallData[0] * 1 + wallData[1] * 2 + wallData[2] * 4 + wallData[3] * 8;
+                        geo.setAttribute( 'wallData', shadowBufferArray[shadowBufferIndex] );
+                        geo.setAttribute( 'cornerData', shadowBufferArray[0] );
+
+                        // vertex colors & room Id
+                        geo.setAttribute( 'color', roomColorBufferArray[cell.roomId] );
+                        geo.setAttribute( 'roomId', roomIdBufferArray[cell.roomId] );
+                        geo.setAttribute( 'textureRepeat', textureRepeat2Buffer );
+
+                        // wallGeomArray.push( geo );
+                        wallGeomChunks[key].push( geo );
+                    }
+
+                }
+
+            }
+
+        this.wallMaterial = makeUberMaterial("#wallDiffuse", "#wallNormal");
+
+        // set up mesh for each chunk
+        for (let key in wallGeomChunks)
+        {
+            if (wallGeomChunks[key].length == 0)
+                continue;
+
+            let wallGeometry0 = THREE.BufferGeometryUtils.mergeBufferGeometries( wallGeomChunks[key] );
+
+            // trying to clear up memory
+            for (let n = 0; n < wallGeomChunks[key].length; n++)
+                wallGeomChunks[key][n].dispose();
+
+            wallGeomChunks[key] = [];
+
+            let mesh = new THREE.Mesh(wallGeometry0, this.wallMaterial);
+            roomElement.object3D.add(mesh);
+        }
+
+
+        // ceiling ----------------------------------------------------------------------------------------------------------
 
         let ceilingGeo = new THREE.PlaneGeometry(40, 40);
         ceilingGeo.rotateX(Math.PI/2);
         ceilingGeo.translate(20, 1, 20);
         let ceilingMat = new THREE.MeshStandardMaterial();
         let ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-        let ceilingElement = document.getElementById("ceilingEntity");
-        ceilingElement.setObject3D( "mesh", ceiling );
+        let ceilingEntity = document.getElementById("ceilingEntity");
+        ceilingEntity.setObject3D( "mesh", ceiling );
 
-        // rooms -------------------------------------------------------
-
-        // start
-        // orb 1 2 3 4 5 6
-        // fire fire ice ice nega nega nega
-        let roomColorArray = [
-          "#CCCCCC", 
-          "#FFCCCC", "#FFCC88", "#FFFF88", "#99FF99", "#99CCFF", "#DDAAFF",
-          "#880000", "#880000", "#000088", "#000088",
-          "#222222", "#222222", "#222222" ];
-
-
-        let roomElement = document.getElementById("roomEntity");
-        for (let i = 0; i < 14; i++)
-        {
-            let room = this.rainbowQuest.roomArray[i];
-            let baseColor = roomColorArray[i];
-
-            let roomEntity = document.createElement("a-entity");
-            roomEntity.setAttribute("id", "room" + room.id);
-            roomEntity.setAttribute("position", {x: room.x + room.w/2, y: 0, z: room.y + room.h/2});
-            this.el.appendChild(roomEntity);
-
-            let roomFloor = document.createElement("a-entity");
-            roomFloor.setAttribute("geometry", 
-              { primitive: "plane", width: room.w, height: room.h } );
-            roomFloor.setAttribute("rotation", "-90 0 0");
-            roomFloor.setAttribute("material", "color", baseColor);
-
-            if (1 <= i && i <= 6)
-            {
-                roomFloor.setAttribute("material", "src", "#tiles");
-                roomFloor.setAttribute("material", "repeat", "5 5");
-            }
-            
-            roomFloor.classList.add("navMesh"); // enable teleporting here
-            roomFloor.setAttribute("raycaster-target", "glowOnHover", "false");
-            roomEntity.appendChild(roomFloor);
-
-            // TODO: add special code for each room type...
-        }
-
-        // minimap ------------------------------------------
-
+        // minimap ---------------------------------------------------------------------------------------------------------
+        
         this.canvas = document.getElementById("minimapCanvas");
         this.minimapContext = this.canvas.getContext("2d");
         this.minimapPlane = document.getElementById("minimapPlane");
 
         this.rainbowQuest.drawMap(this.minimapContext);
-
-        let material = this.minimapPlane.getObject3D('mesh').material;
-        material.map.needsUpdate = true;
+        this.minimapPlane.getObject3D('mesh').material.map.needsUpdate = true;
 
         this.minimapMarker = document.getElementById("minimapMarker");
         this.minimapMarker.object3D.position.set(1,0,0);
-        this.player = document.getElementById("player");
 
-        /*
-        // TODO: minimap graphics
-        let picArray = [   
-            " ", "❤️", "🔥", "☀️", "🍀", "💧", "🌑",
-            "🌋", "🌋", "❄️", "❄️", "💀", "💀", "💀", ];
-        */
-
-        // MOVE TO TAGS
-        // mini model for inspection
-        this.el.setAttribute("scale", "0.1 0.1 0.1");
-        // life size
-        this.el.setAttribute("scale", "4 4 4");
-        
-        this.controllerData = document.querySelector("#controller-data").components["controller-listener"];
-
-        // try to reduce attribute calls to reduce context lost?
+        // TODO: try to reduce attribute calls to reduce context lost?
         this.pos = new THREE.Vector3();
-        this.euler = new THREE.Euler(0,0,0, "XYZ");
-
         this.cameraDirection = new THREE.Vector3();
         this.cameraAngle = 0;
-
-        this.clock = new THREE.Clock();
         this.markerScale = 1;
+        
+        // place orbs ------------------------------------------------------------------------------------------------------
 
-        // place orbs ----------------------------------------------
+        let orbColors = [null, "red", "orange", "yellow", "green", "blue", "violet"];
+        let orbModels = [null, "#heartModel", "#flameModel", "#sunModel", "#cloverModel", "#waterModel", "#moonModel"];
 
-        let room;
-        let orb;
+        let orbArray = [null];
 
-        let orbColors = ["red", "orange", "yellow", "green", "blue", "purple"];
-        let orbModels = ["#heartModel", "#flameModel", "#sunModel", "#cloverModel", "#waterModel", "#moonModel"];
-
-        for (let i = 0; i < 6; i++)
+        // rainbow orbs
+        for (let i = 1; i <= 6; i++)
         {
-            room = this.rainbowQuest.roomArray[i+1];
-            orb = document.createElement("a-entity");
+            let room = this.rainbowQuest.roomArray[i];
+            let orb = document.createElement("a-entity");
             orb.setAttribute("position", {x: room.centerX + 0.5, y: 0.5, z: room.centerY + 0.5});
-            orb.setAttribute("orb", `modelSrc: ${orbModels[i]}; color: ${orbColors[i]}; minimapX: ${-0.5 + 0.2*i};`);
+            orb.setAttribute("orb", `id: ${i}; modelSrc: ${orbModels[i]}; color: ${orbColors[i]}; minimapX: ${-0.5 + 0.2*(i-1)};`);
             this.el.appendChild(orb);
+            orbArray.push(orb);
         }
+    
+        // negative orbs
+        for (let i = 7; i <= 12; i++)
+        {
+            let room = this.rainbowQuest.roomArray[i];
+            let orb = document.createElement("a-entity");
+            orb.setAttribute("position", {x: room.centerX + 0.5, y: 0.5, z: room.centerY + 0.5});
+            orb.setAttribute("orb", `id: ${i}; modelSrc: #lightningModel; color: #222222; minimapX: 0;`);
+            this.el.appendChild(orb);
+            orbArray.push(orb);
+        }
+        
+        this.orbsCollected = 0;
 
-        // could throttle tick?
+        this.el.sceneEl.addEventListener("orb-collected", function (eventData) {
 
-        this.materialsFinished = false;
+            self.orbsCollected++;
+
+            if (self.orbsCollected <= 6)
+            {
+                // camera flash with room color
+                self.startFade( orbColors[eventData.detail.id] );
+
+                self.audioSparkle.play();
+
+                // depending on eventData.detail.id, something else happens in game
+            }
+
+            if (self.orbsCollected == 6)
+            {
+                // new raycaster beam - with the power to vanquish negativity orbs
+                self.beamEntity.getObject3D("mesh").material = rainbowMaterial;
+
+                for (let i = 7; i <= 12; i++)
+                {
+                    // can now interact with lightning orbs
+                    orbArray[i].classList.add("raycaster-target");
+    
+                    // floor/wall material for negative rooms changes
+                    self.floorMaterial.uniforms.roomEffect.value[i] = 0; 
+                    self.wallMaterial.uniforms.roomEffect.value[i] = 0; 
+
+                    // update map room colors
+                    self.updateMapRoom(i, "#777777");
+                }
+
+                // audio will change for dark orb rooms after this
+            }
+
+            if (self.orbsCollected >= 7)
+            {
+                // bright flash
+                self.startFade( "white" );
+
+                self.audioWhoosh.play();
+
+                // change room/wall to rainbow material
+                self.floorMaterial.uniforms.roomEffect.value[eventData.detail.id] = 1; 
+                self.wallMaterial.uniforms.roomEffect.value[eventData.detail.id] = 1;
+
+                // clear room on minimap to reveal colors underneath 
+                self.updateMapRoom(eventData.detail.id, "#000000", true);
+
+                // TODO: also change music in a cleared roon?
+            }
+
+            if (self.orbsCollected == 12)
+            {
+                // quest successful :)
+                
+                let minimapBacking2 = document.querySelector("#minimapBacking2");
+                minimapBacking2.getObject3D("mesh").material = rainbowMaterial;
+            }
+
+        });
+        
+        // set up movement controls ----------------------------------------------------------------------------------------
+
+        this.player = document.getElementById("player");        
+
+        // move forward/backward, left/right, and adjust speed
+        this.leftAxisX = 0;
+        this.leftAxisY = 0;
+        this.leftTrigger = 0;
+
+        // turn left/right
+        this.rightAxisX = 0;
+
+        // listen for right trigger press & raycaster to interact with objects
+
+        // event listeners
+
+        this.leftController  = document.querySelector("#left-controller");
+        this.rightController = document.querySelector("#right-controller");
+        this.player          = document.querySelector("#player");
+
+        this.leftController.addEventListener('thumbstickmoved', function(event)
+          { self.leftAxisX = event.detail.x; 
+            self.leftAxisY = event.detail.y; } );
+
+        this.leftController.addEventListener('triggerchanged', function (event) 
+          { self.leftTrigger = event.detail.value; } );
+
+        this.rightController.addEventListener('thumbstickmoved', function(event)
+          { self.rightAxisX = event.detail.x; 
+            self.rightAxisY = event.detail.y; } );
+
+        this.moveSpeed = 1;
+        this.cameraDirection = new THREE.Vector3();
+
+        this.turnReady = true;
+        this.turnAmount = Math.PI / 4; // 45 degrees?
+        this.turnDirection = 1;
+        this.turnDuration = 0.10;
+        this.turnTime = 0;
+        this.turnInProgress = false;
+
+        // does this free up memory, prevent crash / lost context?
+        // this.rainbowQuest = null;
+        this.i = 0;
+        this.j = 0;      
+        this.cell = null;
+        this.currentRoomId = -1;
+
+        // load audio -----------------------------------------------------------------------------------------------------
+
+        this.audioWind      = new Howl({ src: ['audio/wind.ogg'],      autoplay: true,  loop: true, volume: 1.0 });
+        this.audioHeartbeat = new Howl({ src: ['audio/heartbeat.ogg'], autoplay: false, loop: true, volume: 1.0 });
+        this.audioCampfire  = new Howl({ src: ['audio/campfire.ogg'],  autoplay: false, loop: true, volume: 1.0 });
+        this.audioChimes    = new Howl({ src: ['audio/chimes.ogg'],    autoplay: false, loop: true, volume: 1.0 });
+        this.audioBirds     = new Howl({ src: ['audio/birds.ogg'],     autoplay: false, loop: true, volume: 1.0 });
+        this.audioRiver     = new Howl({ src: ['audio/river.ogg'],     autoplay: false, loop: true, volume: 1.0 });
+        this.audioCrickets  = new Howl({ src: ['audio/crickets.ogg'],  autoplay: false, loop: true, volume: 1.0 });
+        this.audioHarsh     = new Howl({ src: ['audio/harsh.ogg'],     autoplay: false, loop: true, volume: 1.0 });
+
+        this.audioSparkle   = new Howl({ src: ['audio/sparkle.ogg'],        autoplay: false, loop: false, volume: 1.0 });
+        this.audioWhoosh    = new Howl({ src: ['audio/sparkle-whoosh.ogg'], autoplay: false, loop: false, volume: 1.0 });
+        this.audioOof       = new Howl({ src: ['audio/oof.ogg'],            autoplay: false, loop: false, volume: 0.2 });
+
+        this.currentSound = this.audioWind;
+
+        this.currentSound.play();
+
+        // better raycaster graphics -------------------------------------------------------------------------------------
+
+        // draw light beam: thin textured cylinder along raycaster direction
+        this.beamEntity = document.createElement("a-entity");
+        this.beamEntity.setAttribute("geometry", 
+            {primitive: "cylinder", radius: 0.004, height: 1.0, segmentsHeight: 1,  segmentsRadial: 6});
+        this.beamEntity.setAttribute("material", 
+            {shader: "flat", src: "#raycasterGradient", transparent: true, opacity: 0.5} );
+        // assume raycaster component on right controller
+        this.rightController.appendChild(this.beamEntity);
+
+        this.xrSessionStarted = false;
+
+        // need to wait for controllers to load to adjust raycaster beam mesh
+        this.el.sceneEl.renderer.xr.addEventListener( 'sessionstart', function(eventData) {
+            self.xrSessionStarted = true;
+        });
+
+        // fade effect --------------------------------------------------------------------------------------------------
+
+        this.fadeInProgress = false;
+        this.fadeDuration = 0.50;
+        this.fadePercentComplete = 0;
+
+        // create sphere around camera for fade effect
+        this.camera = document.querySelector("#camera");
+        this.fadeSphere = document.createElement("a-entity");
+        this.fadeSphere.setAttribute("geometry", 
+          { primitive: "sphere", radius: 0.1, segmentsHeight: 4, segmentsWidth: 4 } );
+        this.fadeSphere.setAttribute("material",
+         { shader: "flat", color: "black", transparent: true, opacity: 0.0, side: "back"} );
+        this.fadeSphere.setAttribute("visible", false);
+        this.camera.appendChild(this.fadeSphere);
+
     },
 
-    tick: function()
+    startFade: function(color = "#FFFFFF")
     {
-        if ( !this.materialsFinished )
+        this.fadeInProgress = true;
+        this.fadePercentComplete = 0;
+        this.fadeSphere.setAttribute("material", "color", color);
+        this.fadeSphere.setAttribute("visible", true);
+    },
+
+    updateMapRoom: function(roomId, color, clear=false)
+    {
+        this.rainbowQuest.updateMapRoom(this.minimapContext, roomId, color, clear);
+        this.minimapPlane.getObject3D('mesh').material.map.needsUpdate = true;
+    },
+
+    play: function()
+    {
+        // hidden until dark orb rooms are cleared
+        let minimapBacking = document.querySelector("#minimapBacking");
+        minimapBacking.getObject3D("mesh").material = rainbowMaterial;
+
+        // note: setting these properties causes a MeshStandardMaterial to be used...       
+        document.getElementById("ceilingEntity").setAttribute("material", "shader", "flat");
+        document.getElementById("ceilingEntity").setAttribute("material", "src", "#pathDiffuse");
+        document.getElementById("ceilingEntity").setAttribute("material", "color", "#111111");
+        document.getElementById("ceilingEntity").setAttribute("material", "repeat", "160 160");
+    },
+
+    tick: function(t, dt)
+    {
+        // TODO: only do this once - maybe 1 second / 90 ticks after session starts
+        //   so raycaster has time to configure itself
+        if (this.xrSessionStarted)
         {
-            document.getElementById("pathEntity").setAttribute("material", "src", "#pathDiffuse");
+            if (this.rightController.getObject3D("line") != null)
+                this.rightController.getObject3D("line").visible = false;
 
-            document.getElementById("ceilingEntity").setAttribute("material", "src", "#pathDiffuse");
-            document.getElementById("ceilingEntity").setAttribute("material", "color", "#444488");
-            document.getElementById("ceilingEntity").setAttribute("material", "repeat", "160 160");
+            this.raycasterConfig = this.rightController.getAttribute("raycaster");
+            this.currentRayDirection = this.raycasterConfig.direction;
+            this.currentRayOrigin    = this.raycasterConfig.origin;
+            // align beam rotation with ray direction angle
+            //  (beam is always only rotated around x-axis)
+            this.beamAngleX = Math.PI + Math.atan2(this.currentRayDirection.z, this.currentRayDirection.y);
+            this.beamEntity.object3D.rotation.set(this.beamAngleX, 0, 0);
 
-            document.getElementById("wallEntity").setAttribute("material", "src", "#wallDiffuse");
-            document.getElementById("wallEntity").setAttribute("material", "normalMap", "#wallNormal");
-            document.getElementById("wallEntity").setAttribute("material", "repeat", "2 3");
-            document.getElementById("wallEntity").setAttribute("material", "side", "double");
-
-            this.materialsFinished = true;
+            // align beam position with ray origin point
+            //  and shift so beam cylinder end is at origin            
+            this.beamEntity.object3D.position.set(
+                this.currentRayOrigin.x,
+                this.currentRayOrigin.y - Math.cos(this.beamAngleX) * 1.0 / 2.0,
+                this.currentRayOrigin.z - Math.sin(this.beamAngleX) * 1.0 / 2.0 );
         }
+
+        // location check ----------------------------------------------------------------------------------------------------
+
+        this.i = Math.floor(this.player.object3D.position.x/4);
+        this.j = Math.floor(this.player.object3D.position.z/4);
+        this.cell = this.rainbowQuest.cellArray.get2D(this.i, this.j);
+
+        if (this.cell != null)
+        {
+            // check if entering a new room
+            if (this.cell.roomId != this.currentRoomId)
+            {
+                // update current room
+                this.currentRoomId = this.cell.roomId;
+
+                if (this.currentRoomId == 0)
+                    this.nextSound = this.audioWind;
+                else if (this.currentRoomId == 1)
+                    this.nextSound = this.audioHeartbeat;
+                else if (this.currentRoomId == 2)
+                    this.nextSound = this.audioCampfire;
+                else if (this.currentRoomId == 3)
+                    this.nextSound = this.audioChimes;
+                else if (this.currentRoomId == 4)
+                    this.nextSound = this.audioBirds;
+                else if (this.currentRoomId == 5)
+                    this.nextSound = this.audioRiver;
+                else if (this.currentRoomId == 6)
+                    this.nextSound = this.audioCrickets;
+                else // rooms 7-12
+                {
+                    if (this.orbsCollected < 6)
+                        this.nextSound = this.audioHarsh;
+                    else
+                        this.nextSound = this.audioWind;
+                }
+
+                if (this.nextSound != this.currentSound)
+                {
+                    this.currentSound.fade(1, 0, 1000);
+                    this.currentSound.loop(false);
+                    this.nextSound.play();
+                    this.nextSound.fade(0, 1, 1000);
+                    this.nextSound.loop(true);
+                    this.currentSound = this.nextSound;
+                }
+
+                if (this.orbsCollected < 6 && this.currentRoomId >= 7)
+                {
+                    this.audioOof.play();
+                    this.startFade("#440000");
+                    // take damage
+                }
+
+            }
+        }
+
+        // movement ----------------------------------------------------------------------------------------------------------
+
+        // move with left joystick; move faster when also pressing trigger
+        this.leftJoystickLength = Math.sqrt(this.leftAxisX * this.leftAxisX + 
+                                            this.leftAxisY * this.leftAxisY );
+
+        if ( this.leftJoystickLength > 0.01 )
+        {
+            // this.cameraDirection: a vector to store camera direction
+            this.player.sceneEl.camera.getWorldDirection(this.cameraDirection);
+            this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
+
+            this.leftJoystickAngle = Math.atan2(this.leftAxisY, this.leftAxisX);
+            
+            this.moveAngle = this.cameraAngle + this.leftJoystickAngle;
+
+            this.moveDistance = this.moveSpeed * dt / 1000;
+
+            // move faster if pressing trigger at same time
+            this.moveDistance *= (1 + 4 * this.leftTrigger);
+
+            // convert move distance and angle to right and forward amounts
+            // scale by magnitude of joystick press (smaller press moves player slower)
+            this.moveRight   = -this.leftJoystickLength * Math.sin(this.moveAngle) * this.moveDistance;
+            this.moveForward =  this.leftJoystickLength * Math.cos(this.moveAngle) * this.moveDistance;
+            
+            this.player.object3D.position.x = this.player.object3D.position.x + this.moveRight;
+            this.player.object3D.position.z = this.player.object3D.position.z + this.moveForward;
+        }
+
+        // snap turns
+
+        if ( Math.abs(this.rightAxisX) < 0.20 )
+        {           
+            this.turnReady = true;
+        }
+
+        if ( this.turnReady && Math.abs(this.rightAxisX) > 0.80 )
+        {
+            this.turnDirection = -Math.sign( this.rightAxisX );
+            this.turnInProgress = true;
+            this.turnTime = 0;
+            this.turnReady = false;
+        }
+
+        if (this.turnInProgress)
+        {
+            this.turnTime += dt / 1000;
+            this.player.object3D.rotation.y += this.turnDirection * (this.turnAmount / this.turnDuration) * (dt / 1000);
+            
+            if (this.turnTime >= this.turnDuration)
+                this.turnInProgress = false;
+        }
+
+        // material update (time; convert to seconds) ---------------------------------------------------------------
+
+        this.floorMaterial.uniforms.time.value = 5 * t/1000;
+        this.wallMaterial.uniforms.time.value = 5 * t/1000;
+        rainbowMaterial.uniforms.time.value = 5 * t/1000;
+
+        // minimap updates ------------------------------------------------------------------------------------------
+
         // calculate direction based on camera look direction, not just player rotation
         this.el.sceneEl.camera.getWorldDirection(this.cameraDirection);
         this.cameraAngle = Math.atan2(this.cameraDirection.z, this.cameraDirection.x);
-        this.euler.z = -this.cameraAngle + Math.PI;
-        this.minimapMarker.object3D.children[0].setRotationFromEuler(this.euler);
-        // less accurate...
-        // let rot = this.player.getAttribute("rotation").y;
-        // this.minimapMarker.setAttribute("rotation", {x: 0, y: 0, z: rot});
+        this.minimapMarker.object3D.children[0].rotation.set(0, 0, -this.cameraAngle + Math.PI);
 
+        // marker position
         this.pos.copy( this.player.object3D.position );
-        this.minimapMarker.object3D.position.set(this.pos.x / 160 - 0.5, -this.pos.z / 160 + 0.5, 0.005);
-        // TODO: marker invisible if out of bounds
+        this.minimapMarker.object3D.position.set(this.pos.x / 160 - 0.5, -this.pos.z / 160 + 0.5, 0.01);
 
-        this.clock.getDelta();
-        this.markerScale = 0.035 * (1 + 0.2 * Math.sin(8 * this.clock.elapsedTime));
+        // marker pulse effect
+        this.markerScale = 0.035 * (1 + 0.2 * Math.sin(8 * t/1000));
         this.minimapMarker.object3D.scale.set(this.markerScale, this.markerScale, 1);
 
-    }
-});
+        // camera fade in progress ----------------------------------------------------------------------------------
 
-// TODO: transparent, opacity, blending
-AFRAME.registerComponent("gltf-modify", {
+        if (this.fadeInProgress)
+        {   
+            this.fadePercentComplete += (dt/1000) / this.fadeDuration;
 
-    schema: {
-        color: {type: 'color', default: "red"},
-    },
+            if (this.fadePercentComplete <= 0.50)
+                this.fadeSphere.setAttribute("material", "opacity", this.fadePercentComplete);
+            else
+                this.fadeSphere.setAttribute("material", "opacity", 1.00 - this.fadePercentComplete);
 
-    init: function () 
-    {
-        let self = this;
-        this.el.addEventListener("model-loaded", function(eventData) {
-          let model = eventData.detail.model;
-          model.traverse((obj) => {
-            if (obj.isMesh) 
+            if (this.fadePercentComplete >= 1.00)
             {
-                // blending: THREE.AdditiveBlending (boolean?) // emissive
-              // obj.material.color = new THREE.Color(self.data.color); // = new THREE.MeshStandardMaterial({color: self.data.color});
-              obj.material = new THREE.MeshStandardMaterial({color: self.data.color});
+                this.fadeInProgress = false;
+                this.fadeSphere.setAttribute("material", "opacity", 0.0);
+                this.fadeSphere.setAttribute("visible", false);
             }
-          });
+        }
 
-        });
-        // Material replacement complete
-
-    }
+    }  // end of tick function
 });
 
-// "orbSetup"
-// make clickable
-// move to map?
+
+// orb component ---------------------------------------------------------------------------------------------------------
+
 AFRAME.registerComponent("orb", {
 
     schema: {
         modelSrc: {type: 'string', default: "#model"},
         color:    {type: 'color',  default: "white"},
         minimapX: {type: 'float',  default: 0.5},
-
-        controllerListenerId:  {type: 'string',  default: "#controller-data"},
-
+        id:       {type: 'float',  default: -1},
     },
 
     init: function()
     {
-        this.sphere = document.createElement("a-entity");
-        this.sphere.setAttribute("geometry",
+        this.el.setAttribute("id", "orb" + this.data.id);
+        this.el.setAttribute("geometry",
             {primitive: "sphere", radius: 1, segmentsHeight: 4, segmentsWidth: 8} );
-        this.sphere.setAttribute("material",
+        this.el.setAttribute("material",
             {color: this.data.color, transparent: true, opacity: 0.33} );
-        this.sphere.setAttribute("scale", "0.25 0.25 0.25");
-        this.sphere.setAttribute("raycaster-target", "");
-        this.el.appendChild(this.sphere);
+        this.el.setAttribute("scale", "0.25 0.25 0.25");
+
+        let self = this;
+
+        // at first, can only target colorful orbs
+        if (this.data.id <= 6)
+            this.el.classList.add("raycaster-target");
+
+        // this happens once, when intersection begins
+        this.el.addEventListener("raycaster-intersected", function(event)
+            { 
+                self.el.setAttribute("material", "emissive", "#888888"); 
+            } 
+        );
+
+        // this happens once, when intersection ends
+        this.el.addEventListener("raycaster-intersected-cleared", function(event)
+            { 
+                self.el.setAttribute("material", "emissive", "#000000"); 
+            } 
+        );
+
+        this.el.addEventListener("click", function(event)
+            { 
+                if (self.data.id <= 6)
+                    self.attachToMinimap(); 
+                if (self.data.id >= 7)
+                    self.fadeAway();
+
+                self.el.classList.remove("raycaster-target");
+                // orb-collected event emitted at end of animation
+            } 
+        );
 
         this.model = document.createElement("a-entity");
         this.model.setAttribute("gltf-model", this.data.modelSrc);
+        this.model.setAttribute("gltf-modify", "color", this.data.color);
         this.model.setAttribute("scale", "0.005 0.005 0.005");
         this.model.setAttribute("rotation", "90 0 0");
-        this.model.setAttribute("gltf-modify", "color", this.data.color);
-        this.sphere.appendChild( this.model );
+        this.el.appendChild( this.model );
 
-        this.particles = document.createElement("a-entity");
-        this.particles.setAttribute("position", "0 -2 0"); // -2
-        /*
-        this.particles.setAttribute("sprite-particles",
-            `
-            enable: true;
-            texture: #blob; 
-            color: ${this.data.color};
-            scale: 0.25;
-            emitterTime: 5; 
-            lifeTime: 5;
-            spawnRate: 30;
-            velocity: 0 0.2 0 .. 0 0.3 0; 
-            acceleration: 0 0.05 0; 
-            radialType: circleXZ;   
-            radialVelocity: -0.10 .. -0.15; 
-            angularVelocity: 0 -90 0 .. 0 90 0; 
-            opacity: 0,1,1,0;
-            `
-        );
-        */
-        this.sphere.appendChild(this.particles);
-
-        // for animating to minimap top
-        this.clock = new THREE.Clock();
-        this.deltaTime = 0;
-        this.animationDuration = 1; // seconds 
+        // orb effects: animate (move) and fade
+        this.effectDuration = 1; // seconds 
         this.percentComplete = 0;
+
+        // for animation
         this.animationInProgress = false;
         this.startPosition = {x: 0, y: 0, z: 0};
         this.endPosition   = {x: this.data.minimapX, y: 0.7, z: 0};
@@ -396,159 +1259,160 @@ AFRAME.registerComponent("orb", {
         this.startScale = {x: 1.0, y: 1.0, z: 1.0};
         this.endScale   = {x: 0.1, y: 0.1, z: 0.1};
 
-        this.controllerData = null;
+        // for fading
+        this.fadeInProgress = false;
     },
 
-    setParticlesEnabled(state)
-    {
-        this.particles.setAttribute("sprite-particles", "enable", state);
-    },
 
     lerp(startValue, endValue, percent)
     {
         return startValue + (endValue - startValue) * percent;
     },
 
-    attachToMinimap() // need to specify postion via constructor
+    attachToMinimap()
     {
-        this.setParticlesEnabled(false);
-
         let minimapPlane = document.getElementById("minimapPlane");
-        minimapPlane.object3D.attach( this.sphere.object3D );
-        let pos = this.sphere.object3D.position;
+        minimapPlane.object3D.attach( this.el.object3D );
+        let pos = this.el.object3D.position;
         this.startPosition = {x: pos.x, y: pos.y, z: pos.z};
-        let scale = this.sphere.object3D.scale;
+        let scale = this.el.object3D.scale;
         this.startScale = {x: scale.x, y: scale.y, z: scale.z};
         this.animationInProgress = true;
+    },
 
+    fadeAway()
+    {
+        this.fadeInProgress = true;
+        this.percentComplete = 0;
 
-        // reattach to minimap space -- attach object3D, then calculate point.
-
+        // make first/outer mesh (sphere) invisible
+        //  because rendering nested transparent objects is glitchy
+        this.el.getObject3D("mesh").visible = false;
     },
 
     // attachToMinimap // animate movement // then camera opacity flash
-    tick: function()
+    tick: function(time, deltaTime)
     {
-        this.sphere.object3D.rotateY(0.01);
+        this.el.object3D.rotateY(0.01);
         this.model.object3D.rotateZ(0.03);
 
-        if (this.controllerData == null)
-            this.controllerData = document.querySelector(this.data.controllerListenerId).components["controller-listener"];
-
-
-        if (this.controllerData.rightTrigger.pressed &&
-            this.sphere.components["raycaster-target"].hasFocus )
-        {
-            this.attachToMinimap();
-            // also remove raycaster-target
-        }
-
-        this.deltaTime = this.clock.getDelta();
         if (this.animationInProgress)
         {   
-            this.percentComplete += this.deltaTime / this.animationDuration;
+            this.percentComplete += (deltaTime/1000) / this.effectDuration;
 
+            // TODO: factor this out
             if (this.percentComplete >= 1)
             {
                 this.percentComplete = 1;
                 this.animationInProgress = false;
-                this.sphere.object3D.rotation.set(0,0,0);
+                this.el.object3D.rotation.set(0,0,0);
+                this.el.emit("orb-collected", {id: this.data.id});
             }
 
-            // update position of sphere via lerp
-            this.sphere.object3D.position.set(
+            // update position/scale of sphere via lerp
+            this.el.object3D.position.set(
                 this.lerp(this.startPosition.x, this.endPosition.x, this.percentComplete),
                 this.lerp(this.startPosition.y, this.endPosition.y, this.percentComplete),
                 this.lerp(this.startPosition.z, this.endPosition.z, this.percentComplete)
             );
 
-            //console.log(this.lerp(this.startScale.x, this.endScale.x, this.percentComplete))
-
-            this.sphere.object3D.scale.set(
+            this.el.object3D.scale.set(
                 this.lerp(this.startScale.x, this.endScale.x, this.percentComplete),
                 this.lerp(this.startScale.y, this.endScale.y, this.percentComplete),
                 this.lerp(this.startScale.z, this.endScale.z, this.percentComplete)
             );
+        }
+
+
+        if (this.fadeInProgress)
+        {
+            this.percentComplete += (deltaTime/1000) / this.effectDuration;
+            
+            let self = this;
+
+            // the gltf model is buried someone in a bunch of groups;
+            //   traverse to find anything with a material, and set its opacity
+            this.el.object3D.traverse( function(child) {
+                if ( child.material ) 
+                {
+                    child.material.transparent = true;
+                    child.material.opacity = 1 - self.percentComplete;
+                }
+            });
+
+            if (this.percentComplete >= 1)
+            {
+                this.fadeInProgress = false;
+                this.percentComplete = 0;
+                this.el.emit("orb-collected", {id: this.data.id});
+            }
 
         }
 
-    },
+    } // end of tick function
 });
 
 </script>
 
-<a-scene 
- stats 
- xenvironment="preset: starry; fog: 0; dressing: none; flatShading: false; ground: flat; 
-    groundTexture: walkernoise; groundColor: #1B0000; groundColor2: #331B00; grid: none"
- background="color: black;">
+<a-scene renderer="sortObjects: true;" fog="type: linear; near: 1; far: 29; color: #000000;" background="color: #000000;">
         
     <a-assets>
-        <img id="gradient" src="images/gradient-fade.png" />
-        <img id="blob" src="images/blob.png" />
 
         <img id="tiles" src="images/tiles-256.jpg" />
-        <img id="pathDiffuse" src="images/floor-diffuse-256.jpg" />
+        <img id="pathDiffuse" src="images/floor-diffuse-light-256.jpg" />
+        <img id="pathNormal" src="images/floor-normal-256.jpg" />
         <img id="wallDiffuse" src="images/stone-wall-diffuse-256.jpg" />
         <img id="wallNormal"  src="images/stone-wall-normal-256.jpg" />
-
+        
         <canvas id="minimapCanvas" width="512" height="512"></canvas>
         <img id="minimapArrow" src="images/minimapMarker.png" />
 
-        <a-asset-item id="heartModel"  src="models/heart.glb">  </a-asset-item>
-        <a-asset-item id="flameModel"  src="models/flame.glb">  </a-asset-item>
-        <a-asset-item id="sunModel"    src="models/sun.glb">    </a-asset-item>
-        <a-asset-item id="cloverModel" src="models/clover.glb"> </a-asset-item>
-        <a-asset-item id="waterModel"  src="models/water.glb">  </a-asset-item>
-        <a-asset-item id="moonModel"   src="models/moon.glb">   </a-asset-item>
+        <a-asset-item id="heartModel"     src="models/heart.glb">  </a-asset-item>
+        <a-asset-item id="flameModel"     src="models/flame.glb">  </a-asset-item>
+        <a-asset-item id="sunModel"       src="models/sun.glb">    </a-asset-item>
+        <a-asset-item id="cloverModel"    src="models/clover.glb"> </a-asset-item>
+        <a-asset-item id="waterModel"     src="models/water.glb">  </a-asset-item>
+        <a-asset-item id="moonModel"      src="models/moon.glb">   </a-asset-item>
+        <a-asset-item id="lightningModel" src="models/lightning.glb">   </a-asset-item>
+
+        <img id="raycasterGradient" src="images/gradient-fade.png" />
+        <img id="raycasterRainbow"  src="images/gradient-rainbow.png" />
+
     </a-assets>
 
-    <!-- Default lights: one directional light from top left, one small ambient light.
-         Adding a light manually removes the default lighting setup.  -->
-        <a-entity 
-            light="type: ambient; color: #222222;">
-        </a-entity>
+    <a-entity light="type: ambient; color: #222222;"></a-entity>
 
-    <a-entity 
-        id="player" 
-        position="80 0 170" 
-        player-move="controllerListenerId: #controller-data;
-                     navigationMeshClass: navMesh;">
+    <a-entity id="player" 
+              wasd-controls
+              position="80 0 159">
         
-        <a-camera position="0 1.6 0">
-             <a-entity light="type: point; color: #FFFFFF; distance: 20;"></a-entity>
-        </a-camera>
-        
-
-        <a-entity 
-            id="controller-data" 
-            controller-listener="leftControllerId:  #left-controller; 
-                                 rightControllerId: #right-controller;">
+        <a-entity id="camera" 
+                  look-controls  
+                  camera="far: 30;" 
+                  position="0 1.6 0">
+            <a-entity light="type: point; color: #FFFFFF; distance: 40;"></a-entity>
         </a-entity>
-
+        
         <a-entity 
             id="left-controller"
-            oculus-touch-controls="hand: left">
+            laser-controls="hand: left;"
+            raycaster="objects: .absolutely-nothing; enabled: false; showLine: false; lineOpacity: 0.0; far: 0.01;">
 
-            <!-- position of minimapPlane: 0 0 0.15; rot: -30 0 0 -- desktop test at 0.0 1.0 0.15 -->
             <a-plane id="minimapPlane" 
                      scale = "0.2 0.2 0.2"
-                     material="shader: flat; src: #minimapCanvas;" 
+                     material="shader: flat; src: #minimapCanvas; transparent: true;" 
                      position="0.0 0.0 0.15" 
                      rotation="-30 0 0">
 
-                <a-plane id="minimapBacking"
-                         scale="1.1 1.1 1"
-                         position="0 0 -0.001"
-                         material="shader: flat; color: gray; side: double;">
-                </a-plane>
-                
-                <a-plane id="minimapMarker"
+                <a-plane id="minimapBacking2" position="0 0 -0.004" scale="1.1 1.1 1.1" material="shader: flat; color: gray; side: double;"></a-plane>
+                <a-plane id="minimapBacking" position="0 0 -0.002"></a-plane> <!-- hides hue shifting material -->
+                <a-circle id="minimapMarker"
+                         radius="0.5"
                          scale="0.025 0.025 0.025"
-                         position="0 0 0.005"
+                         position="0 0 0.1"
                          rotation="0 0 90"
-                         material="src: #minimapArrow; transparent: true; color: yellow;">
-                </a-plane>
+                         material="src: #minimapArrow; color: gray;">
+                </a-circle>
             
             </a-plane>
 
@@ -556,23 +1420,18 @@ AFRAME.registerComponent("orb", {
 
         <a-entity
             id="right-controller"
-            oculus-touch-controls="hand: right"
-            raycaster="objects: .raycaster-target;"
-            raycaster-extras="controllerListenerId: #controller-data; 
-                              beamImageSrc: #gradient; beamLength: 0.5;">
+            laser-controls="hand: right;"
+            raycaster="objects: .raycaster-target; far: 50; showLine: false;">
         </a-entity>
 
     </a-entity>
 
-    <a-entity rainbow-quest>
-
-        <a-entity id="pathEntity" raycaster-target="glowOnHover: false;" class="navMesh"></a-entity>
-        <a-entity id="wallEntity" raycaster-target="glowOnHover: false;" ></a-entity>
+    <a-entity id="game" rainbow-quest scale="4 4 4">
+        <a-entity id="pathEntity"></a-entity>
+        <a-entity id="wallEntity"></a-entity>
         <a-entity id="ceilingEntity"></a-entity>
         <a-entity id="roomEntity"></a-entity>
-    
     </a-entity>    
-
 
 </a-scene>
 </body>
