@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Dice Tower!</title>
+	<meta name="description" content="Dice Tower">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+	<script src="js/aframe-v1.3.0.js"></script>
+	<script src="js/aframe-environment-component.js"></script>
+
+	<script src="js/physx.release.js"></script>
+	<script src="js/physics.js"></script>
+  <script src="js/gltf-modifier.js"></script>
+
+</head>
+
+<body>
+<script>
+// select random element from array
+Array.prototype.random = function () 
+{  return this[ Math.floor( this.length * Math.random() ) ]; };
+
+// generate random float value in range
+Math.randomFloat = function (min=0, max=100)
+{  return min + (max - min) * Math.random();  };
+
+
+// if raycaster is pointing at this object, press trigger to change color
+AFRAME.registerComponent("dice-spawner", {
+    init: function () 
+    {
+        let modelArray = ["#d12", "#d20"];
+        let colorArray = ["#FFFFFF"];
+        
+        this.diceElementArray = [];
+        this.diceTeleported   = [];
+        for (let i = 0; i < 10; i++)
+        {
+            let entity = document.createElement("a-entity");
+            entity.setAttribute("id", "poly" + i);
+            let x = (i % 6 - 2.5) / 2;
+            let y = Math.randomFloat(7, 15);
+            let z = (Math.floor(i/6) - 2.5) / 2;
+            entity.setAttribute( "position", {x: x, y: y, z: z} );
+            entity.setAttribute( "physx-body", {type: "dynamic"} );
+            entity.setAttribute( "gltf-model", modelArray.random() );
+            entity.setAttribute( "gltf-modifier", {color: colorArray.random()} );
+            this.el.appendChild(entity);
+            this.diceElementArray.push(entity);
+            this.diceTeleported.push(false);
+        }
+    },
+
+    tick: function()
+    {
+
+        for (let i = 0; i < this.diceElementArray.length; i++)
+        {
+            if ( this.diceTeleported[i] )
+            {
+                // restore dynamic physics
+                this.diceElementArray[i].removeState("grabbed");  
+
+                // reset linear velocity
+                this.diceElementArray[i].components["physx-body"].rigidBody.setLinearVelocity({x:0, y:0, z:0}, true);
+
+                this.diceTeleported[i] = false;
+            }
+
+            // some collisions cause objects to fly off into the sky
+            if (this.diceElementArray[i].object3D.position.y < -2 ||
+                this.diceElementArray[i].object3D.position.y > 20   )
+            {
+                // "grabbed" state temporarily disables dynamic physics, allows position to be set directly
+                this.diceElementArray[i].addState("grabbed");  
+
+                // move back to top of tower
+                let x = (i % 6 - 2.5) / 2;
+                let y = 8;
+                let z = (Math.floor(i/6) - 2.5) / 2;
+
+                this.diceElementArray[i].object3D.position.set( x,y,z );
+
+                // during next tick, restore dynamic physics
+                this.diceTeleported[i] = true;
+            }
+        }
+    },
+});
+</script>
+
+<a-scene  
+
+  environment="preset: starry; grid: false;"
+
+  physx="autoLoad: true; delay: 100; wasmUrl: js/physx.release.wasm; useDefaultScene: false; gravity: 0 -2 0;" background="color: #000000;">
+
+
+	<a-assets>
+    <a-asset-item id="d6" src="models/dice/d6.glb"></a-asset-item>
+    <a-asset-item id="d8" src="models/dice/d8.glb"></a-asset-item>
+    <a-asset-item id="d10" src="models/dice/d10.glb"></a-asset-item>
+    <a-asset-item id="d12" src="models/dice/d12.glb"></a-asset-item>
+    <a-asset-item id="d20" src="models/dice/d20.glb"></a-asset-item>
+		<img id="crate" src="images/crate.jpg" />
+    <img id="pathDiffuse" src="images/floor-diffuse-light-256.jpg" />
+    <img id="pathNormal" src="images/floor-normal-256.jpg" />
+
+	</a-assets>
+
+  <a-entity dice-spawner position="0 0.2 -4">
+
+    <!-- sides -->    
+    <a-box physx-body="type: static;" 
+           position="-0.75 3 0"
+           width="0.1" height="6" depth="1" rotation="0 0 0"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 3;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0.75 3 0"
+           width="0.1" height="6" depth="1" rotation="0 0 0"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 3;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0 3 -0.5"
+           width="1.58" height="6" depth="0.1" rotation="0 0 0"
+           material="color: #AACCFF; src: #pathDiffuse; repeat: 1 3; transparent: true; opacity: 0.20;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0 3.5 0.5"
+           width="1.58" height="5" depth="0.1" rotation="0 0 0"
+           material="color: #AACCFF; src: #pathDiffuse; repeat: 1 3; transparent: true; opacity: 0.20;">
+    </a-box>
+
+
+    <!-- catch-all at top -->
+    <a-box physx-body="type: static;" 
+           position="1.5 6.8 0"
+           width="2" height="0.1" depth="4" rotation="0 0 45"
+           material="src: #pathDiffuse; repeat: 10 10; transparent: true; opacity: 0.01;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="-1.5 6.8 0"
+           width="2" height="0.1" depth="4" rotation="0 0 -45"
+           material="src: #pathDiffuse; repeat: 10 10; transparent: true; opacity: 0.01;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0 6.8 -1.2"
+           width="4" height="0.1" depth="2" rotation="45 0 0"
+           material="src: #pathDiffuse; repeat: 10 10; transparent: true; opacity: 0.01;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0 6.8 1.2"
+           width="4" height="0.1" depth="2" rotation="-45 0 0"
+           material="src: #pathDiffuse; repeat: 10 10; transparent: true; opacity: 0.01;">
+    </a-box>
+
+    <!-- ramps -->
+    <a-box physx-body="type: static;" 
+           position="0.4 5 0"
+           width="0.1" height="1" depth="1" rotation="0 0 -45"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 1;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="-0.4 3.5 0"
+           width="0.1" height="1" depth="1" rotation="0 0 45"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 1;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0.5 2 0"
+           width="0.1" height="0.75" depth="1" rotation="0 0 -45"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 1;">
+    </a-box>
+
+    <a-box physx-body="type: static;" 
+           position="0 0.5 0"
+           width="1.4" height="1.2" depth="0.1" rotation="-45 0 0"
+           material="color: #888888; src: #pathDiffuse; normalMap: #pathNormal; repeat: 1 1;">
+    </a-box>
+
+
+
+  </a-entity>
+
+	<!-- camera -->
+	<a-entity camera look-controls wasd-controls="acceleration: 5" position="0 2.6 0">
+      <a-entity light="type: point; color: #FFFFFF; distance: 20;"></a-entity>
+ 
+  </a-entity>
+
+
+ 
+
+</a-scene>
+
+
+</body>
+</html>

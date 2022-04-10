@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+       <title>Polyhedral Dice</title>
+       <meta name="description" content="Polyhedral Dice">
+       <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+       <script src="js/aframe-v1.3.0.js"></script>
+       <script src="js/aframe-environment-component.js"></script>
+</head>
+
+<body>
+
+<script>
+
+// material used by instances
+let instanceMaterial = new THREE.ShaderMaterial({
+    
+    uniforms: 
+    {
+        time:  { value: 0 },
+        map:   { type: "map" },
+        lightColor: { type: "color", value: "#FFFFFF"},
+        darkColor:  { type: "color", value: "#000000"},
+    },
+
+
+    vertexShader: 
+    `
+    // automatically declared....  
+    // attribute mat4 instanceMatrix;
+    // attribute vec3 instanceColor;
+
+    // instance attributes
+    attribute vec3 lightColor;
+    varying vec3 vLightColor;
+
+    attribute vec3 darkColor;
+    varying vec3 vDarkColor;
+
+    attribute float instanceIndex;
+    attribute vec3  instanceRandom;
+
+    uniform float time;
+    varying vec2 vUv;
+
+    mat4 rotationX(float angle)
+    {
+        float s = sin(angle);
+        float c = cos(angle);
+        return mat4(1.0, 0.0, 0.0, 0.0, 
+                    0.0,   c,   s, 0.0,
+                    0.0,  -s,   c, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
+    }
+
+    mat4 rotationY(float angle)
+    {
+        float s = sin(angle);
+        float c = cos(angle);
+        return mat4(  c, 0.0,  -s, 0.0, 
+                    0.0, 1.0, 0.0, 0.0,
+                      s, 0.0,   c, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
+    }
+
+    mat4 rotationZ(float angle)
+    {
+        float s = sin(angle);
+        float c = cos(angle);
+        return mat4(  c,   s, 0.0, 0.0, 
+                     -s,   c, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
+    }
+
+    void main() 
+    {
+        
+        float i = mod(instanceIndex / 1000.0 + time / 1000.0, 1.0);
+        
+        float x = sin(i * 42.0 * 3.1416);
+        float y = 2.0 * i - 1.0;
+        float z = cos(i * 42.0 * 3.1416);
+        
+        float d = sqrt(x*x + y*y + z*z) / 400.0;
+        x = x/d;
+        y = y/d;
+        z = z/d;
+        
+        vec4 mvPosition =  vec4(position, 0.0);
+
+        // local rotations
+        mvPosition = rotationX(time * instanceRandom.x) * rotationY(time * instanceRandom.y) * rotationZ(time * instanceRandom.z) * mvPosition;
+
+        // translate to point on sphere
+        mvPosition += vec4( x, y, z, 1.0 );
+
+        // extra matrix from instancing
+        mvPosition = instanceMatrix * mvPosition;
+
+        mvPosition = modelViewMatrix * mvPosition;
+        gl_Position = projectionMatrix * mvPosition;
+
+        vUv = uv;
+        vLightColor = lightColor;
+        vDarkColor = darkColor;
+    }
+    `,
+
+    fragmentShader: `
+
+    uniform sampler2D map;
+    varying vec2 vUv;
+
+    varying vec3 vLightColor;
+    varying vec3 vDarkColor;
+
+    void main() 
+    {
+        vec4 color = texture2D(map, vUv);
+
+        if ( (color.r + color.g + color.b) / 3.0 > 0.8 )
+          color.rgb *= vLightColor;
+        else
+          color.rgb *= vDarkColor;
+
+        gl_FragColor = color;
+    }
+    ` 
+}); // end of ShaderMaterial
+
+
+// select random element from array
+Array.prototype.random = function () 
+{  return this[ Math.floor( this.length * Math.random() ) ]; };
+
+
+// generate random float value in range
+Math.randomFloat = function (min=0, max=100)
+{  return min + (max - min) * Math.random();  };
+
+
+AFRAME.registerComponent("dice-instances", {
+
+    schema: {
+
+    },
+
+    init: function () 
+    {        
+
+        // inject some helpful functions for working with instanced meshes
+        THREE.InstancedMesh.prototype.createInstanceAttribute = function(attribName, vecSize, type="float")
+        {
+            let array;
+            if (type == "float")
+                array = new Float32Array(this.count * vecSize);
+            else if (type == "int")
+                array = new Int32Array(this.count * vecSize);
+            else
+                console.error("unknown attribute type: " + type);
+
+            this.geometry.setAttribute( attribName, new THREE.InstancedBufferAttribute(array, vecSize) );
+        };
+
+        THREE.InstancedMesh.prototype.setInstanceValueAtIndex = function(attribName, index, valueArray)
+        {
+            let offset = index * valueArray.length;
+            for (let i = 0; i < valueArray.length; i++)
+                this.geometry.getAttribute(attribName).array[offset + i] = valueArray[i];
+        };
+
+        // use to generate instance matrix transforms.
+        let dummy = new THREE.Object3D();
+
+        let colorArray = [ [1, 0.2, 0.2], [1, 0.5, 0.2], [1.0, 1.0, 0.0], [0.2, 0.8, 0.2], [0.5, 0.8, 1.0], [0.8, 0.5, 1.0] ];
+
+        // load a model -------------------------------------------------------
+
+        let loader = new THREE.GLTFLoader();
+
+        let self = this;
+
+        let callbackFunction = function(model)
+        {
+            // adding the mesh once
+            let mesh = model.scene.children[0];
+            let baseGeometry = mesh.geometry;
+
+            // let baseMaterial = mesh.material;
+            let baseMaterial = instanceMaterial;
+            baseMaterial.uniforms.map.value = mesh.material.map;
+
+            let megamesh = new THREE.InstancedMesh(baseGeometry, baseMaterial, 1000);
+            megamesh.createInstanceAttribute("lightColor", 3);
+            megamesh.createInstanceAttribute("darkColor", 3);
+            megamesh.createInstanceAttribute("instanceIndex", 1);
+            megamesh.createInstanceAttribute("instanceRandom", 3);
+
+            self.el.object3D.add(megamesh);
+
+            for (let i = 0; i < 1000; i++)
+            {
+                dummy.position.set(0, 0, 0);
+                dummy.rotation.set(0, 0, 0);
+                dummy.scale.set(0.0028, 0.0028, 0.0028)
+                dummy.updateMatrix();
+
+                megamesh.setMatrixAt(i, dummy.matrix);
+                megamesh.setInstanceValueAtIndex( "instanceIndex", i, [i] );
+                megamesh.setInstanceValueAtIndex( "instanceRandom", i, 
+                    [Math.randomFloat(-2,2), Math.randomFloat(-2,2), Math.randomFloat(-2,2)] );
+
+                if ( Math.random() < 0.333 )
+                {
+                    megamesh.setInstanceValueAtIndex( "darkColor", i, colorArray.random() );
+                    megamesh.setInstanceValueAtIndex( "lightColor", i, [1.0, 1.0, 1.0] );
+                }
+                else if ( Math.random() < 0.500 )
+                {
+                    megamesh.setInstanceValueAtIndex( "lightColor", i, colorArray.random() );                    
+                    megamesh.setInstanceValueAtIndex( "darkColor", i, [1.0, 1.0, 1.0] );
+                }
+                else
+                {
+                    megamesh.setInstanceValueAtIndex( "lightColor", i, colorArray.random() );                    
+                    megamesh.setInstanceValueAtIndex( "darkColor", i, [0.2, 0.2, 0.2] );                    
+                }
+            }
+
+        };
+
+        loader.load("models/dice/d20.glb", callbackFunction)
+    },
+
+    tick: function(time, deltaTime)
+    {
+        time /= 1000;
+        instanceMaterial.uniforms.time.value = time;
+    },
+
+});
+
+</script>
+
+<a-scene environment="preset: starry; ground: none;" background="color: #000000;">
+
+  <a-entity camera look-controls wasd-controls="acceleration: 5" position="0 1.6 0">
+      <a-entity light="type: point; color: #888888; distance: 20;"></a-entity>
+  </a-entity>  
+
+  <a-entity dice-instances position="0 1.6 -1.7"></a-entity>
+
+</a-scene>
+
+</body>
+</html>
