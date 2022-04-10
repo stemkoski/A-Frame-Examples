@@ -10,7 +10,6 @@
 
 	<script src="js/physx.release.js"></script>
 	<script src="js/physics.js"></script>
-  <script src="js/gltf-modifier.js"></script>
 
 </head>
 
@@ -25,7 +24,6 @@ Math.randomFloat = function (min=0, max=100)
 {  return min + (max - min) * Math.random();  };
 
 
-// if raycaster is pointing at this object, press trigger to change color
 AFRAME.registerComponent("dice-spawner", {
     init: function () 
     {
@@ -44,7 +42,6 @@ AFRAME.registerComponent("dice-spawner", {
             entity.setAttribute( "position", {x: x, y: y, z: z} );
             entity.setAttribute( "physx-body", {type: "dynamic"} );
             entity.setAttribute( "gltf-model", modelArray.random() );
-            entity.setAttribute( "gltf-modifier", {color: colorArray.random()} );
             this.el.appendChild(entity);
             this.diceElementArray.push(entity);
             this.diceTeleported.push(false);
